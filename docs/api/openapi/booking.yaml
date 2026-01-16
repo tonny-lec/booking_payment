@@ -1,5 +1,492 @@
 openapi: 3.0.3
 info:
-  title: booking
+  title: Booking API
+  description: |
+    予約管理API。
+    リソース（部屋、席など）の予約作成・取得・更新・キャンセルを提供する。
+
+    ## 予約フロー
+    1. POST /bookings で予約作成（PENDING状態）
+    2. 支払い完了後、CONFIRMEDに遷移
+    3. 必要に応じてPUT /bookings/{id} で変更
+    4. DELETE /bookings/{id} でキャンセル
+
+    ## 衝突防止
+    - 同一リソース・時間帯の重複予約は409 Conflictで拒否
+    - 楽観的ロック（version）で競合状態を検出
+
+    ## 認可
+    - 予約の取得・変更・キャンセルは所有者（userId一致）のみ可能
   version: v1
-paths: {}
+  contact:
+    name: Platform Team
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: bookings
+    description: 予約操作
+
+security:
+  - bearerAuth: []
+
+paths:
+  /bookings:
+    post:
+      tags:
+        - bookings
+      operationId: createBooking
+      summary: 予約作成
+      description: |
+        新しい予約を作成する。作成直後のステータスはPENDING。
+
+        ## 不変条件
+        - startAt < endAt（開始は終了より前）
+        - startAt >= now（過去の予約は不可）
+        - 同一resourceIdでTimeRangeが重複する予約は作成不可
+
+        ## 失敗モード
+        - 400: バリデーションエラー
+        - 401: 未認証
+        - 409: 時間帯の衝突（既存予約と重複）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: 予約作成成功
+          headers:
+            Location:
+              description: 作成された予約のURI
+              schema:
+                type: string
+                example: /api/v1/bookings/550e8400-e29b-41d4-a716-446655440000
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: 時間帯の衝突（既存予約と重複）
+          content:
+            application/problem+json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ProblemDetail'
+                  - type: object
+                    properties:
+                      conflictingBookingId:
+                        type: string
+                        format: uuid
+                        description: 衝突している既存予約のID
+
+    get:
+      tags:
+        - bookings
+      operationId: listBookings
+      summary: 予約一覧取得
+      description: |
+        認証ユーザーの予約一覧を取得する。
+        フィルタリングとページネーションをサポート。
+      parameters:
+        - name: resourceId
+          in: query
+          description: リソースIDでフィルタ
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: ステータスでフィルタ
+          schema:
+            $ref: '#/components/schemas/BookingStatus'
+        - name: fromDate
+          in: query
+          description: 開始日以降の予約を取得（ISO 8601形式）
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          description: 終了日以前の予約を取得（ISO 8601形式）
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          description: 取得件数の上限
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          description: ページネーション用カーソル
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 予約一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /bookings/{bookingId}:
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        description: 予約ID
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags:
+        - bookings
+      operationId: getBooking
+      summary: 予約取得
+      description: |
+        指定された予約の詳細を取得する。
+        所有者（userId一致）のみアクセス可能。
+      responses:
+        '200':
+          description: 予約詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: アクセス権限なし（他ユーザーの予約）
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 予約が見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    put:
+      tags:
+        - bookings
+      operationId: updateBooking
+      summary: 予約変更
+      description: |
+        予約の時間帯を変更する。
+        PENDING または CONFIRMED 状態の予約のみ変更可能。
+
+        ## 楽観的ロック
+        - リクエストのversionと現在のversionが一致しない場合は409 Conflict
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookingRequest'
+      responses:
+        '200':
+          description: 予約変更成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: アクセス権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 予約が見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: 衝突（時間帯重複またはバージョン不一致）
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          description: 変更不可能な状態（CANCELLED等）
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    delete:
+      tags:
+        - bookings
+      operationId: cancelBooking
+      summary: 予約キャンセル
+      description: |
+        予約をキャンセルする。
+        PENDING または CONFIRMED 状態の予約のみキャンセル可能。
+        キャンセル後のステータスはCANCELLED。
+
+        ## 副作用
+        - CONFIRMED状態からのキャンセルは返金処理をトリガー（非同期）
+      responses:
+        '200':
+          description: キャンセル成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: アクセス権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 予約が見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          description: キャンセル不可能な状態（既にCANCELLED等）
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT形式のAccessToken。
+        ヘッダー例: `Authorization: Bearer <token>`
+
+  schemas:
+    CreateBookingRequest:
+      type: object
+      required:
+        - resourceId
+        - startAt
+        - endAt
+      properties:
+        resourceId:
+          type: string
+          format: uuid
+          description: 予約対象のリソースID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        startAt:
+          type: string
+          format: date-time
+          description: 予約開始日時（ISO 8601形式）
+          example: "2026-01-20T10:00:00Z"
+        endAt:
+          type: string
+          format: date-time
+          description: 予約終了日時（ISO 8601形式）
+          example: "2026-01-20T12:00:00Z"
+        note:
+          type: string
+          maxLength: 500
+          description: 予約メモ（任意）
+          example: "会議室A、プロジェクター使用"
+
+    UpdateBookingRequest:
+      type: object
+      required:
+        - version
+      properties:
+        startAt:
+          type: string
+          format: date-time
+          description: 新しい予約開始日時
+          example: "2026-01-20T14:00:00Z"
+        endAt:
+          type: string
+          format: date-time
+          description: 新しい予約終了日時
+          example: "2026-01-20T16:00:00Z"
+        note:
+          type: string
+          maxLength: 500
+          description: 予約メモ
+        version:
+          type: integer
+          description: 楽観的ロック用バージョン
+          example: 1
+
+    Booking:
+      type: object
+      required:
+        - id
+        - userId
+        - resourceId
+        - startAt
+        - endAt
+        - status
+        - version
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 予約ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        userId:
+          type: string
+          format: uuid
+          description: 予約者のユーザーID
+          example: "user-123"
+        resourceId:
+          type: string
+          format: uuid
+          description: 予約対象のリソースID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        startAt:
+          type: string
+          format: date-time
+          description: 予約開始日時
+          example: "2026-01-20T10:00:00Z"
+        endAt:
+          type: string
+          format: date-time
+          description: 予約終了日時
+          example: "2026-01-20T12:00:00Z"
+        status:
+          $ref: '#/components/schemas/BookingStatus'
+        note:
+          type: string
+          description: 予約メモ
+          example: "会議室A、プロジェクター使用"
+        version:
+          type: integer
+          description: 楽観的ロック用バージョン
+          example: 1
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2026-01-16T09:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2026-01-16T09:00:00Z"
+
+    BookingStatus:
+      type: string
+      enum:
+        - PENDING
+        - CONFIRMED
+        - CANCELLED
+      description: |
+        予約ステータス
+        - PENDING: 作成直後、支払い待ち
+        - CONFIRMED: 支払い完了、予約確定
+        - CANCELLED: キャンセル済み
+
+    BookingListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+        nextCursor:
+          type: string
+          description: 次ページ取得用カーソル（最終ページの場合はnull）
+          example: "eyJsYXN0SWQiOiIxMjM..."
+        totalCount:
+          type: integer
+          description: 総件数（フィルタ適用後）
+          example: 42
+
+    ProblemDetail:
+      type: object
+      description: RFC 7807準拠のエラーレスポンス
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          description: エラータイプを識別するURI
+          example: "https://api.example.com/errors/booking-conflict"
+        title:
+          type: string
+          description: エラーの概要
+          example: "Booking Conflict"
+        status:
+          type: integer
+          description: HTTPステータスコード
+          example: 409
+        detail:
+          type: string
+          description: エラーの詳細説明
+          example: "The requested time range conflicts with an existing booking."
+        instance:
+          type: string
+          format: uri
+          description: エラーが発生したリソースのURI
+          example: "/bookings/123"
+        traceId:
+          type: string
+          description: 分散トレーシング用のTraceId
+          example: "abc123def456"

@@ -1,5 +1,253 @@
 openapi: 3.0.3
 info:
-  title: iam
+  title: IAM API
+  description: |
+    認証・認可（Identity and Access Management）API。
+    ログイン、トークンリフレッシュ、ログアウトを提供する。
+
+    ## 認証フロー
+    1. POST /auth/login でAccessToken + RefreshTokenを取得
+    2. AccessTokenをAuthorizationヘッダーに付与してAPIを呼び出す
+    3. AccessToken期限切れ時は POST /auth/refresh で再発行
+    4. ログアウト時は POST /auth/logout でRefreshTokenを失効
+
+    ## セキュリティ
+    - パスワードはログに出力しない
+    - Brute-force対策：連続失敗でレート制限
+    - RefreshTokenはサーバー側で失効管理
   version: v1
-paths: {}
+  contact:
+    name: Platform Team
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: auth
+    description: 認証操作
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - auth
+      operationId: login
+      summary: ログイン
+      description: |
+        メールアドレスとパスワードで認証し、トークンペアを発行する。
+
+        ## 失敗モード
+        - 401: 認証情報が無効
+        - 423: アカウントがロック中
+        - 429: レート制限超過
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: 認証失敗（メールまたはパスワードが無効）
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '423':
+          description: アカウントロック中
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '429':
+          description: レート制限超過
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+          headers:
+            Retry-After:
+              description: 再試行までの秒数
+              schema:
+                type: integer
+
+  /auth/refresh:
+    post:
+      tags:
+        - auth
+      operationId: refreshToken
+      summary: トークンリフレッシュ
+      description: |
+        RefreshTokenを使用して新しいAccessTokenを発行する。
+        RefreshTokenのローテーション：新しいRefreshTokenも同時に発行する。
+
+        ## 失敗モード
+        - 401: RefreshTokenが無効または失効
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: リフレッシュ成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: RefreshTokenが無効または失効
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /auth/logout:
+    post:
+      tags:
+        - auth
+      operationId: logout
+      summary: ログアウト
+      description: |
+        RefreshTokenを失効させる。
+        AccessTokenは短命のため、サーバー側での失効管理は行わない（期限切れを待つ）。
+
+        ## セキュリティ
+        - 認証済みユーザーのみ実行可能
+        - 自身のRefreshTokenのみ失効可能
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '204':
+          description: ログアウト成功（RefreshToken失効）
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT形式のAccessToken。
+        ヘッダー例: `Authorization: Bearer <token>`
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: ユーザーのメールアドレス
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: パスワード（ログ出力禁止）
+          example: "********"
+
+    RefreshRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: 現在のRefreshToken
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    LogoutRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: 失効させるRefreshToken
+          example: "eyJhbGciOiJIUzI1NiIs..."
+
+    TokenResponse:
+      type: object
+      required:
+        - accessToken
+        - refreshToken
+        - tokenType
+        - expiresIn
+      properties:
+        accessToken:
+          type: string
+          description: JWT形式のAccessToken
+          example: "eyJhbGciOiJSUzI1NiIs..."
+        refreshToken:
+          type: string
+          description: RefreshToken（ローテーション後の新トークン）
+          example: "eyJhbGciOiJIUzI1NiIs..."
+        tokenType:
+          type: string
+          enum:
+            - Bearer
+          description: トークンタイプ
+          example: Bearer
+        expiresIn:
+          type: integer
+          description: AccessTokenの有効期限（秒）
+          example: 3600
+
+    ProblemDetail:
+      type: object
+      description: RFC 7807準拠のエラーレスポンス
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          description: エラータイプを識別するURI
+          example: "https://api.example.com/errors/invalid-credentials"
+        title:
+          type: string
+          description: エラーの概要
+          example: "Invalid Credentials"
+        status:
+          type: integer
+          description: HTTPステータスコード
+          example: 401
+        detail:
+          type: string
+          description: エラーの詳細説明
+          example: "The provided email or password is incorrect."
+        instance:
+          type: string
+          format: uri
+          description: エラーが発生したリソースのURI
+          example: "/auth/login"
+        traceId:
+          type: string
+          description: 分散トレーシング用のTraceId
+          example: "abc123def456"

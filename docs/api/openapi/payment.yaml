@@ -1,5 +1,621 @@
 openapi: 3.0.3
 info:
-  title: payment
+  title: Payment API
+  description: |
+    決済管理API。
+    予約に紐づく支払いの作成・取得・キャプチャ・返金を提供する。
+
+    ## 決済フロー
+    1. POST /payments で支払い作成（Idempotency-Key必須）
+    2. 外部決済ゲートウェイで与信（AUTHORIZED）
+    3. POST /payments/{id}/capture でキャプチャ（CAPTURED）
+    4. 必要に応じて POST /payments/{id}/refund で返金
+
+    ## 冪等性
+    - POST /payments は Idempotency-Key ヘッダー必須
+    - 同一キーでの再リクエストは既存結果を返す（再処理しない）
+    - キーの有効期限：24時間
+
+    ## 認可
+    - 支払いの取得・キャプチャ・返金は対象予約の所有者のみ可能
   version: v1
-paths: {}
+  contact:
+    name: Platform Team
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: payments
+    description: 決済操作
+
+security:
+  - bearerAuth: []
+
+paths:
+  /payments:
+    post:
+      tags:
+        - payments
+      operationId: createPayment
+      summary: 支払い作成
+      description: |
+        新しい支払いを作成する。
+        Idempotency-Keyヘッダー必須（重複処理防止）。
+
+        ## 処理フロー
+        1. Idempotency-Keyの重複チェック
+        2. 予約（bookingId）の存在・所有権チェック
+        3. 外部決済ゲートウェイへの与信リクエスト
+        4. 結果をIdempotency-Keyと紐付けて保存
+
+        ## 失敗モード
+        - 400: バリデーションエラー
+        - 401: 未認証
+        - 403: 予約の所有権なし
+        - 404: 予約が見つからない
+        - 409: Idempotency-Key衝突（異なるリクエスト内容で同一キー使用）
+        - 422: 予約が支払い可能な状態でない
+        - 502: 外部決済ゲートウェイエラー
+        - 504: 外部決済ゲートウェイタイムアウト
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: |
+            冪等性を保証するためのクライアント生成キー（UUID推奨）。
+            同一キーでの再リクエストは既存結果を返す。
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '201':
+          description: 支払い作成成功
+          headers:
+            Location:
+              description: 作成された支払いのURI
+              schema:
+                type: string
+                example: /api/v1/payments/550e8400-e29b-41d4-a716-446655440000
+            Idempotency-Key:
+              description: 使用されたIdempotency-Key
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '200':
+          description: 冪等リクエスト（既存結果を返却）
+          headers:
+            Idempotency-Key:
+              description: 使用されたIdempotency-Key
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: 予約の所有権なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 予約が見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '409':
+          description: |
+            Idempotency-Key衝突。
+            同一キーで異なるリクエスト内容が送信された。
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          description: 予約が支払い可能な状態でない（既に支払い済み等）
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '502':
+          description: 外部決済ゲートウェイエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '504':
+          description: 外部決済ゲートウェイタイムアウト
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    get:
+      tags:
+        - payments
+      operationId: listPayments
+      summary: 支払い一覧取得
+      description: |
+        認証ユーザーの支払い一覧を取得する。
+        フィルタリングとページネーションをサポート。
+      parameters:
+        - name: bookingId
+          in: query
+          description: 予約IDでフィルタ
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          description: ステータスでフィルタ
+          schema:
+            $ref: '#/components/schemas/PaymentStatus'
+        - name: limit
+          in: query
+          description: 取得件数の上限
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          description: ページネーション用カーソル
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 支払い一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentListResponse'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /payments/{paymentId}:
+    parameters:
+      - name: paymentId
+        in: path
+        required: true
+        description: 支払いID
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags:
+        - payments
+      operationId: getPayment
+      summary: 支払い取得
+      description: |
+        指定された支払いの詳細を取得する。
+        対象予約の所有者のみアクセス可能。
+      responses:
+        '200':
+          description: 支払い詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: アクセス権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 支払いが見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /payments/{paymentId}/capture:
+    parameters:
+      - name: paymentId
+        in: path
+        required: true
+        description: 支払いID
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags:
+        - payments
+      operationId: capturePayment
+      summary: 支払いキャプチャ
+      description: |
+        与信済み（AUTHORIZED）の支払いをキャプチャ（確定）する。
+        キャプチャ後のステータスはCAPTURED。
+
+        ## 前提条件
+        - ステータスがAUTHORIZEDであること
+
+        ## 失敗モード
+        - 422: キャプチャ不可能な状態（PENDING/CAPTURED/REFUNDED/FAILED）
+        - 502: 外部決済ゲートウェイエラー
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 冪等性を保証するためのキー
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CapturePaymentRequest'
+      responses:
+        '200':
+          description: キャプチャ成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: アクセス権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 支払いが見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          description: キャプチャ不可能な状態
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '502':
+          description: 外部決済ゲートウェイエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /payments/{paymentId}/refund:
+    parameters:
+      - name: paymentId
+        in: path
+        required: true
+        description: 支払いID
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags:
+        - payments
+      operationId: refundPayment
+      summary: 返金
+      description: |
+        キャプチャ済み（CAPTURED）の支払いを返金する。
+        全額返金または部分返金をサポート。
+
+        ## 前提条件
+        - ステータスがAUTHORIZEDまたはCAPTUREDであること
+        - AUTHORIZEDの場合はvoid（与信取消）、CAPTUREDの場合はrefund
+
+        ## 失敗モード
+        - 422: 返金不可能な状態（PENDING/REFUNDED/FAILED）
+        - 502: 外部決済ゲートウェイエラー
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          description: 冪等性を保証するためのキー
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundPaymentRequest'
+      responses:
+        '200':
+          description: 返金成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: アクセス権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 支払いが見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          description: 返金不可能な状態または返金額が超過
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '502':
+          description: 外部決済ゲートウェイエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT形式のAccessToken。
+        ヘッダー例: `Authorization: Bearer <token>`
+
+  schemas:
+    CreatePaymentRequest:
+      type: object
+      required:
+        - bookingId
+        - amount
+        - currency
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+          description: 支払い対象の予約ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        amount:
+          type: integer
+          minimum: 1
+          description: 支払い金額（通貨の最小単位）
+          example: 10000
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          description: ISO 4217準拠の通貨コード
+          example: "JPY"
+        description:
+          type: string
+          maxLength: 200
+          description: 支払いの説明
+          example: "会議室予約料金"
+
+    CapturePaymentRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+          description: |
+            キャプチャ金額（省略時は全額）。
+            与信額以下である必要がある。
+          example: 10000
+
+    RefundPaymentRequest:
+      type: object
+      required:
+        - reason
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+          description: |
+            返金金額（省略時は全額）。
+            キャプチャ済み金額以下である必要がある。
+          example: 5000
+        reason:
+          type: string
+          enum:
+            - CUSTOMER_REQUEST
+            - DUPLICATE
+            - FRAUDULENT
+            - OTHER
+          description: 返金理由
+          example: "CUSTOMER_REQUEST"
+        note:
+          type: string
+          maxLength: 500
+          description: 返金に関するメモ
+          example: "顧客都合によるキャンセル"
+
+    Payment:
+      type: object
+      required:
+        - id
+        - bookingId
+        - userId
+        - amount
+        - currency
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 支払いID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        bookingId:
+          type: string
+          format: uuid
+          description: 支払い対象の予約ID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          description: 支払い者のユーザーID
+          example: "user-123"
+        amount:
+          type: integer
+          description: 支払い金額（通貨の最小単位）
+          example: 10000
+        capturedAmount:
+          type: integer
+          description: キャプチャ済み金額
+          example: 10000
+        refundedAmount:
+          type: integer
+          description: 返金済み金額
+          example: 0
+        currency:
+          type: string
+          description: ISO 4217準拠の通貨コード
+          example: "JPY"
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+        description:
+          type: string
+          description: 支払いの説明
+          example: "会議室予約料金"
+        gatewayTransactionId:
+          type: string
+          description: 外部決済ゲートウェイのトランザクションID
+          example: "txn_1234567890"
+        failureReason:
+          type: string
+          description: 失敗時の理由（FAILEDステータス時のみ）
+          example: "card_declined"
+        idempotencyKey:
+          type: string
+          format: uuid
+          description: 作成時に使用されたIdempotency-Key
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2026-01-16T09:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2026-01-16T09:00:00Z"
+
+    PaymentStatus:
+      type: string
+      enum:
+        - PENDING
+        - AUTHORIZED
+        - CAPTURED
+        - REFUNDED
+        - FAILED
+      description: |
+        支払いステータス
+        - PENDING: 処理中
+        - AUTHORIZED: 与信枠確保済み（キャプチャ前）
+        - CAPTURED: 決済確定（売上計上）
+        - REFUNDED: 返金済み
+        - FAILED: 決済失敗
+
+    PaymentListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+        nextCursor:
+          type: string
+          description: 次ページ取得用カーソル（最終ページの場合はnull）
+          example: "eyJsYXN0SWQiOiIxMjM..."
+        totalCount:
+          type: integer
+          description: 総件数（フィルタ適用後）
+          example: 15
+
+    ProblemDetail:
+      type: object
+      description: RFC 7807準拠のエラーレスポンス
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          description: エラータイプを識別するURI
+          example: "https://api.example.com/errors/payment-failed"
+        title:
+          type: string
+          description: エラーの概要
+          example: "Payment Failed"
+        status:
+          type: integer
+          description: HTTPステータスコード
+          example: 502
+        detail:
+          type: string
+          description: エラーの詳細説明
+          example: "The payment gateway returned an error."
+        instance:
+          type: string
+          format: uri
+          description: エラーが発生したリソースのURI
+          example: "/payments/123"
+        traceId:
+          type: string
+          description: 分散トレーシング用のTraceId
+          example: "abc123def456"
