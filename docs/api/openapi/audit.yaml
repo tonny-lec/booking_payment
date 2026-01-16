@@ -1,0 +1,5 @@
+openapi: 3.0.3
+info:
+  title: audit
+  version: v1
+paths: {}

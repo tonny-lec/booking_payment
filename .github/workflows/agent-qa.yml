@@ -1,0 +1,23 @@
+name: agent-qa
+on:
+  pull_request:
+    branches: ["main"]
+jobs:
+  quality_gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: PRD Gate (PRD-First)
+        run: |
+          bash scripts/prd-gate.sh origin/main
+
+      - name: Evidence Lint
+        run: |
+          bash scripts/evidence-lint.sh
+
+      - name: Tests
+        run: |
+          bash scripts/test-all.sh
