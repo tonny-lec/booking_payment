@@ -28,11 +28,14 @@ bash scripts/context-reset.sh
 ## Architecture
 
 ### Tech Stack (planned)
-- Java 21+ with Spring Boot
+- Java 25 with Spring Boot
 - PostgreSQL (primary data store)
+- Redis (cache, rate limiting, distributed lock)
+- Kafka (messaging, event-driven)
 - OpenTelemetry for observability
 - OpenAPI 3.0 for contracts
-- Gradle or Maven for build
+- Gradle for build
+- Terraform for IaC
 
 ### DDD Bounded Contexts
 - **IAM**: Authentication/authorization (User, AccessToken, RefreshToken)

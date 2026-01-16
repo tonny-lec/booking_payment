@@ -4,7 +4,7 @@ version: "0.6"
 last_updated: "2026-01-16"
 language: "ja"
 audience: ["human", "agent"]
-design_methodology: ["DDD", "Hexagonal Architecture", "Contract-first API", "SLO/Observability-first", "Event-driven (optional)"]
+design_methodology: ["DDD", "Hexagonal Architecture", "Contract-first API", "SLO/Observability-first", "Event-driven"]
 ssot:
   rules: "docs/agent/rules.md"
   workflow: "docs/agent/workflow.md"
@@ -71,7 +71,7 @@ ssot:
 | 返金 | Payment | `docs/design/usecases/payment-refund.md` | `docs/api/openapi/payment.yaml` |
 | 通知送信（イベント受信） | Notification | `docs/design/usecases/notification-send.md` | `docs/api/openapi/notification.yaml` |
 | 監査記録 | Audit | `docs/design/usecases/audit-record.md` | `docs/api/openapi/audit.yaml` |
-| 台帳投影（projection） | Ledger | `docs/design/usecases/ledger-project.md` | （任意） |
+| 台帳投影（projection） | Ledger | `docs/design/usecases/ledger-project.md` | `docs/api/openapi/ledger.yaml` |
 
 ---
 
