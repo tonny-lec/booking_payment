@@ -55,12 +55,12 @@
 ### 1.5 テスト計画
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| IAM-TEST-01 | Unit Test: PasswordValidator | `docs/test/test-plan.md` | A | 🔴 | ⬜ |
-| IAM-TEST-02 | Unit Test: TokenGenerator | 同上 | A | 🔴 | ⬜ |
-| IAM-TEST-03 | Unit Test: User集約 | 同上 | A | 🔴 | ⬜ |
-| IAM-TEST-04 | Integration Test: UserRepository | 同上 | A | 🟡 | ⬜ |
-| IAM-TEST-05 | E2E Test: login→refresh→logout フロー | 同上 | A | 🔴 | ⬜ |
-| IAM-TEST-06 | 権限テスト: 無効トークンでのアクセス拒否 | 同上 | A | 🔴 | ⬜ |
+| IAM-TEST-01 | Unit Test: PasswordValidator | `docs/test/test-plan.md` | A | 🔴 | ✅ |
+| IAM-TEST-02 | Unit Test: TokenGenerator | 同上 | A | 🔴 | ✅ |
+| IAM-TEST-03 | Unit Test: User集約 | 同上 | A | 🔴 | ✅ |
+| IAM-TEST-04 | Integration Test: UserRepository | 同上 | A | 🟡 | ✅ |
+| IAM-TEST-05 | E2E Test: login→refresh→logout フロー | 同上 | A | 🔴 | ✅ |
+| IAM-TEST-06 | 権限テスト: 無効トークンでのアクセス拒否 | 同上 | A | 🔴 | ✅ |
 
 ### 1.6 ADR
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
