@@ -76,12 +76,12 @@
 ### 2.1 コンテキスト設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| BK-CTX-01 | 目的・責務の定義 | `docs/design/contexts/booking.md` | A | 🔴 | ⬜ |
-| BK-CTX-02 | 集約一覧（Booking, TimeRange）の定義 | 同上 | A | 🔴 | ⬜ |
-| BK-CTX-03 | Context Map（IAM認証、Payment連携）の定義 | 同上 | A | 🔴 | ⬜ |
-| BK-CTX-04 | 永続化設計（bookings テーブル） | 同上 | A | 🔴 | ⬜ |
-| BK-CTX-05 | ドメインイベント定義（BookingCreated, BookingCancelled） | 同上 | A | 🟡 | ⬜ |
-| BK-CTX-06 | 非機能要件（SLO/制約）の記載 | 同上 | A | 🟡 | ⬜ |
+| BK-CTX-01 | 目的・責務の定義 | `docs/design/contexts/booking.md` | A | 🔴 | ✅ |
+| BK-CTX-02 | 集約一覧（Booking, TimeRange）の定義 | 同上 | A | 🔴 | ✅ |
+| BK-CTX-03 | Context Map（IAM認証、Payment連携）の定義 | 同上 | A | 🔴 | ✅ |
+| BK-CTX-04 | 永続化設計（bookings テーブル） | 同上 | A | 🔴 | ✅ |
+| BK-CTX-05 | ドメインイベント定義（BookingCreated, BookingCancelled） | 同上 | A | 🟡 | ✅ |
+| BK-CTX-06 | 非機能要件（SLO/制約）の記載 | 同上 | A | 🟡 | ✅ |
 
 ### 2.2 ユースケース設計
 
