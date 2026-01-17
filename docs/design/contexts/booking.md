@@ -127,6 +127,7 @@ overlaps(a, b) = a.startAt < b.endAt AND b.startAt < a.endAt
 └────────┬─────────────────┬──────────────┘
          │                 │
          │ BookingCreated  │ BookingCancelled
+         │ BookingUpdated  │
          │ BookingConfirmed│
          ▼                 ▼
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐

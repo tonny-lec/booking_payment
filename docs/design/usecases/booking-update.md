@@ -34,6 +34,8 @@ status: "draft"
   - **Booking**：リソースの特定時間帯の利用権を表す集約
   - **BookingStatus**：PENDING | CONFIRMED | CANCELLED
   - **TimeRange**：開始時刻（startAt）と終了時刻（endAt）のペア
+    - ドメインモデルでは値オブジェクト `timeRange: TimeRange` として表現
+    - API/イベントでは `startAt`、`endAt` として個別フィールドで表現（表現規約は glossary.md 参照）
   - **Version**：楽観的ロック用のバージョン番号
 
 ---
