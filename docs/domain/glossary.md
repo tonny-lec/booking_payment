@@ -1,9 +1,9 @@
 ---
 doc_type: "glossary"
 id: "glossary"
-version: "0.1"
-last_updated: "2026-01-16"
-status: "draft"
+version: "0.2"
+last_updated: "2026-01-17"
+status: "stable"
 ---
 
 # 用語集（Glossary）SSOT
