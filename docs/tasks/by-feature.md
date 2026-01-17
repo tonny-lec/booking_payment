@@ -377,11 +377,11 @@
 ### 7.5 ドメイン用語
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| GLO-01 | TimeRangeの定義 | `docs/domain/glossary.md` | A | 🔴 | ⬜ |
-| GLO-02 | Idempotency Keyの定義 | 同上 | A | 🔴 | ⬜ |
-| GLO-03 | Payment状態（PENDING/AUTHORIZED/CAPTURED/REFUNDED）の定義 | 同上 | A | 🔴 | ⬜ |
-| GLO-04 | Booking状態（PENDING/CONFIRMED/CANCELLED）の定義 | 同上 | A | 🔴 | ⬜ |
-| GLO-05 | 認証トークン（AccessToken/RefreshToken）の定義 | 同上 | A | 🔴 | ⬜ |
+| GLO-01 | TimeRangeの定義 | `docs/domain/glossary.md` | A | 🔴 | ✅ |
+| GLO-02 | Idempotency Keyの定義 | 同上 | A | 🔴 | ✅ |
+| GLO-03 | Payment状態（PENDING/AUTHORIZED/CAPTURED/REFUNDED）の定義 | 同上 | A | 🔴 | ✅ |
+| GLO-04 | Booking状態（PENDING/CONFIRMED/CANCELLED）の定義 | 同上 | A | 🔴 | ✅ |
+| GLO-05 | 認証トークン（AccessToken/RefreshToken）の定義 | 同上 | A | 🔴 | ✅ |
 
 ---
 
