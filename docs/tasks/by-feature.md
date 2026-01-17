@@ -108,21 +108,21 @@
 #### 2.2.3 予約キャンセル
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| BK-UC-CANCEL-01 | 目的・背景の記載 | `docs/design/usecases/booking-cancel.md` | A | 🔴 | ⬜ |
-| BK-UC-CANCEL-02 | 入出力定義（CancelBookingCommand→BookingCancelled） | 同上 | A | 🔴 | ⬜ |
-| BK-UC-CANCEL-03 | 状態遷移（CONFIRMED→CANCELLED）の定義 | 同上 | A | 🔴 | ⬜ |
-| BK-UC-CANCEL-04 | 失敗モード定義（already_cancelled, invalid_state） | 同上 | A | 🔴 | ⬜ |
-| BK-UC-CANCEL-05 | 返金トリガー連携の設計 | 同上 | A | 🔴 | ⬜ |
-| BK-UC-CANCEL-06 | 観測性設計 | 同上 | A | 🟡 | ⬜ |
-| BK-UC-CANCEL-07 | セキュリティ設計（所有者のみキャンセル可） | 同上 | A | 🔴 | ⬜ |
+| BK-UC-CANCEL-01 | 目的・背景の記載 | `docs/design/usecases/booking-cancel.md` | A | 🔴 | ✅ |
+| BK-UC-CANCEL-02 | 入出力定義（CancelBookingCommand→BookingCancelled） | 同上 | A | 🔴 | ✅ |
+| BK-UC-CANCEL-03 | 状態遷移（CONFIRMED→CANCELLED）の定義 | 同上 | A | 🔴 | ✅ |
+| BK-UC-CANCEL-04 | 失敗モード定義（already_cancelled, invalid_state） | 同上 | A | 🔴 | ✅ |
+| BK-UC-CANCEL-05 | 返金トリガー連携の設計 | 同上 | A | 🔴 | ✅ |
+| BK-UC-CANCEL-06 | 観測性設計 | 同上 | A | 🟡 | ✅ |
+| BK-UC-CANCEL-07 | セキュリティ設計（所有者のみキャンセル可） | 同上 | A | 🔴 | ✅ |
 
 ### 2.3 OpenAPI仕様
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
 | BK-API-01 | POST /bookings エンドポイント定義 | `docs/api/openapi/booking.yaml` | A | 🔴 | ✅ |
 | BK-API-02 | GET /bookings/{id} エンドポイント定義 | 同上 | A | 🔴 | ✅ |
-| BK-API-03 | PUT /bookings/{id} エンドポイント定義 | 同上 | A | 🔴 | ⬜ |
-| BK-API-04 | DELETE /bookings/{id} エンドポイント定義 | 同上 | A | 🔴 | ⬜ |
+| BK-API-03 | PUT /bookings/{id} エンドポイント定義 | 同上 | A | 🔴 | ✅ |
+| BK-API-04 | DELETE /bookings/{id} エンドポイント定義 | 同上 | A | 🔴 | ✅ |
 | BK-API-05 | 409 Conflict レスポンス設計 | 同上 | A | 🔴 | ✅ |
 | BK-API-06 | Booking/TimeRange/Error スキーマ定義 | 同上 | A | 🔴 | ✅ |
 
