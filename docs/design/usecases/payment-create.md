@@ -41,29 +41,58 @@ status: "draft"
 # 3. 依存関係（Context Map）
 
 ```
-┌─────────────┐
-│    IAM      │
-│  (Identity) │
-└──────┬──────┘
-       │ AccessToken（認証）
-       ▼
-┌─────────────┐     ┌─────────────────┐
-│   Booking   │────▶│    Payment      │
-│             │     │                 │
-└─────────────┘     └────────┬────────┘
-                             │
-                             │ API Call
-                             ▼
-                    ┌─────────────────┐
-                    │ Payment Gateway │
-                    │   (External)    │
-                    └─────────────────┘
+┌─────────────────┐
+│       IAM       │
+│   (Identity)    │
+└────────┬────────┘
+         │ AccessToken（認証）
+         ▼
+┌─────────────────┐     ┌─────────────────────────────────────────┐
+│     Booking     │     │              Payment                     │
+│                 │────▶│                                          │
+│ BookingCreated  │     │  ・支払い作成/与信/キャプチャ/返金        │
+│                 │     │  ・冪等性管理                            │
+│                 │     │  ・状態管理                              │
+└─────────────────┘     └────────┬─────────────────┬──────────────┘
+                                 │                 │
+                                 │ PaymentCaptured │ PaymentFailed
+                                 │ PaymentRefunded │
+                                 ▼                 ▼
+┌─────────────────┐     ┌─────────────┐     ┌─────────────┐
+│ Payment Gateway │     │    Audit    │     │   Booking   │
+│   (External)    │     │             │     │             │
+│                 │     │ 監査記録    │     │ 状態更新    │
+└─────────────────┘     └─────────────┘     └─────────────┘
+        │
+        │ Anti-Corruption Layer
+        ▼
+┌─────────────────┐
+│ Stripe / PayPay │
+│     etc.        │
+└─────────────────┘
 ```
 
-- **IAM → Payment**：AccessTokenでユーザーを認証
-- **Booking → Payment**：予約情報を参照し、所有権を検証
-- **Payment → Gateway**：外部決済ゲートウェイとの連携（Anti-Corruption Layer経由）
-- **関係タイプ**：Customer-Supplier（Paymentが外部Gatewayの顧客）
+## 関係性
+
+| 関係 | 種別 | 説明 |
+|------|------|------|
+| IAM → Payment | Customer-Supplier | IAMがAccessTokenを提供、Paymentが検証して使用 |
+| Booking → Payment | Publisher-Subscriber | BookingCreatedイベントでPaymentが支払い処理を開始 |
+| Payment → Booking | Publisher-Subscriber | PaymentCapturedでBookingがCONFIRMEDに遷移 |
+| Payment → Audit | Publisher-Subscriber | 支払い操作イベントをAuditが購読して記録 |
+| Payment → Gateway | Customer-Supplier (ACL) | 外部ゲートウェイとAnti-Corruption Layer経由で連携 |
+
+## 統合パターン
+
+- **IAM との統合**：
+  - `Authorization: Bearer <token>` ヘッダーからAccessTokenを取得
+  - トークンの `sub` クレームからuserIdを抽出
+  - 対象予約の所有者（booking.userId一致）のみ操作可能
+
+- **Payment Gateway との統合**（Anti-Corruption Layer）：
+  - `PaymentGatewayPort` インターフェースで外部依存を抽象化
+  - 各ゲートウェイ（Stripe, PayPay等）に対応したAdapterを実装
+  - タイムアウト、リトライ、エラー変換をACLで処理
 
 ---
 
@@ -105,36 +134,58 @@ Payment {
 ```
 PaymentCreated {
   eventId: UUID
-  paymentId: UUID
-  bookingId: UUID
-  userId: UUID
-  amount: Integer
-  currency: String
-  status: PaymentStatus
-  idempotencyKey: UUID
+  aggregateId: PaymentId
   occurredAt: DateTime
+  payload: {
+    paymentId: UUID
+    bookingId: UUID
+    userId: UUID
+    amount: Integer
+    currency: String
+    status: "PENDING"
+    idempotencyKey: UUID
+  }
 }
 ```
+
+**購読者：** Audit（監査記録）
 
 ## Domain Event: PaymentAuthorized
 ```
 PaymentAuthorized {
   eventId: UUID
-  paymentId: UUID
-  gatewayTransactionId: String
+  aggregateId: PaymentId
   occurredAt: DateTime
+  payload: {
+    paymentId: UUID
+    bookingId: UUID
+    userId: UUID
+    amount: Integer
+    currency: String
+    gatewayTransactionId: String
+  }
 }
 ```
+
+**購読者：** Audit（監査記録）、Notification（与信完了通知）
 
 ## Domain Event: PaymentFailed
 ```
 PaymentFailed {
   eventId: UUID
-  paymentId: UUID
-  reason: String
+  aggregateId: PaymentId
   occurredAt: DateTime
+  payload: {
+    paymentId: UUID
+    bookingId: UUID
+    userId: UUID
+    failureReason: String
+    failedAt: DateTime
+  }
 }
 ```
+
+**購読者：** Audit（監査記録）、Notification（決済失敗通知）
 
 ---
 
@@ -198,16 +249,14 @@ IdempotencyKey {
 
 ## 状態遷移
 
-```
-    作成
-     │
-     ▼
-  PENDING ─────────────→ AUTHORIZED ─────────────→ CAPTURED
-     │      与信成功          │       キャプチャ成功      │
-     │                       │                         │
-     │ 与信失敗              │ void                    │ refund
-     ▼                       ▼                         ▼
-  FAILED                 REFUNDED ←───────────── REFUNDED
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING : create()
+    PENDING --> AUTHORIZED : authorize()
+    PENDING --> FAILED : fail()
+    AUTHORIZED --> CAPTURED : capture()
+    AUTHORIZED --> REFUNDED : void()
+    CAPTURED --> REFUNDED : refund()
 ```
 
 ---
@@ -228,38 +277,47 @@ IdempotencyKey {
 ## テーブル設計（推論、実装時に検証が必要）
 
 ### payments テーブル
-| カラム | 型 | 制約 |
-|--------|-----|------|
-| id | UUID | PK |
-| booking_id | UUID | NOT NULL, INDEX |
-| user_id | UUID | NOT NULL, INDEX |
-| amount | INTEGER | NOT NULL, CHECK > 0 |
-| captured_amount | INTEGER | NULL |
-| refunded_amount | INTEGER | NULL |
-| currency | VARCHAR(3) | NOT NULL |
-| status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' |
-| description | VARCHAR(200) | NULL |
-| gateway_transaction_id | VARCHAR(255) | NULL |
-| failure_reason | VARCHAR(500) | NULL |
-| idempotency_key | UUID | UNIQUE, NOT NULL |
-| created_at | TIMESTAMP | NOT NULL |
-| updated_at | TIMESTAMP | NOT NULL |
-
-### idempotency_records テーブル（冪等性管理）
-| カラム | 型 | 制約 |
-|--------|-----|------|
-| idempotency_key | UUID | PK |
-| request_hash | VARCHAR(64) | NOT NULL |
-| response_status | INTEGER | NOT NULL |
-| response_body | JSONB | NOT NULL |
-| created_at | TIMESTAMP | NOT NULL |
-| expires_at | TIMESTAMP | NOT NULL |
+| カラム | 型 | 制約 | 説明 |
+|--------|-----|------|------|
+| id | UUID | PK | 支払いID |
+| booking_id | UUID | NOT NULL | 予約ID |
+| user_id | UUID | NOT NULL | ユーザーID |
+| amount | INTEGER | NOT NULL | 金額（通貨の最小単位） |
+| captured_amount | INTEGER | NULL | キャプチャ済み金額 |
+| refunded_amount | INTEGER | NULL | 返金済み金額 |
+| currency | VARCHAR(3) | NOT NULL | 通貨コード（ISO 4217） |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING/AUTHORIZED/CAPTURED/REFUNDED/FAILED |
+| description | VARCHAR(200) | NULL | 説明 |
+| gateway_transaction_id | VARCHAR(255) | NULL | 外部ゲートウェイのトランザクションID |
+| failure_reason | VARCHAR(500) | NULL | 失敗理由 |
+| idempotency_key | UUID | UNIQUE, NOT NULL | 冪等キー |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
 **インデックス：**
-- `payments(booking_id)` - 予約の支払い検索
-- `payments(user_id)` - ユーザーの支払い一覧
-- `payments(idempotency_key)` - 冪等性チェック
-- `idempotency_records(expires_at)` - 期限切れレコードの削除用
+- `idx_payments_booking_id` ON payments(booking_id) - 予約の支払い検索
+- `idx_payments_user_id` ON payments(user_id) - ユーザーの支払い一覧
+- `idx_payments_idempotency_key` ON payments(idempotency_key) - 冪等性チェック
+- `idx_payments_status_created` ON payments(status, created_at) - ステータス×日時フィルタ
+
+**制約：**
+- `CHECK (amount > 0)` - 金額は正の整数
+- `CHECK (captured_amount IS NULL OR captured_amount <= amount)` - キャプチャ額制約
+- `CHECK (refunded_amount IS NULL OR refunded_amount <= captured_amount)` - 返金額制約
+- `CHECK (status IN ('PENDING', 'AUTHORIZED', 'CAPTURED', 'REFUNDED', 'FAILED'))` - ステータス値
+
+### idempotency_records テーブル（冪等性管理）
+| カラム | 型 | 制約 | 説明 |
+|--------|-----|------|------|
+| idempotency_key | UUID | PK | 冪等キー |
+| request_hash | VARCHAR(64) | NOT NULL | リクエスト内容のハッシュ |
+| response_status | INTEGER | NOT NULL | レスポンスHTTPステータス |
+| response_body | JSONB | NOT NULL | レスポンスボディ |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| expires_at | TIMESTAMP | NOT NULL | 有効期限 |
+
+**インデックス：**
+- `idx_idempotency_records_expires_at` ON idempotency_records(expires_at) - 期限切れレコードの削除用
 
 ---
 

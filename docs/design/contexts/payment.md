@@ -34,7 +34,9 @@ Paymentコンテキストは、**予約に対する決済処理**を担当する
 - 主要用語：
   - **Payment**：予約に紐づく決済を表す集約
   - **PaymentStatus**：PENDING | AUTHORIZED | CAPTURED | REFUNDED | FAILED
-  - **Money**：金額と通貨を表す値オブジェクト
+  - **Money**：金額（Amount）と通貨（Currency）を表す値オブジェクト
+  - **Amount**：支払い金額（通貨の最小単位、例：JPYは円、USDはセント）
+  - **Currency**：ISO 4217準拠の通貨コード
   - **IdempotencyKey**：重複処理を防ぐためのクライアント生成キー
   - **GatewayTransactionId**：外部決済ゲートウェイのトランザクションID
 
@@ -123,10 +125,7 @@ IdempotencyKey {
   value: UUID
   createdAt: DateTime
 
-  // 不変条件
-  invariant: value is valid UUID
-
-  // 振る舞い
+  // 有効期限：24時間
   isExpired(): Boolean = now > createdAt + 24h
 }
 ```
