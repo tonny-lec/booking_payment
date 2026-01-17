@@ -39,28 +39,50 @@ status: "draft"
 # 3. 依存関係（Context Map）
 
 ```
-┌─────────────┐
-│    IAM      │
-│  (Identity) │
-└──────┬──────┘
-       │ AccessToken（認証）
-       ▼
-┌─────────────┐
-│   Booking   │
-│             │
-└──────┬──────┘
-       │ BookingCreated Event
-       ▼
-┌─────────────┐     ┌─────────────┐
-│   Payment   │     │ Notification│
-│             │     │             │
-└─────────────┘     └─────────────┘
+┌─────────────────┐
+│       IAM       │
+│   (Identity)    │
+└────────┬────────┘
+         │ AccessToken（認証）
+         ▼
+┌─────────────────────────────────────────┐
+│              Booking                     │
+│                                          │
+│  ・予約作成/変更/キャンセル               │
+│  ・衝突検出                              │
+│  ・状態管理                              │
+└────────┬─────────────────┬──────────────┘
+         │                 │
+         │ BookingCreated  │ BookingCancelled
+         │ BookingConfirmed│
+         ▼                 ▼
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Payment   │     │    Audit    │     │Notification │
+│             │     │             │     │             │
+│ 支払い処理   │     │ 監査記録    │     │ 通知送信    │
+└─────────────┘     └─────────────┘     └─────────────┘
 ```
 
-- **IAM → Booking**：AccessTokenでユーザーを認証・認可
-- **Booking → Payment**：予約作成後、支払い処理をトリガー
-- **Booking → Notification**：予約作成イベントを通知サービスに送信
-- **関係タイプ**：Published Language（BookingCreated Event）
+## 関係性
+
+| 関係 | 種別 | 説明 |
+|------|------|------|
+| IAM → Booking | Customer-Supplier | IAMがAccessTokenを提供、Bookingが検証して使用 |
+| Booking → Payment | Publisher-Subscriber | BookingCreatedイベントでPaymentが支払い処理を開始 |
+| Booking → Audit | Publisher-Subscriber | 予約操作イベントをAuditが購読して記録 |
+| Booking → Notification | Publisher-Subscriber | 予約イベントをNotificationが購読して通知 |
+| Payment → Booking | Conformist | PaymentCapturedでBookingがCONFIRMEDに遷移 |
+
+## 統合パターン
+
+- **IAM との統合**：
+  - `Authorization: Bearer <token>` ヘッダーからAccessTokenを取得
+  - トークンの `sub` クレームからuserIdを抽出
+  - 予約の所有者（userId一致）のみ操作可能
+
+- **Payment との統合**：
+  - BookingCreated イベント → Payment がPENDING状態の支払いを作成
+  - PaymentCaptured イベント → Booking がCONFIRMEDに状態遷移
 
 ---
 
@@ -97,15 +119,21 @@ Booking {
 ```
 BookingCreated {
   eventId: UUID
-  bookingId: UUID
-  userId: UUID
-  resourceId: UUID
-  startAt: DateTime
-  endAt: DateTime
-  status: "PENDING"
+  aggregateId: BookingId
   occurredAt: DateTime
+  payload: {
+    bookingId: UUID
+    userId: UUID
+    resourceId: UUID
+    startAt: DateTime
+    endAt: DateTime
+    status: "PENDING"
+    note: String?
+  }
 }
 ```
+
+**購読者：** Payment（支払い作成）、Audit（監査記録）、Notification（予約確認通知）
 
 ---
 
@@ -152,16 +180,12 @@ TimeRange {
 
 ## 状態遷移
 
-```
-    作成
-     │
-     ▼
-  PENDING ─────────────→ CONFIRMED
-     │     支払い完了        │
-     │                      │
-     │ キャンセル/タイムアウト   │ キャンセル
-     ▼                      ▼
- CANCELLED ←───────────── CANCELLED
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING : create()
+    PENDING --> CONFIRMED : confirm()
+    PENDING --> CANCELLED : cancel()
+    CONFIRMED --> CANCELLED : cancel()
 ```
 
 ## 衝突検出アルゴリズム
@@ -189,23 +213,29 @@ overlap(a, b) = a.startAt < b.endAt AND b.startAt < a.endAt
 ## テーブル設計（推論、実装時に検証が必要）
 
 ### bookings テーブル
-| カラム | 型 | 制約 |
-|--------|-----|------|
-| id | UUID | PK |
-| user_id | UUID | NOT NULL, INDEX |
-| resource_id | UUID | NOT NULL |
-| start_at | TIMESTAMP | NOT NULL |
-| end_at | TIMESTAMP | NOT NULL |
-| status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' |
-| note | VARCHAR(500) | NULL |
-| version | INTEGER | NOT NULL, DEFAULT 1 |
-| created_at | TIMESTAMP | NOT NULL |
-| updated_at | TIMESTAMP | NOT NULL |
+| カラム | 型 | 制約 | 説明 |
+|--------|-----|------|------|
+| id | UUID | PK | 予約ID |
+| user_id | UUID | NOT NULL | ユーザーID |
+| resource_id | UUID | NOT NULL | リソースID |
+| start_at | TIMESTAMP | NOT NULL | 開始時刻 |
+| end_at | TIMESTAMP | NOT NULL | 終了時刻 |
+| status | VARCHAR(20) | NOT NULL, DEFAULT 'PENDING' | PENDING/CONFIRMED/CANCELLED |
+| note | VARCHAR(500) | NULL | メモ |
+| version | INTEGER | NOT NULL, DEFAULT 1 | 楽観的ロック用 |
+| cancelled_at | TIMESTAMP | NULL | キャンセル日時 |
+| cancel_reason | VARCHAR(500) | NULL | キャンセル理由 |
+| created_at | TIMESTAMP | NOT NULL | 作成日時 |
+| updated_at | TIMESTAMP | NOT NULL | 更新日時 |
 
 **インデックス：**
-- `bookings(user_id)` - ユーザーの予約一覧取得
-- `bookings(resource_id, start_at, end_at)` - 衝突検出用
-- `bookings(status, start_at)` - ステータス×日時でのフィルタ
+- `idx_bookings_user_id` ON bookings(user_id) - ユーザーの予約一覧取得
+- `idx_bookings_resource_time` ON bookings(resource_id, start_at, end_at) - 衝突検出用
+- `idx_bookings_status_start` ON bookings(status, start_at) - ステータス×日時フィルタ
+
+**制約：**
+- `CHECK (start_at < end_at)` - 時間範囲の整合性
+- `CHECK (status IN ('PENDING', 'CONFIRMED', 'CANCELLED'))` - ステータス値
 
 ## 衝突検出クエリ
 
