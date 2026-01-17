@@ -15,6 +15,7 @@ status: "stable"
 4. **Tests Gate**：テストが落ちる変更はReject（例外なし）
 5. **No Secrets / No PII**：Secrets/PIIを出力・埋め込みしない（SSOT：`docs/security/pii-policy.md`）
 6. **Git Flow**：ブランチ運用ルールを遵守する（下記参照）
+7. **One Task, One PR**：細分化されたタスク単位でブランチを作成しPRを出す（下記参照）
 
 ## Must Not（禁止）
 - SSOTを無視してコードだけ変更
@@ -78,6 +79,46 @@ git pull origin main
 git checkout <作業ブランチ>
 git rebase main  # コンフリクトがあれば解決
 ```
+
+---
+
+## One Task, One PR（タスク単位PR運用）
+
+### 原則
+- `docs/tasks/by-feature.md` で細分化されたタスク単位でPRを作成
+- 1つのPRに複数の無関係なタスクを混ぜない
+- 関連するタスクは同一PRにまとめてもよい（例：同一ファイルの複数セクション）
+
+### ブランチ命名
+```
+docs/<context>-<document>
+```
+例：
+- `docs/iam-context` - IAMコンテキスト設計
+- `docs/booking-update-usecase` - 予約変更ユースケース
+- `docs/observability` - 観測性設計
+
+### ワークフロー
+```
+1. mainブランチから新規ブランチ作成
+2. タスクを完了（ドキュメント編集）
+3. コミット＆プッシュ
+4. PR作成
+5. （必要に応じて）レビュー・修正
+6. マージ後、次のタスクへ
+```
+
+### PRタイトル形式
+```
+docs: <タスクの要約>
+```
+例：
+- `docs: add IAM context design`
+- `docs: complete booking-update usecase`
+
+### タスク参照
+- PRの説明にタスクID（例：`IAM-CTX-01`）を記載
+- 完了後は `docs/tasks/by-feature.md` のステータスを更新
 
 ---
 
