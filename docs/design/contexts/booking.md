@@ -73,16 +73,12 @@ Booking (Aggregate Root) {
 
 ### 状態遷移
 
-```
-    create()
-       │
-       ▼
-    PENDING ──────────────→ CONFIRMED
-       │      confirm()         │
-       │                        │
-       │ cancel()               │ cancel()
-       ▼                        ▼
-   CANCELLED ←────────────── CANCELLED
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING : create()
+    PENDING --> CONFIRMED : confirm()
+    PENDING --> CANCELLED : cancel()
+    CONFIRMED --> CANCELLED : cancel()
 ```
 
 ## 3.2 TimeRange（値オブジェクト）
@@ -94,6 +90,7 @@ TimeRange {
 
   // 不変条件
   invariant: startAt < endAt
+  invariant: startAt >= now（過去の予約は不可、作成時点で検証）
 
   // 振る舞い
   overlaps(other: TimeRange): Boolean
@@ -102,13 +99,13 @@ TimeRange {
 }
 ```
 
-### 重複判定アルゴリズム
+### 衝突検出アルゴリズム
 
 ```
 overlaps(a, b) = a.startAt < b.endAt AND b.startAt < a.endAt
 ```
 
-**注意**：隣接する予約（A.endAt == B.startAt）は重複しない
+**注意**：隣接する予約（A.endAt == B.startAt）は衝突しない
 
 ---
 
