@@ -63,11 +63,13 @@ Booking (Aggregate Root) {
 2. `timeRange.startAt >= now`（過去の予約は不可、作成時点で検証）
 3. 同一`resourceId`で重複する`TimeRange`を持つ有効な予約（PENDING/CONFIRMED）は存在不可
 4. `version`は更新のたびにインクリメント
+5. `status == CANCELLED` の予約は更新不可（終状態）
 
 ### 振る舞い
 
 - `create(userId, resourceId, timeRange, note)`: 新規予約作成
 - `updateTimeRange(newTimeRange, expectedVersion)`: 時間範囲の変更
+- `updateNote(note, expectedVersion)`: メモの変更
 - `confirm()`: PENDING → CONFIRMED（支払い完了時）
 - `cancel(reason)`: PENDING/CONFIRMED → CANCELLED
 
@@ -127,6 +129,7 @@ overlaps(a, b) = a.startAt < b.endAt AND b.startAt < a.endAt
 └────────┬─────────────────┬──────────────┘
          │                 │
          │ BookingCreated  │ BookingCancelled
+         │ BookingUpdated  │
          │ BookingConfirmed│
          ▼                 ▼
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
@@ -318,7 +321,11 @@ BookingCancelled {
 - **主要メトリクス**：
   - `booking_create_total{status}` - 予約作成試行数
   - `booking_create_duration_seconds{status}` - 予約作成処理時間
+  - `booking_update_total{status}` - 予約更新試行数
+  - `booking_update_duration_seconds{status}` - 予約更新処理時間
+  - `booking_cancel_total{status,previous_status}` - 予約キャンセル試行数
   - `booking_conflict_total{resource_id}` - 衝突発生数
+  - `booking_version_mismatch_total` - バージョン不一致発生数
   - `booking_active_count{status}` - アクティブ予約数
 
 ## 7.3 Security
@@ -360,6 +367,8 @@ BookingCancelled {
 | 予約可能な最大期間 | 1回の予約で予約可能な最大時間（例：8時間） | 中 | 未定 |
 | 予約可能な先行期間 | 何日先まで予約可能か（例：30日） | 中 | 未定 |
 | キャンセルポリシー | キャンセル期限、キャンセル料の設計 | 高 | Slice B |
+| CONFIRMED予約の変更制限 | 支払い済み予約の時間変更可否、差額精算 | 高 | Slice B |
 | 繰り返し予約 | 週次/月次の定期予約 | 低 | Phase 2 |
 | リソース管理 | リソースのマスタ管理（CRUD） | 中 | 別タスク |
 | 予約の自動キャンセル | 支払いタイムアウト時の自動キャンセル | 高 | Slice B |
+| 変更履歴テーブル | 変更履歴を別テーブルで管理するか | 中 | 未定 |

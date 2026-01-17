@@ -98,12 +98,12 @@
 #### 2.2.2 予約更新
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| BK-UC-UPDATE-01 | 目的・背景の記載 | `docs/design/usecases/booking-update.md` | A | 🔴 | ⬜ |
-| BK-UC-UPDATE-02 | 入出力定義（UpdateBookingCommand→BookingUpdated） | 同上 | A | 🔴 | ⬜ |
-| BK-UC-UPDATE-03 | 楽観的ロック・TimeRange再検証の定義 | 同上 | A | 🔴 | ⬜ |
-| BK-UC-UPDATE-04 | 失敗モード定義（conflict_409, version_mismatch） | 同上 | A | 🔴 | ⬜ |
-| BK-UC-UPDATE-05 | 観測性設計 | 同上 | A | 🟡 | ⬜ |
-| BK-UC-UPDATE-06 | セキュリティ設計（所有者のみ変更可） | 同上 | A | 🔴 | ⬜ |
+| BK-UC-UPDATE-01 | 目的・背景の記載 | `docs/design/usecases/booking-update.md` | A | 🔴 | ✅ |
+| BK-UC-UPDATE-02 | 入出力定義（UpdateBookingCommand→BookingUpdated） | 同上 | A | 🔴 | ✅ |
+| BK-UC-UPDATE-03 | 楽観的ロック・TimeRange再検証の定義 | 同上 | A | 🔴 | ✅ |
+| BK-UC-UPDATE-04 | 失敗モード定義（conflict_409, version_mismatch） | 同上 | A | 🔴 | ✅ |
+| BK-UC-UPDATE-05 | 観測性設計 | 同上 | A | 🟡 | ✅ |
+| BK-UC-UPDATE-06 | セキュリティ設計（所有者のみ変更可） | 同上 | A | 🔴 | ✅ |
 
 #### 2.2.3 予約キャンセル
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
