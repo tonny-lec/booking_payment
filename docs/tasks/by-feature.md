@@ -151,12 +151,12 @@
 ### 3.1 コンテキスト設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| PAY-CTX-01 | 目的・責務の定義 | `docs/design/contexts/payment.md` | A | 🔴 | ⬜ |
-| PAY-CTX-02 | 集約一覧（Payment, Money, IdempotencyKey）の定義 | 同上 | A | 🔴 | ⬜ |
-| PAY-CTX-03 | Context Map（Booking連携、外部Gateway）の定義 | 同上 | A | 🔴 | ⬜ |
-| PAY-CTX-04 | 永続化設計（payments, idempotency_records テーブル） | 同上 | A | 🔴 | ⬜ |
-| PAY-CTX-05 | ドメインイベント定義（PaymentCreated, PaymentCaptured, PaymentFailed） | 同上 | A | 🟡 | ⬜ |
-| PAY-CTX-06 | 非機能要件（SLO/制約）の記載 | 同上 | A | 🟡 | ⬜ |
+| PAY-CTX-01 | 目的・責務の定義 | `docs/design/contexts/payment.md` | A | 🔴 | ✅ |
+| PAY-CTX-02 | 集約一覧（Payment, Money, IdempotencyKey）の定義 | 同上 | A | 🔴 | ✅ |
+| PAY-CTX-03 | Context Map（Booking連携、外部Gateway）の定義 | 同上 | A | 🔴 | ✅ |
+| PAY-CTX-04 | 永続化設計（payments, idempotency_records テーブル） | 同上 | A | 🔴 | ✅ |
+| PAY-CTX-05 | ドメインイベント定義（PaymentCreated, PaymentCaptured, PaymentFailed） | 同上 | A | 🟡 | ✅ |
+| PAY-CTX-06 | 非機能要件（SLO/制約）の記載 | 同上 | A | 🟡 | ✅ |
 
 ### 3.2 ユースケース設計
 
