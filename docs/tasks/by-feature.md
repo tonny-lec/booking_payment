@@ -341,8 +341,8 @@
 | SEC-02 | マスキングルール具体化（email, IP） | 同上 | A | 🔴 | ⬜ |
 | SEC-03 | ログ出力禁止項目（パスワード、カード情報） | 同上 | A | 🔴 | ⬜ |
 | SEC-04 | 保持期間と削除方針 | 同上 | A | 🟡 | ⬜ |
-| SEC-05 | シークレット一覧（DB接続、JWT鍵、外部API） | `docs/security/secrets.md` | A | 🟡 | ⬜ |
-| SEC-06 | シークレット管理方針（環境変数 vs Vault） | 同上 | A | 🟡 | ⬜ |
+| SEC-05 | シークレット一覧（DB接続、JWT鍵、外部API） | `docs/security/secrets.md` | A | 🟡 | ✅ |
+| SEC-06 | シークレット管理方針（環境変数 vs Vault） | 同上 | A | 🟡 | ✅ |
 | SEC-07 | シークレット漏洩時の対応手順 | 同上 | B | 🟡 | ⬜ |
 | SEC-08 | 脅威モデル：資産の特定 | `docs/security/threat-model.md` | B | 🟡 | ⬜ |
 | SEC-09 | 脅威モデル：STRIDE分析 | 同上 | B | 🟡 | ⬜ |
