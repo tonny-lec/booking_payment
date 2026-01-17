@@ -89,6 +89,13 @@ git rebase main  # コンフリクトがあれば解決
 - 1つのPRに複数の無関係なタスクを混ぜない
 - 関連するタスクは同一PRにまとめてもよい（例：同一ファイルの複数セクション）
 
+### OpenAPI仕様の粒度（例外ルール）
+- **OpenAPI仕様はタスクID単位で1つのPRを作成**
+- 例：`IAM-API-01`（POST /auth/login）で1PR、`IAM-API-02`（POST /auth/refresh）で別PR
+- 理由：APIエンドポイントは個別にレビュー・検証が必要なため
+- ブランチ命名：`docs/openapi-<context>-<endpoint>`
+  - 例：`docs/openapi-iam-login`, `docs/openapi-booking-create`
+
 ### ブランチ命名
 ```
 docs/<context>-<document>
@@ -115,6 +122,8 @@ docs: <タスクの要約>
 例：
 - `docs: add IAM context design`
 - `docs: complete booking-update usecase`
+- `docs: add POST /auth/login endpoint to OpenAPI` （OpenAPI）
+- `docs: add POST /payments endpoint with idempotency` （OpenAPI）
 
 ### タスク参照
 - PRの説明にタスクID（例：`IAM-CTX-01`）を記載
