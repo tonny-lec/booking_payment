@@ -17,12 +17,12 @@
 ### 1.1 コンテキスト設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| IAM-CTX-01 | 目的・責務の定義 | `docs/design/contexts/iam.md` | A | 🔴 | ⬜ |
-| IAM-CTX-02 | 集約一覧（User, RefreshToken）の定義 | 同上 | A | 🔴 | ⬜ |
-| IAM-CTX-03 | Context Map（他BCへの認証提供関係）の定義 | 同上 | A | 🔴 | ⬜ |
-| IAM-CTX-04 | 永続化設計（users, refresh_tokens テーブル） | 同上 | A | 🔴 | ⬜ |
-| IAM-CTX-05 | ドメインイベント定義（UserLoggedIn, LoginFailed） | 同上 | A | 🟡 | ⬜ |
-| IAM-CTX-06 | 非機能要件（SLO/制約）の記載 | 同上 | A | 🟡 | ⬜ |
+| IAM-CTX-01 | 目的・責務の定義 | `docs/design/contexts/iam.md` | A | 🔴 | ✅ |
+| IAM-CTX-02 | 集約一覧（User, RefreshToken）の定義 | 同上 | A | 🔴 | ✅ |
+| IAM-CTX-03 | Context Map（他BCへの認証提供関係）の定義 | 同上 | A | 🔴 | ✅ |
+| IAM-CTX-04 | 永続化設計（users, refresh_tokens テーブル） | 同上 | A | 🔴 | ✅ |
+| IAM-CTX-05 | ドメインイベント定義（UserLoggedIn, LoginFailed） | 同上 | A | 🟡 | ✅ |
+| IAM-CTX-06 | 非機能要件（SLO/制約）の記載 | 同上 | A | 🟡 | ✅ |
 
 ### 1.2 ユースケース設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |

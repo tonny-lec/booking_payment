@@ -101,6 +101,20 @@ LoginFailed {
 }
 ```
 
+## Domain Event: AccountLocked
+```
+AccountLocked {
+  eventId: UUID
+  userId: UUID
+  occurredAt: DateTime
+  reason: Enum (CONSECUTIVE_FAILURES | RATE_LIMITED)
+  lockedUntil: DateTime
+  failedAttempts: Integer
+}
+```
+- **発行タイミング**：連続失敗回数が閾値に達したとき
+- **購読者**：Audit（監査記録）、Notification（ユーザーへの通知）
+
 ---
 
 # 5. ドメインモデル（集約/不変条件）
