@@ -33,10 +33,13 @@ status: "draft"
 - SSOT：`docs/domain/glossary.md`
 - 主要用語：
   - **Booking**：リソースの特定時間帯の利用権を表す集約
-  - **BookingStatus**：PENDING | CONFIRMED | CANCELLED
-  - **PENDING**：支払い待ち状態（キャンセル可能、返金不要）
-  - **CONFIRMED**：支払い完了・予約確定状態（キャンセル可能、返金必要）
-  - **CANCELLED**：キャンセル済み状態（終状態、変更不可）
+  - **BookingStatus**：予約のライフサイクル状態
+    - `PENDING`：支払い待ち状態（キャンセル可能、返金不要）
+    - `CONFIRMED`：支払い完了・予約確定状態（キャンセル可能、返金必要）
+    - `CANCELLED`：キャンセル済み状態（終状態、変更不可）
+  - **TimeRange**：開始時刻（startAt）と終了時刻（endAt）のペア
+    - ドメインモデルでは値オブジェクト `timeRange: TimeRange` として表現
+    - API/イベントでは `startAt`、`endAt` として個別フィールドで表現（表現規約は glossary.md 参照）
 
 ---
 
@@ -88,6 +91,9 @@ status: "draft"
 # 4. 入出力（Command/Query/Event）
 
 ## Command: CancelBookingCommand
+
+**注意**：Commandはユースケースドキュメントで定義。コンテキスト設計（booking.md）では集約とドメインイベントを定義。
+
 ```
 CancelBookingCommand {
   bookingId: UUID (required, from path)
@@ -115,6 +121,9 @@ Booking {
 ```
 
 ## Domain Event: BookingCancelled
+
+**注意**：イベント構造は `docs/design/contexts/booking.md` のセクション6.4を参照（SSOT）
+
 ```
 BookingCancelled {
   eventId: UUID
@@ -124,9 +133,7 @@ BookingCancelled {
     bookingId: UUID
     userId: UUID
     resourceId: UUID
-    startAt: DateTime
-    endAt: DateTime
-    previousStatus: "PENDING" | "CONFIRMED"
+    previousStatus: BookingStatus ("PENDING" | "CONFIRMED")
     cancelReason: String?
     cancelledAt: DateTime
   }
