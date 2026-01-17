@@ -362,9 +362,9 @@
 ### 7.4 運用ドキュメント
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| OPS-01 | 設計概要：システムアーキテクチャ図 | `docs/design/overview.md` | A | 🟡 | ⬜ |
-| OPS-02 | 設計概要：BC間関係図 | 同上 | A | 🟡 | ⬜ |
-| OPS-03 | 設計概要：データフロー図 | 同上 | A | 🟡 | ⬜ |
+| OPS-01 | 設計概要：システムアーキテクチャ図 | `docs/design/overview.md` | A | 🟡 | ✅ |
+| OPS-02 | 設計概要：BC間関係図 | 同上 | A | 🟡 | ✅ |
+| OPS-03 | 設計概要：データフロー図 | 同上 | A | 🟡 | ✅ |
 | OPS-04 | Runbook：インシデント対応フロー概要 | `docs/runbook/README.md` | C | 🟡 | ⬜ |
 | OPS-05 | Runbook：共通手順（ログ確認、再起動、ロールバック） | 同上 | C | 🟡 | ⬜ |
 | OPS-06 | Runbook：DB接続障害対応 | `docs/runbook/incident-db-connection.md` | C | 🟢 | ⬜ |
