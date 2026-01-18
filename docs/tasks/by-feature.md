@@ -203,13 +203,13 @@
 ### 3.4 テスト計画
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| PAY-TEST-01 | Unit Test: Money値オブジェクト | `docs/test/test-plan.md` | A | 🔴 | ⬜ |
-| PAY-TEST-02 | Unit Test: Payment集約 | 同上 | A | 🔴 | ⬜ |
-| PAY-TEST-03 | Unit Test: IdempotencyKey | 同上 | A | 🔴 | ⬜ |
-| PAY-TEST-04 | Integration Test: PaymentRepository | 同上 | A | 🟡 | ⬜ |
-| PAY-TEST-05 | 冪等性テスト: 同一Idempotency-Key再送 | 同上 | A | 🔴 | ⬜ |
-| PAY-TEST-06 | 境界値テスト: 金額境界（最小/最大） | 同上 | A | 🔴 | ⬜ |
-| PAY-TEST-07 | E2E Test: create→capture→refund フロー | 同上 | B | 🟡 | ⬜ |
+| PAY-TEST-01 | Unit Test: Money値オブジェクト | `docs/test/test-plan.md` | A | 🔴 | ✅ |
+| PAY-TEST-02 | Unit Test: Payment集約 | 同上 | A | 🔴 | ✅ |
+| PAY-TEST-03 | Unit Test: IdempotencyKey | 同上 | A | 🔴 | ✅ |
+| PAY-TEST-04 | Integration Test: PaymentRepository | 同上 | A | 🟡 | ✅ |
+| PAY-TEST-05 | 冪等性テスト: 同一Idempotency-Key再送 | 同上 | A | 🔴 | ✅ |
+| PAY-TEST-06 | 境界値テスト: 金額境界（最小/最大） | 同上 | A | 🔴 | ✅ |
+| PAY-TEST-07 | E2E Test: create→capture→refund フロー | 同上 | B | 🟡 | ✅ |
 
 ### 3.5 ADR
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
