@@ -46,11 +46,11 @@
 ### 1.4 セキュリティ
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| IAM-SEC-01 | JWT構造（header/payload/signature）設計 | `docs/design/security.md` | A | 🟡 | ⬜ |
-| IAM-SEC-02 | トークン有効期限設計（Access: 15min, Refresh: 7d等） | 同上 | A | 🟡 | ⬜ |
-| IAM-SEC-03 | 署名アルゴリズム選定（RS256推奨） | 同上 | A | 🟡 | ⬜ |
-| IAM-SEC-04 | RefreshTokenローテーション方針 | 同上 | A | 🟡 | ⬜ |
-| IAM-SEC-05 | Brute-force対策の閾値設定 | 同上 | A | 🔴 | ⬜ |
+| IAM-SEC-01 | JWT構造（header/payload/signature）設計 | `docs/design/security.md` | A | 🟡 | ✅ |
+| IAM-SEC-02 | トークン有効期限設計（Access: 15min, Refresh: 7d等） | 同上 | A | 🟡 | ✅ |
+| IAM-SEC-03 | 署名アルゴリズム選定（RS256推奨） | 同上 | A | 🟡 | ✅ |
+| IAM-SEC-04 | RefreshTokenローテーション方針 | 同上 | A | 🟡 | ✅ |
+| IAM-SEC-05 | Brute-force対策の閾値設定 | 同上 | A | 🔴 | ✅ |
 
 ### 1.5 テスト計画
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
