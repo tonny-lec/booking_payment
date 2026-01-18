@@ -129,13 +129,13 @@
 ### 2.4 テスト計画
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| BK-TEST-01 | Unit Test: TimeRange値オブジェクト | `docs/test/test-plan.md` | A | 🔴 | ⬜ |
-| BK-TEST-02 | Unit Test: Booking集約 | 同上 | A | 🔴 | ⬜ |
-| BK-TEST-03 | Unit Test: ConflictDetector | 同上 | A | 🔴 | ⬜ |
-| BK-TEST-04 | Integration Test: BookingRepository | 同上 | A | 🟡 | ⬜ |
-| BK-TEST-05 | 境界値テスト: TimeRange境界（隣接予約） | 同上 | A | 🔴 | ⬜ |
-| BK-TEST-06 | E2E Test: create→update→cancel フロー | 同上 | A | 🔴 | ⬜ |
-| BK-TEST-07 | 権限テスト: 所有者以外のアクセス拒否 | 同上 | A | 🔴 | ⬜ |
+| BK-TEST-01 | Unit Test: TimeRange値オブジェクト | `docs/test/test-plan.md` | A | 🔴 | ✅ |
+| BK-TEST-02 | Unit Test: Booking集約 | 同上 | A | 🔴 | ✅ |
+| BK-TEST-03 | Unit Test: ConflictDetector | 同上 | A | 🔴 | ✅ |
+| BK-TEST-04 | Integration Test: BookingRepository | 同上 | A | 🟡 | ✅ |
+| BK-TEST-05 | 境界値テスト: TimeRange境界（隣接予約） | 同上 | A | 🔴 | ✅ |
+| BK-TEST-06 | E2E Test: create→update→cancel フロー | 同上 | A | 🔴 | ✅ |
+| BK-TEST-07 | 権限テスト: 所有者以外のアクセス拒否 | 同上 | A | 🔴 | ✅ |
 
 ### 2.5 ADR
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
