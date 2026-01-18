@@ -65,9 +65,9 @@
 ### 1.6 ADR
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| IAM-ADR-01 | ADR-001: JWT認証方式の採用 | `docs/adr/0001-jwt-auth.md` | A | 🟡 | ⬜ |
-| IAM-ADR-02 | ADR-002: RefreshTokenローテーション戦略 | `docs/adr/0002-refresh-rotation.md` | A | 🟡 | ⬜ |
-| IAM-ADR-03 | ADR-003: Brute-force対策の閾値設定 | `docs/adr/0003-brute-force.md` | A | 🟡 | ⬜ |
+| IAM-ADR-01 | ADR-001: JWT認証方式の採用 | `docs/adr/0001-jwt-auth.md` | A | 🟡 | ✅ |
+| IAM-ADR-02 | ADR-002: RefreshTokenローテーション戦略 | `docs/adr/0002-refresh-rotation.md` | A | 🟡 | ✅ |
+| IAM-ADR-03 | ADR-003: Brute-force対策の閾値設定 | `docs/adr/0003-brute-force.md` | A | 🟡 | ✅ |
 
 ---
 
