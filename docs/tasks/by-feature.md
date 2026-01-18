@@ -226,12 +226,12 @@
 ### 4.1 コンテキスト設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| NTF-CTX-01 | 目的・責務の定義 | `docs/design/contexts/notification.md` | B | 🟡 | ⬜ |
-| NTF-CTX-02 | 集約一覧（Notification, NotificationStatus）の定義 | 同上 | B | 🟡 | ⬜ |
-| NTF-CTX-03 | Context Map（イベント受信元BCの定義）の定義 | 同上 | B | 🟡 | ⬜ |
-| NTF-CTX-04 | 永続化設計（notifications テーブル） | 同上 | B | 🟡 | ⬜ |
-| NTF-CTX-05 | ドメインイベント定義（NotificationSent, NotificationFailed） | 同上 | B | 🟡 | ⬜ |
-| NTF-CTX-06 | 非機能要件（リトライ戦略、配信保証）の記載 | 同上 | B | 🟡 | ⬜ |
+| NTF-CTX-01 | 目的・責務の定義 | `docs/design/contexts/notification.md` | B | 🟡 | ✅ |
+| NTF-CTX-02 | 集約一覧（Notification, NotificationStatus）の定義 | 同上 | B | 🟡 | ✅ |
+| NTF-CTX-03 | Context Map（イベント受信元BCの定義）の定義 | 同上 | B | 🟡 | ✅ |
+| NTF-CTX-04 | 永続化設計（notifications テーブル） | 同上 | B | 🟡 | ✅ |
+| NTF-CTX-05 | ドメインイベント定義（NotificationSent, NotificationFailed） | 同上 | B | 🟡 | ✅ |
+| NTF-CTX-06 | 非機能要件（リトライ戦略、配信保証）の記載 | 同上 | B | 🟡 | ✅ |
 
 ### 4.2 ユースケース設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
