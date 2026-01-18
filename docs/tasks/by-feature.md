@@ -258,12 +258,12 @@
 ### 5.1 コンテキスト設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| AUD-CTX-01 | 目的・責務の定義 | `docs/design/contexts/audit.md` | B | 🟡 | ⬜ |
-| AUD-CTX-02 | 集約一覧（AuditLog）の定義 | 同上 | B | 🟡 | ⬜ |
-| AUD-CTX-03 | Context Map（全BCからのイベント受信）の定義 | 同上 | B | 🟡 | ⬜ |
-| AUD-CTX-04 | 永続化設計（audit_logs テーブル、追記専用） | 同上 | B | 🟡 | ⬜ |
-| AUD-CTX-05 | ドメインイベント定義（AuditLogRecorded） | 同上 | B | 🟡 | ⬜ |
-| AUD-CTX-06 | 非機能要件（改ざん防止、保持期間）の記載 | 同上 | B | 🟡 | ⬜ |
+| AUD-CTX-01 | 目的・責務の定義 | `docs/design/contexts/audit.md` | B | 🟡 | ✅ |
+| AUD-CTX-02 | 集約一覧（AuditLog）の定義 | 同上 | B | 🟡 | ✅ |
+| AUD-CTX-03 | Context Map（全BCからのイベント受信）の定義 | 同上 | B | 🟡 | ✅ |
+| AUD-CTX-04 | 永続化設計（audit_logs テーブル、追記専用） | 同上 | B | 🟡 | ✅ |
+| AUD-CTX-05 | ドメインイベント定義（AuditLogRecorded） | 同上 | B | 🟡 | ✅ |
+| AUD-CTX-06 | 非機能要件（改ざん防止、保持期間）の記載 | 同上 | B | 🟡 | ✅ |
 
 ### 5.2 ユースケース設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
