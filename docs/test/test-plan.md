@@ -1,7 +1,7 @@
 ---
 doc_type: "test_plan"
 id: "test-plan"
-version: "1.1"
+version: "1.2"
 last_updated: "2026-01-22"
 status: "draft"
 ---
@@ -614,11 +614,145 @@ User集約のドメインロジックのユニットテスト。
 
 ---
 
-## 6. Unit Test設計概要
+## 6. Booking テスト計画詳細
 
-### 6.1 IAM
+### 6.1 TimeRange値オブジェクト（BK-TEST-01）
 
-### 6.2 Booking
+TimeRange値オブジェクトの不変条件と振る舞いのユニットテスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 入力 | 期待結果 |
+|----|-------------|------|----------|
+| TR-001 | 有効なTimeRange作成 | start=10:00, end=11:00 | 正常作成 |
+| TR-002 | 無効：start >= end | start=11:00, end=10:00 | IllegalArgumentException |
+| TR-003 | 無効：start == end | start=10:00, end=10:00 | IllegalArgumentException |
+| TR-004 | 無効：過去のstart | start=昨日, end=明日 | IllegalArgumentException |
+| TR-005 | 境界：現在時刻のstart | start=now, end=now+1h | 正常作成（許容） |
+| TR-006 | 重複判定：完全重複 | A=[10:00-12:00], B=[10:00-12:00] | overlaps=true |
+| TR-007 | 重複判定：部分重複（前半） | A=[10:00-12:00], B=[09:00-11:00] | overlaps=true |
+| TR-008 | 重複判定：部分重複（後半） | A=[10:00-12:00], B=[11:00-13:00] | overlaps=true |
+| TR-009 | 重複判定：包含（AがBを含む） | A=[09:00-13:00], B=[10:00-12:00] | overlaps=true |
+| TR-010 | 重複判定：包含（BがAを含む） | A=[10:00-12:00], B=[09:00-13:00] | overlaps=true |
+| TR-011 | 重複判定：隣接（衝突しない） | A=[10:00-11:00], B=[11:00-12:00] | overlaps=false |
+| TR-012 | 重複判定：離散（衝突しない） | A=[10:00-11:00], B=[12:00-13:00] | overlaps=false |
+| TR-013 | duration計算 | start=10:00, end=12:30 | 2時間30分 |
+| TR-014 | contains判定：範囲内 | range=[10:00-12:00], point=11:00 | true |
+| TR-015 | contains判定：範囲外 | range=[10:00-12:00], point=13:00 | false |
+| TR-016 | contains判定：境界（start） | range=[10:00-12:00], point=10:00 | true |
+| TR-017 | contains判定：境界（end） | range=[10:00-12:00], point=12:00 | false（半開区間） |
+
+### 6.2 Booking集約（BK-TEST-02）
+
+Booking集約のドメインロジックと状態遷移のユニットテスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 条件 | 期待結果 |
+|----|-------------|------|----------|
+| BK-001 | 予約作成（正常） | 有効な入力 | PENDING状態で作成 + BookingCreatedイベント |
+| BK-002 | 予約作成：note付き | note指定あり | noteが保存される |
+| BK-003 | 予約作成：note最大長 | 500文字のnote | 正常保存 |
+| BK-004 | 予約作成：note超過 | 501文字のnote | IllegalArgumentException |
+| BK-005 | 時間更新（正常） | PENDING状態 + 正しいversion | 更新成功 + BookingUpdatedイベント |
+| BK-006 | 時間更新：バージョン不一致 | expectedVersion != 現在version | OptimisticLockException |
+| BK-007 | 時間更新：CONFIRMED状態 | status=CONFIRMED | IllegalStateException |
+| BK-008 | 時間更新：CANCELLED状態 | status=CANCELLED | IllegalStateException |
+| BK-009 | 確定（正常） | PENDING → CONFIRMED | 遷移成功 + BookingConfirmedイベント |
+| BK-010 | 確定：既にCONFIRMED | status=CONFIRMED | IllegalStateException |
+| BK-011 | キャンセル（PENDING） | PENDING → CANCELLED | 遷移成功 + BookingCancelledイベント |
+| BK-012 | キャンセル（CONFIRMED） | CONFIRMED → CANCELLED | 遷移成功 + BookingCancelledイベント |
+| BK-013 | キャンセル：既にCANCELLED | status=CANCELLED | IllegalStateException |
+| BK-014 | キャンセル理由保存 | reason指定 | cancelReasonが保存される |
+| BK-015 | versionインクリメント | 更新操作 | version + 1 |
+
+### 6.3 ConflictDetector（BK-TEST-03）
+
+予約衝突検出ロジックのユニットテスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 条件 | 期待結果 |
+|----|-------------|------|----------|
+| CD-001 | 衝突なし：予約なし | 既存予約0件 | conflict=false |
+| CD-002 | 衝突なし：別リソース | 同時間帯だが別resource_id | conflict=false |
+| CD-003 | 衝突なし：隣接 | A.endAt == B.startAt | conflict=false |
+| CD-004 | 衝突あり：完全重複（PENDING） | 同一時間帯 + status=PENDING | conflict=true |
+| CD-005 | 衝突あり：完全重複（CONFIRMED） | 同一時間帯 + status=CONFIRMED | conflict=true |
+| CD-006 | 衝突なし：CANCELLED予約 | 同一時間帯 + status=CANCELLED | conflict=false |
+| CD-007 | 衝突あり：部分重複 | 時間が一部重なる | conflict=true |
+| CD-008 | 自己除外：更新時 | 更新対象予約を除外 | conflict=false |
+| CD-009 | 複数衝突 | 複数の既存予約と衝突 | 全衝突をリスト |
+
+### 6.4 BookingRepository 統合テスト（BK-TEST-04）
+
+データベースとの統合テスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 操作 | 期待結果 |
+|----|-------------|------|----------|
+| BR-001 | 予約保存 | save(booking) | DBに永続化 |
+| BR-002 | ID検索 | findById(existingId) | Optional.of(booking) |
+| BR-003 | ユーザー検索 | findByUserId(userId) | ユーザーの予約一覧 |
+| BR-004 | 衝突検索：重複あり | findActiveByResourceAndTimeRange | 重複予約を返却 |
+| BR-005 | 衝突検索：CANCELLED除外 | status=CANCELLED | 結果に含まれない |
+| BR-006 | 楽観的ロック成功 | save(updatedBooking) | 保存成功 + version++ |
+| BR-007 | 楽観的ロック失敗 | 競合更新 | OptimisticLockingFailureException |
+| BR-008 | ステータスフィルタ | findByUserIdAndStatus | 指定ステータスのみ |
+
+### 6.5 境界値テスト：TimeRange境界（BK-TEST-05）
+
+隣接予約と境界条件の特化テスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 条件 | 期待結果 |
+|----|-------------|------|----------|
+| BND-001 | 隣接予約：A.end == B.start | 連続予約 | 両方作成可能 |
+| BND-002 | 1ms重複 | A.end = B.start + 1ms | 衝突 |
+| BND-003 | 同一時刻開始 | A.start == B.start | 衝突 |
+| BND-004 | 同一時刻終了 | A.end == B.end | 衝突（start次第） |
+| BND-005 | 最小期間予約 | duration=1分 | 作成可能 |
+| BND-006 | 日跨ぎ予約 | 23:00-01:00（翌日） | 作成可能 |
+| BND-007 | 深夜0時境界 | 00:00-01:00 | 正常動作 |
+
+### 6.6 E2Eテスト：create→update→cancel フロー（BK-TEST-06）
+
+予約フロー全体のE2Eテスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 期待結果 |
+|----|-------------|----------|
+| E2E-BK-001 | 正常フロー：create→update→cancel | 各ステップで期待レスポンス |
+| E2E-BK-002 | 衝突検出：重複予約 | 409 Conflict + conflictingBookingId |
+| E2E-BK-003 | 楽観的ロック：競合更新 | 409 Conflict + version_mismatch |
+| E2E-BK-004 | 状態遷移：PENDING→CONFIRMED→CANCELLED | 正常遷移 |
+| E2E-BK-005 | 所有者チェック：他者の予約変更 | 403 Forbidden |
+
+### 6.7 権限テスト：所有者以外のアクセス拒否（BK-TEST-07）
+
+予約リソースへのアクセス制御テスト。
+
+#### テストケース一覧
+
+| ID | テストケース | リクエスト | 期待結果 |
+|----|-------------|----------|----------|
+| BK-AUTH-001 | 自分の予約取得 | GET /bookings/{ownId} | 200 OK |
+| BK-AUTH-002 | 他人の予約取得 | GET /bookings/{otherId} | 403 Forbidden |
+| BK-AUTH-003 | 自分の予約更新 | PUT /bookings/{ownId} | 200 OK |
+| BK-AUTH-004 | 他人の予約更新 | PUT /bookings/{otherId} | 403 Forbidden |
+| BK-AUTH-005 | 自分の予約キャンセル | DELETE /bookings/{ownId} | 204 No Content |
+| BK-AUTH-006 | 他人の予約キャンセル | DELETE /bookings/{otherId} | 403 Forbidden |
+
+---
+
+## 7. Unit Test設計概要
+
+### 7.1 IAM
+
+### 7.2 Booking
 
 | テスト対象 | テストケース | 境界条件 |
 |------------|-------------|----------|
@@ -632,7 +766,7 @@ User集約のドメインロジックのユニットテスト。
 | Booking集約 | CANCELLED更新拒否 | 終状態からの遷移不可 |
 | ConflictDetector | 衝突検出 | 重複時間帯 |
 
-### 6.3 Payment
+### 7.3 Payment
 
 | テスト対象 | テストケース | 境界条件 |
 |------------|-------------|----------|
@@ -646,9 +780,9 @@ User集約のドメインロジックのユニットテスト。
 
 ---
 
-## 7. Integration Test設計
+## 8. Integration Test設計
 
-### 7.1 リポジトリテスト
+### 8.1 リポジトリテスト
 
 | テスト対象 | テストケース |
 |------------|-------------|
@@ -660,7 +794,7 @@ User集約のドメインロジックのユニットテスト。
 | PaymentRepository | 支払い保存・取得 |
 | PaymentRepository | 冪等キー検索 |
 
-### 7.2 外部サービス連携テスト
+### 8.2 外部サービス連携テスト
 
 | テスト対象 | テストケース | テスト方法 |
 |------------|-------------|-----------|
@@ -670,9 +804,9 @@ User集約のドメインロジックのユニットテスト。
 
 ---
 
-## 8. E2E Test設計
+## 9. E2E Test設計
 
-### 8.1 シナリオ一覧
+### 9.1 シナリオ一覧
 
 | シナリオ | フロー | 検証内容 |
 |----------|--------|----------|
@@ -682,7 +816,7 @@ User集約のドメインロジックのユニットテスト。
 | 認証失敗フロー | 無効認証情報 → エラー | 401レスポンス |
 | 衝突検出フロー | 予約作成 → 重複予約 → エラー | 409レスポンス |
 
-### 8.2 E2Eテスト実装例
+### 9.2 E2Eテスト実装例
 
 ```java
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -746,7 +880,7 @@ class BookingE2ETest {
 
 ---
 
-## 9. 関連ドキュメント
+## 10. 関連ドキュメント
 
 | ドキュメント | 内容 |
 |--------------|------|
@@ -756,7 +890,7 @@ class BookingE2ETest {
 
 ---
 
-## 10. Evidence（根拠）
+## 11. Evidence（根拠）
 
 | 項目 | 根拠 | 備考 |
 |------|------|------|
@@ -767,7 +901,7 @@ class BookingE2ETest {
 
 ---
 
-## 11. 未決事項
+## 12. 未決事項
 
 | 項目 | 内容 | 優先度 |
 |------|------|--------|
