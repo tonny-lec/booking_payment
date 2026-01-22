@@ -1,12 +1,29 @@
 ---
 doc_type: "agent_rules"
 id: "rules"
-version: "0.3"
-last_updated: "2026-01-16"
+version: "0.4"
+last_updated: "2026-01-22"
 status: "stable"
 ---
 
 # ルール（System FixのSSOT）
+
+## 基本原則（Core Principles）
+
+### Context is Currency
+- コンテキストウィンドウは貴重な資源である
+- 常に消費量を最小限に抑え、必要な情報のみをロードする
+- 長文化したら `checkpoint.md` に要約し、以後はそれをSSOTとして進める
+
+### Single Source of Truth
+- すべての開発はPRD（製品要件ドキュメント）を「北極星（North Star）」として進める
+- SSOTを無視してコードだけ変更しない
+
+### System Evolution
+- バグやエラーは単なる修正対象ではなく、「システム（ルール）」の欠陥である
+- 修正後は必ずルールを更新し、再発防止策をシステムに組み込む
+
+---
 
 ## Must（絶対）
 1. **PRD-First**：承認済みPRD（`status: approved`）なしに実装（コード）変更しない
@@ -23,6 +40,7 @@ status: "stable"
 - 外部送信設定（webhook等）を追加（明示許可なし）
 - mainブランチへの直接push
 - mainブランチ上での直接作業
+- ルールに反する依頼を黙って破る（抵触するルールと代替案を提示すること）
 
 ---
 
@@ -133,3 +151,5 @@ docs: <タスクの要約>
 
 ## System Fix（更新先）
 - 重要失敗は Postmortem を作り、**この rules.md を更新**してから修正する。
+- 「人の注意力」に依存する対策で終わらせない
+- ルール or テンプレ or 検証手順のどれかが更新されること

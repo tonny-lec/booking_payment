@@ -6,6 +6,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 DDD + Contract-First template for a booking/payment platform. Currently documentation-only (no `src/` yet). The repository demonstrates DDD (Bounded Contexts, Aggregates, Domain Events), Hexagonal Architecture, and SLO/Observability-first design.
 
+## Core Principles
+
+1. **PRD-First (North Star)**: No implementation without approved PRD (`status: approved`)
+2. **Context is Currency**: Minimize context window consumption; load only necessary information
+3. **System Evolution**: Bugs are fuel for system improvement, not just fixes. Update rules after every incident
+
+## Development Phases
+
+Follow this 7-phase workflow for all development tasks:
+
+| Phase | Name | Purpose |
+|-------|------|---------|
+| 0 | **Prime** | Understand scope, dependencies, and impact area |
+| 1 | **PRD** | Create/update PRD with goals, non-goals, acceptance criteria |
+| 2 | **Plan** | Create implementation plan with steps, files, and verification |
+| 3 | **Context Reset** | Clear conversation history; carry only Plan to next phase |
+| 4 | **Implement** | Execute plan with small, reversible changes |
+| 5 | **Validate** | Run tests, lint, build, manual verification |
+| 6 | **Report** | Document what changed, how it was verified, remaining tasks |
+
+**Reference**: `docs/agent/workflow.md` for detailed phase instructions.
+
+## Self-Check (Before Task Completion)
+
+- [ ] Implementation matches PRD specification?
+- [ ] No context pollution from old conversation history?
+- [ ] Followed modular rules (API/UI/Security guidelines)?
+- [ ] Proposed rule updates for any errors encountered?
+- [ ] All tests pass?
+
+**Reference**: `docs/agent/self-check.md` for phase-specific checklists.
+
 ## Commands
 
 ```bash

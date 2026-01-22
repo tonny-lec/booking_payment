@@ -9,6 +9,49 @@ This repository is a documentation-first DDD template for a booking/payment plat
 Project-wide references include `checkpoint.md` and the PRDs (`docs/prd-*.md`).
 Primary agent SSOTs live under `docs/agent/`.
 
+---
+
+## 5 Core Principles (必ず守る)
+
+| # | Principle | Description |
+|---|-----------|-------------|
+| 1 | **PRD-First** | Never implement without approved PRD. No PRD = experimental work only |
+| 2 | **Modular Rules** | Keep global rules short; load detailed rules only when needed |
+| 3 | **Commandify Everything** | If you do it twice, make it a reusable template/command |
+| 4 | **Context Reset** | Separate planning from execution; carry only Plan to implementation |
+| 5 | **System Evolution** | Bugs are not just fixes—update rules/templates to prevent recurrence |
+
+---
+
+## Development Workflow (7 Phases)
+
+```
+Phase 0: Prime      → Understand scope and dependencies
+Phase 1: PRD        → Create/update requirements document
+Phase 2: Plan       → Write implementation plan
+Phase 3: Reset      → Clear context, carry only Plan forward
+Phase 4: Implement  → Execute with small, reversible changes
+Phase 5: Validate   → Test, lint, build, verify
+Phase 6: Report     → Document changes and remaining work
+```
+
+**Full details**: `docs/agent/workflow.md`
+
+---
+
+## Self-Check Before Completion
+
+Before declaring any task complete:
+- [ ] Matches PRD specification?
+- [ ] No context pollution?
+- [ ] Followed modular rules?
+- [ ] Proposed rule updates for errors?
+- [ ] Tests pass?
+
+**Full checklists**: `docs/agent/self-check.md`
+
+---
+
 ## Build, Test, and Development Commands
 This repo is template-mode (no `src/` yet). Use the provided scripts:
 - `bash scripts/prd-gate.sh`: enforces PRD approval before code/infra changes.
@@ -40,7 +83,8 @@ This repo is template-mode (no `src/` yet). Use the provided scripts:
 
 ## Agent SSOT & Policies (Read First)
 - System rules (Must/Must Not, Git flow): `docs/agent/rules.md`.
-- Workflow (PRD-first, structured plan, commandify): `docs/agent/workflow.md`.
+- Workflow (7-phase development): `docs/agent/workflow.md`.
+- Self-check checklists: `docs/agent/self-check.md`.
 - Context policy & reference order: `docs/agent/context-policy.md`.
 - Tool contract & write scope: `docs/agent/tool-contract.md`.
 - Incident response (postmortem + rules update): `docs/agent/incident-policy.md`.
