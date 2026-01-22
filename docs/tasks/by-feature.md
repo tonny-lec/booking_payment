@@ -46,11 +46,11 @@
 ### 1.4 セキュリティ
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| IAM-SEC-01 | JWT構造（header/payload/signature）設計 | `docs/design/security.md` | A | 🟡 | ⬜ |
-| IAM-SEC-02 | トークン有効期限設計（Access: 15min, Refresh: 7d等） | 同上 | A | 🟡 | ⬜ |
-| IAM-SEC-03 | 署名アルゴリズム選定（RS256推奨） | 同上 | A | 🟡 | ⬜ |
-| IAM-SEC-04 | RefreshTokenローテーション方針 | 同上 | A | 🟡 | ⬜ |
-| IAM-SEC-05 | Brute-force対策の閾値設定 | 同上 | A | 🔴 | ⬜ |
+| IAM-SEC-01 | JWT構造（header/payload/signature）設計 | `docs/design/security.md` | A | 🟡 | ✅ |
+| IAM-SEC-02 | トークン有効期限設計（Access: 15min, Refresh: 7d等） | 同上 | A | 🟡 | ✅ |
+| IAM-SEC-03 | 署名アルゴリズム選定（RS256推奨） | 同上 | A | 🟡 | ✅ |
+| IAM-SEC-04 | RefreshTokenローテーション方針 | 同上 | A | 🟡 | ✅ |
+| IAM-SEC-05 | Brute-force対策の閾値設定 | 同上 | A | 🔴 | ✅ |
 
 ### 1.5 テスト計画
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
@@ -65,9 +65,9 @@
 ### 1.6 ADR
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| IAM-ADR-01 | ADR-001: JWT認証方式の採用 | `docs/adr/0001-jwt-auth.md` | A | 🟡 | ⬜ |
-| IAM-ADR-02 | ADR-002: RefreshTokenローテーション戦略 | `docs/adr/0002-refresh-rotation.md` | A | 🟡 | ⬜ |
-| IAM-ADR-03 | ADR-003: Brute-force対策の閾値設定 | `docs/adr/0003-brute-force.md` | A | 🟡 | ⬜ |
+| IAM-ADR-01 | ADR-001: JWT認証方式の採用 | `docs/adr/0001-jwt-auth.md` | A | 🟡 | ✅ |
+| IAM-ADR-02 | ADR-002: RefreshTokenローテーション戦略 | `docs/adr/0002-refresh-rotation.md` | A | 🟡 | ✅ |
+| IAM-ADR-03 | ADR-003: Brute-force対策の閾値設定 | `docs/adr/0003-brute-force.md` | A | 🟡 | ✅ |
 
 ---
 
@@ -140,9 +140,9 @@
 ### 2.5 ADR
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| BK-ADR-01 | ADR-004: 予約衝突検出戦略 | `docs/adr/0004-conflict-detection.md` | A | 🟡 | ⬜ |
-| BK-ADR-02 | ADR-005: 楽観的ロックの採用理由 | `docs/adr/0005-optimistic-lock.md` | A | 🟡 | ⬜ |
-| BK-ADR-03 | ADR-006: 予約ステータス遷移の設計 | `docs/adr/0006-booking-status.md` | A | 🟡 | ⬜ |
+| BK-ADR-01 | ADR-004: 予約衝突検出戦略 | `docs/adr/0004-conflict-detection.md` | A | 🟡 | ✅ |
+| BK-ADR-02 | ADR-005: 楽観的ロックの採用理由 | `docs/adr/0005-optimistic-lock.md` | A | 🟡 | ✅ |
+| BK-ADR-03 | ADR-006: 予約ステータス遷移の設計 | `docs/adr/0006-booking-status.md` | A | 🟡 | ✅ |
 
 ---
 
@@ -214,10 +214,10 @@
 ### 3.5 ADR
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| PAY-ADR-01 | ADR-007: 冪等キー戦略の採用 | `docs/adr/0007-idempotency-key.md` | A | 🟡 | ⬜ |
-| PAY-ADR-02 | ADR-008: 外部決済ゲートウェイの抽象化（ACL） | `docs/adr/0008-payment-gateway-acl.md` | A | 🟡 | ⬜ |
-| PAY-ADR-03 | ADR-009: 支払いステータス遷移の設計 | `docs/adr/0009-payment-status.md` | A | 🟡 | ⬜ |
-| PAY-ADR-04 | ADR-010: タイムアウト時の状態管理 | `docs/adr/0010-timeout-handling.md` | A | 🟡 | ⬜ |
+| PAY-ADR-01 | ADR-007: 冪等キー戦略の採用 | `docs/adr/0007-idempotency-key.md` | A | 🟡 | ✅ |
+| PAY-ADR-02 | ADR-008: 外部決済ゲートウェイの抽象化（ACL） | `docs/adr/0008-payment-gateway-acl.md` | A | 🟡 | ✅ |
+| PAY-ADR-03 | ADR-009: 支払いステータス遷移の設計 | `docs/adr/0009-payment-status.md` | A | 🟡 | ✅ |
+| PAY-ADR-04 | ADR-010: タイムアウト時の状態管理 | `docs/adr/0010-timeout-handling.md` | A | 🟡 | ✅ |
 
 ---
 
@@ -226,12 +226,12 @@
 ### 4.1 コンテキスト設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| NTF-CTX-01 | 目的・責務の定義 | `docs/design/contexts/notification.md` | B | 🟡 | ⬜ |
-| NTF-CTX-02 | 集約一覧（Notification, NotificationStatus）の定義 | 同上 | B | 🟡 | ⬜ |
-| NTF-CTX-03 | Context Map（イベント受信元BCの定義）の定義 | 同上 | B | 🟡 | ⬜ |
-| NTF-CTX-04 | 永続化設計（notifications テーブル） | 同上 | B | 🟡 | ⬜ |
-| NTF-CTX-05 | ドメインイベント定義（NotificationSent, NotificationFailed） | 同上 | B | 🟡 | ⬜ |
-| NTF-CTX-06 | 非機能要件（リトライ戦略、配信保証）の記載 | 同上 | B | 🟡 | ⬜ |
+| NTF-CTX-01 | 目的・責務の定義 | `docs/design/contexts/notification.md` | B | 🟡 | ✅ |
+| NTF-CTX-02 | 集約一覧（Notification, NotificationStatus）の定義 | 同上 | B | 🟡 | ✅ |
+| NTF-CTX-03 | Context Map（イベント受信元BCの定義）の定義 | 同上 | B | 🟡 | ✅ |
+| NTF-CTX-04 | 永続化設計（notifications テーブル） | 同上 | B | 🟡 | ✅ |
+| NTF-CTX-05 | ドメインイベント定義（NotificationSent, NotificationFailed） | 同上 | B | 🟡 | ✅ |
+| NTF-CTX-06 | 非機能要件（リトライ戦略、配信保証）の記載 | 同上 | B | 🟡 | ✅ |
 
 ### 4.2 ユースケース設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
@@ -258,12 +258,12 @@
 ### 5.1 コンテキスト設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| AUD-CTX-01 | 目的・責務の定義 | `docs/design/contexts/audit.md` | B | 🟡 | ⬜ |
-| AUD-CTX-02 | 集約一覧（AuditLog）の定義 | 同上 | B | 🟡 | ⬜ |
-| AUD-CTX-03 | Context Map（全BCからのイベント受信）の定義 | 同上 | B | 🟡 | ⬜ |
-| AUD-CTX-04 | 永続化設計（audit_logs テーブル、追記専用） | 同上 | B | 🟡 | ⬜ |
-| AUD-CTX-05 | ドメインイベント定義（AuditLogRecorded） | 同上 | B | 🟡 | ⬜ |
-| AUD-CTX-06 | 非機能要件（改ざん防止、保持期間）の記載 | 同上 | B | 🟡 | ⬜ |
+| AUD-CTX-01 | 目的・責務の定義 | `docs/design/contexts/audit.md` | B | 🟡 | ✅ |
+| AUD-CTX-02 | 集約一覧（AuditLog）の定義 | 同上 | B | 🟡 | ✅ |
+| AUD-CTX-03 | Context Map（全BCからのイベント受信）の定義 | 同上 | B | 🟡 | ✅ |
+| AUD-CTX-04 | 永続化設計（audit_logs テーブル、追記専用） | 同上 | B | 🟡 | ✅ |
+| AUD-CTX-05 | ドメインイベント定義（AuditLogRecorded） | 同上 | B | 🟡 | ✅ |
+| AUD-CTX-06 | 非機能要件（改ざん防止、保持期間）の記載 | 同上 | B | 🟡 | ✅ |
 
 ### 5.2 ユースケース設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
@@ -321,26 +321,26 @@
 ### 7.1 観測性（Observability）
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| OBS-01 | ログフォーマット設計（JSON構造化ログ） | `docs/design/observability.md` | A | 🔴 | ⬜ |
-| OBS-02 | 必須フィールド定義（traceId, spanId, timestamp, level） | 同上 | A | 🔴 | ⬜ |
-| OBS-03 | PIIマスキングルールの具体化 | 同上 | A | 🔴 | ⬜ |
-| OBS-04 | REDメトリクス定義（Rate, Errors, Duration） | 同上 | A | 🔴 | ⬜ |
-| OBS-05 | サービス固有メトリクス定義 | 同上 | A | 🟡 | ⬜ |
-| OBS-06 | Prometheus形式のメトリクス命名規則 | 同上 | A | 🟡 | ⬜ |
-| OBS-07 | OpenTelemetry設定方針 | 同上 | A | 🔴 | ⬜ |
-| OBS-08 | Span命名規則・必須属性一覧 | 同上 | A | 🟡 | ⬜ |
-| OBS-09 | サンプリング戦略の定義 | 同上 | A | 🟡 | ⬜ |
-| OBS-10 | SLI/SLO定義 | 同上 | A | 🔴 | ⬜ |
+| OBS-01 | ログフォーマット設計（JSON構造化ログ） | `docs/design/observability.md` | A | 🔴 | ✅ |
+| OBS-02 | 必須フィールド定義（traceId, spanId, timestamp, level） | 同上 | A | 🔴 | ✅ |
+| OBS-03 | PIIマスキングルールの具体化 | 同上 | A | 🔴 | ✅ |
+| OBS-04 | REDメトリクス定義（Rate, Errors, Duration） | 同上 | A | 🔴 | ✅ |
+| OBS-05 | サービス固有メトリクス定義 | 同上 | A | 🟡 | ✅ |
+| OBS-06 | Prometheus形式のメトリクス命名規則 | 同上 | A | 🟡 | ✅ |
+| OBS-07 | OpenTelemetry設定方針 | 同上 | A | 🔴 | ✅ |
+| OBS-08 | Span命名規則・必須属性一覧 | 同上 | A | 🟡 | ✅ |
+| OBS-09 | サンプリング戦略の定義 | 同上 | A | 🟡 | ✅ |
+| OBS-10 | SLI/SLO定義 | 同上 | A | 🔴 | ✅ |
 | OBS-11 | アラート閾値・エスカレーションルール | 同上 | C | 🟡 | ⬜ |
 | OBS-12 | ダッシュボード設計（主要KPI） | 同上 | C | 🟡 | ⬜ |
 
 ### 7.2 セキュリティ（共通）
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| SEC-01 | PII定義（メールアドレス、IPアドレス等） | `docs/security/pii-policy.md` | A | 🔴 | ⬜ |
-| SEC-02 | マスキングルール具体化（email, IP） | 同上 | A | 🔴 | ⬜ |
-| SEC-03 | ログ出力禁止項目（パスワード、カード情報） | 同上 | A | 🔴 | ⬜ |
-| SEC-04 | 保持期間と削除方針 | 同上 | A | 🟡 | ⬜ |
+| SEC-01 | PII定義（メールアドレス、IPアドレス等） | `docs/security/pii-policy.md` | A | 🔴 | ✅ |
+| SEC-02 | マスキングルール具体化（email, IP） | 同上 | A | 🔴 | ✅ |
+| SEC-03 | ログ出力禁止項目（パスワード、カード情報） | 同上 | A | 🔴 | ✅ |
+| SEC-04 | 保持期間と削除方針 | 同上 | A | 🟡 | ✅ |
 | SEC-05 | シークレット一覧（DB接続、JWT鍵、外部API） | `docs/security/secrets.md` | A | 🟡 | ⬜ |
 | SEC-06 | シークレット管理方針（環境変数 vs Vault） | 同上 | A | 🟡 | ⬜ |
 | SEC-07 | シークレット漏洩時の対応手順 | 同上 | B | 🟡 | ⬜ |
@@ -354,17 +354,17 @@
 ### 7.3 テスト（共通）
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| TEST-01 | Contract Testの設計方針 | `docs/test/test-plan.md` | A | 🔴 | ⬜ |
-| TEST-02 | 契約テスト：リクエスト/レスポンス形式検証 | 同上 | A | 🔴 | ⬜ |
+| TEST-01 | Contract Testの設計方針 | `docs/test/test-plan.md` | A | 🔴 | ✅ |
+| TEST-02 | 契約テスト：リクエスト/レスポンス形式検証 | 同上 | A | 🔴 | ✅ |
 | TEST-03 | E2E Testシナリオ：認証→予約→支払い→通知→監査 | 同上 | B | 🟡 | ⬜ |
 | TEST-04 | 互換性テスト：v1/v2併走 | 同上 | C | 🟢 | ⬜ |
 
 ### 7.4 運用ドキュメント
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| OPS-01 | 設計概要：システムアーキテクチャ図 | `docs/design/overview.md` | A | 🟡 | ⬜ |
-| OPS-02 | 設計概要：BC間関係図 | 同上 | A | 🟡 | ⬜ |
-| OPS-03 | 設計概要：データフロー図 | 同上 | A | 🟡 | ⬜ |
+| OPS-01 | 設計概要：システムアーキテクチャ図 | `docs/design/overview.md` | A | 🟡 | ✅ |
+| OPS-02 | 設計概要：BC間関係図 | 同上 | A | 🟡 | ✅ |
+| OPS-03 | 設計概要：データフロー図 | 同上 | A | 🟡 | ✅ |
 | OPS-04 | Runbook：インシデント対応フロー概要 | `docs/runbook/README.md` | C | 🟡 | ⬜ |
 | OPS-05 | Runbook：共通手順（ログ確認、再起動、ロールバック） | 同上 | C | 🟡 | ⬜ |
 | OPS-06 | Runbook：DB接続障害対応 | `docs/runbook/incident-db-connection.md` | C | 🟢 | ⬜ |
