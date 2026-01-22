@@ -321,16 +321,16 @@
 ### 7.1 観測性（Observability）
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| OBS-01 | ログフォーマット設計（JSON構造化ログ） | `docs/design/observability.md` | A | 🔴 | ⬜ |
-| OBS-02 | 必須フィールド定義（traceId, spanId, timestamp, level） | 同上 | A | 🔴 | ⬜ |
-| OBS-03 | PIIマスキングルールの具体化 | 同上 | A | 🔴 | ⬜ |
-| OBS-04 | REDメトリクス定義（Rate, Errors, Duration） | 同上 | A | 🔴 | ⬜ |
-| OBS-05 | サービス固有メトリクス定義 | 同上 | A | 🟡 | ⬜ |
-| OBS-06 | Prometheus形式のメトリクス命名規則 | 同上 | A | 🟡 | ⬜ |
-| OBS-07 | OpenTelemetry設定方針 | 同上 | A | 🔴 | ⬜ |
-| OBS-08 | Span命名規則・必須属性一覧 | 同上 | A | 🟡 | ⬜ |
-| OBS-09 | サンプリング戦略の定義 | 同上 | A | 🟡 | ⬜ |
-| OBS-10 | SLI/SLO定義 | 同上 | A | 🔴 | ⬜ |
+| OBS-01 | ログフォーマット設計（JSON構造化ログ） | `docs/design/observability.md` | A | 🔴 | ✅ |
+| OBS-02 | 必須フィールド定義（traceId, spanId, timestamp, level） | 同上 | A | 🔴 | ✅ |
+| OBS-03 | PIIマスキングルールの具体化 | 同上 | A | 🔴 | ✅ |
+| OBS-04 | REDメトリクス定義（Rate, Errors, Duration） | 同上 | A | 🔴 | ✅ |
+| OBS-05 | サービス固有メトリクス定義 | 同上 | A | 🟡 | ✅ |
+| OBS-06 | Prometheus形式のメトリクス命名規則 | 同上 | A | 🟡 | ✅ |
+| OBS-07 | OpenTelemetry設定方針 | 同上 | A | 🔴 | ✅ |
+| OBS-08 | Span命名規則・必須属性一覧 | 同上 | A | 🟡 | ✅ |
+| OBS-09 | サンプリング戦略の定義 | 同上 | A | 🟡 | ✅ |
+| OBS-10 | SLI/SLO定義 | 同上 | A | 🔴 | ✅ |
 | OBS-11 | アラート閾値・エスカレーションルール | 同上 | C | 🟡 | ⬜ |
 | OBS-12 | ダッシュボード設計（主要KPI） | 同上 | C | 🟡 | ⬜ |
 
