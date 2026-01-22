@@ -1,8 +1,8 @@
 ---
 doc_type: "test_plan"
 id: "test-plan"
-version: "1.0"
-last_updated: "2026-01-17"
+version: "1.1"
+last_updated: "2026-01-22"
 status: "draft"
 ---
 
@@ -384,21 +384,241 @@ void booking_statusTransition_onlyAllowedTransitions(
 
 ---
 
-## 5. Unit Test設計
+## 5. IAM テスト計画詳細
 
-### 5.1 IAM
+### 5.1 PasswordValidator（IAM-TEST-01）
 
-| テスト対象 | テストケース | 境界条件 |
-|------------|-------------|----------|
-| PasswordValidator | 正常パスワード検証 | 最小長、最大長、特殊文字 |
-| PasswordValidator | 不正パスワード拒否 | 弱いパスワード |
-| TokenGenerator | AccessToken生成 | 有効期限、クレーム |
-| TokenGenerator | RefreshToken生成 | ローテーション |
-| User集約 | ログイン成功 | 正常認証 |
-| User集約 | ログイン失敗カウント | 連続失敗 |
-| User集約 | アカウントロック | 閾値到達 |
+パスワード検証ロジックのユニットテスト。
 
-### 5.2 Booking
+#### テストケース一覧
+
+| ID | テストケース | 入力 | 期待結果 |
+|----|-------------|------|----------|
+| PV-001 | 有効なパスワード（標準） | `Password123!` | valid |
+| PV-002 | 有効なパスワード（最小長8文字） | `Pass123!` | valid |
+| PV-003 | 無効：最小長未満 | `Pa12!` | invalid (too_short) |
+| PV-004 | 無効：大文字なし | `password123!` | invalid (no_uppercase) |
+| PV-005 | 無効：小文字なし | `PASSWORD123!` | invalid (no_lowercase) |
+| PV-006 | 無効：数字なし | `PasswordABC!` | invalid (no_digit) |
+| PV-007 | 無効：特殊文字なし | `Password123` | invalid (no_special) |
+| PV-008 | 無効：nullパスワード | `null` | invalid (null_input) |
+| PV-009 | 無効：空文字列 | `""` | invalid (empty) |
+| PV-010 | 無効：一般的なパスワード | `Password1!` | invalid (common_password) |
+| PV-011 | 境界値：最大長（128文字） | 128文字の有効パスワード | valid |
+| PV-012 | 境界値：最大長超過 | 129文字 | invalid (too_long) |
+
+#### 実装例
+
+```java
+@Nested
+@DisplayName("PasswordValidator Unit Tests (IAM-TEST-01)")
+class PasswordValidatorTest {
+
+    private PasswordValidator validator;
+
+    @BeforeEach
+    void setUp() {
+        PasswordPolicy policy = PasswordPolicy.builder()
+            .minLength(8)
+            .maxLength(128)
+            .requireUppercase(true)
+            .requireLowercase(true)
+            .requireDigit(true)
+            .requireSpecialChar(true)
+            .build();
+        validator = new PasswordValidator(policy);
+    }
+
+    @Test
+    @DisplayName("PV-001: 有効なパスワードを受け入れる")
+    void validPassword_IsAccepted() {
+        ValidationResult result = validator.validate("Password123!");
+
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.getErrors()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("PV-003: 最小長未満のパスワードを拒否する")
+    void tooShortPassword_IsRejected() {
+        ValidationResult result = validator.validate("Pa12!");
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.getErrors()).contains(ValidationError.TOO_SHORT);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @DisplayName("PV-008/009: null/空文字列を拒否する")
+    void nullOrEmptyPassword_IsRejected(String password) {
+        ValidationResult result = validator.validate(password);
+
+        assertThat(result.isValid()).isFalse();
+    }
+}
+```
+
+### 5.2 TokenGenerator（IAM-TEST-02）
+
+JWT生成・検証ロジックのユニットテスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 条件 | 期待結果 |
+|----|-------------|------|----------|
+| TG-001 | AccessToken生成 | 有効なユーザーID | JWTトークン（sub=userId, exp=15min後） |
+| TG-002 | RefreshToken生成 | 有効なユーザーID | ランダム256bit + 有効期限7日 |
+| TG-003 | AccessToken検証：有効 | 正しい署名 + 有効期限内 | 検証成功 |
+| TG-004 | AccessToken検証：期限切れ | 正しい署名 + 期限超過 | TokenExpiredException |
+| TG-005 | AccessToken検証：不正署名 | 改ざんされたトークン | InvalidSignatureException |
+| TG-006 | AccessToken検証：不正フォーマット | 不正なJWT形式 | MalformedTokenException |
+| TG-007 | クレーム抽出：userId | 有効なトークン | 正しいuserId |
+| TG-008 | クレーム抽出：roles | 有効なトークン | 正しいroles配列 |
+| TG-009 | トークン再発行 | 有効なRefreshToken | 新しいAccessToken |
+| TG-010 | 鍵ローテーション | 旧鍵で署名されたトークン | 検証成功（猶予期間内） |
+
+#### 実装例
+
+```java
+@Nested
+@DisplayName("TokenGenerator Unit Tests (IAM-TEST-02)")
+class TokenGeneratorTest {
+
+    private TokenGenerator tokenGenerator;
+    private Clock fixedClock;
+    private KeyPair keyPair;
+
+    @BeforeEach
+    void setUp() {
+        fixedClock = Clock.fixed(
+            Instant.parse("2026-01-18T10:00:00Z"),
+            ZoneOffset.UTC
+        );
+        keyPair = generateRSAKeyPair();
+
+        TokenConfig config = TokenConfig.builder()
+            .accessTokenTtl(Duration.ofMinutes(15))
+            .refreshTokenTtl(Duration.ofDays(7))
+            .issuer("booking-payment")
+            .algorithm(Algorithm.RS256)
+            .build();
+
+        tokenGenerator = new TokenGenerator(config, keyPair, fixedClock);
+    }
+
+    @Test
+    @DisplayName("TG-001: AccessTokenに正しいクレームが含まれる")
+    void accessToken_ContainsCorrectClaims() {
+        UserId userId = UserId.of("550e8400-e29b-41d4-a716-446655440000");
+        List<String> roles = List.of("USER");
+
+        String token = tokenGenerator.generateAccessToken(userId, roles);
+
+        DecodedJWT decoded = JWT.decode(token);
+        assertThat(decoded.getSubject()).isEqualTo(userId.value());
+        assertThat(decoded.getExpiresAt()).isEqualTo(
+            Date.from(fixedClock.instant().plus(Duration.ofMinutes(15)))
+        );
+    }
+
+    @Test
+    @DisplayName("TG-004: 期限切れトークンはTokenExpiredExceptionをスローする")
+    void expiredToken_ThrowsTokenExpiredException() {
+        UserId userId = UserId.of("550e8400-e29b-41d4-a716-446655440000");
+        String token = tokenGenerator.generateAccessToken(userId, List.of("USER"));
+
+        Clock advancedClock = Clock.fixed(
+            fixedClock.instant().plus(Duration.ofMinutes(16)),
+            ZoneOffset.UTC
+        );
+        TokenValidator validator = new TokenValidator(keyPair.getPublic(), advancedClock);
+
+        assertThatThrownBy(() -> validator.validate(token))
+            .isInstanceOf(TokenExpiredException.class);
+    }
+}
+```
+
+### 5.3 User集約（IAM-TEST-03）
+
+User集約のドメインロジックのユニットテスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 条件 | 期待結果 |
+|----|-------------|------|----------|
+| USR-001 | 認証成功 | 正しいパスワード + ACTIVE状態 | 成功 + failedLoginAttempts=0 |
+| USR-002 | 認証失敗：パスワード不一致 | 誤ったパスワード | 失敗 + failedLoginAttempts++ |
+| USR-003 | 認証失敗：アカウントロック中 | status=LOCKED + lockedUntil > now | LoginBlockedException |
+| USR-004 | 自動ロック：連続失敗 | 5回連続失敗 | status=LOCKED + lockedUntil=30min後 |
+| USR-005 | 手動ロック解除 | 管理者によるunlock() | status=ACTIVE + failedLoginAttempts=0 |
+| USR-006 | 自動ロック解除 | lockedUntil < now | 次回認証試行可能 |
+| USR-007 | ステータス遷移：ACTIVE→LOCKED | 連続失敗またはadmin操作 | 遷移成功 |
+| USR-008 | ステータス遷移：LOCKED→ACTIVE | unlock() | 遷移成功 |
+| USR-009 | ステータス遷移：SUSPENDED→ACTIVE | 不許可 | IllegalStateException |
+| USR-010 | 失敗カウントリセット | 認証成功時 | failedLoginAttempts=0 |
+| USR-011 | イベント発行：UserLoggedIn | 認証成功時 | UserLoggedInイベント |
+| USR-012 | イベント発行：LoginFailed | 認証失敗時 | LoginFailedイベント |
+| USR-013 | イベント発行：AccountLocked | ロック発生時 | AccountLockedイベント |
+
+### 5.4 UserRepository 統合テスト（IAM-TEST-04）
+
+データベースとの統合テスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 操作 | 期待結果 |
+|----|-------------|------|----------|
+| UR-001 | ユーザー保存 | save(user) | DBに永続化 + IDが設定される |
+| UR-002 | Email検索：存在する | findByEmail(existing) | Optional.of(user) |
+| UR-003 | Email検索：存在しない | findByEmail(nonExistent) | Optional.empty() |
+| UR-004 | ID検索 | findById(existingId) | Optional.of(user) |
+| UR-005 | 更新：楽観的ロック成功 | save(updatedUser) | 保存成功 + version++ |
+| UR-006 | 更新：楽観的ロック失敗 | 競合更新 | OptimisticLockingFailureException |
+| UR-007 | Email一意制約 | 重複Email保存 | DataIntegrityViolationException |
+| UR-008 | トランザクション分離 | 並行読み取り | REPEATABLE_READ動作 |
+
+### 5.5 E2E テスト：login→refresh→logout フロー（IAM-TEST-05）
+
+認証フロー全体のE2Eテスト。
+
+#### テストケース一覧
+
+| ID | テストケース | 期待結果 |
+|----|-------------|----------|
+| E2E-IAM-001 | 正常フロー：login→refresh→logout | 各ステップで期待レスポンス |
+| E2E-IAM-002 | ログイン失敗：無効な認証情報 | 401 + error=invalid_credentials |
+| E2E-IAM-003 | ログイン失敗：アカウントロック | 401 + error=account_locked |
+| E2E-IAM-004 | リフレッシュ失敗：期限切れ | 401 + error=token_expired |
+| E2E-IAM-005 | リフレッシュ失敗：失効済み | 401 + error=token_revoked |
+| E2E-IAM-006 | ログアウト後のアクセス拒否 | 401 Unauthorized |
+| E2E-IAM-007 | 並行セッション：複数デバイス | 各セッション独立動作 |
+| E2E-IAM-008 | トークンローテーション | 新RefreshToken発行 + 旧トークン失効 |
+
+### 5.6 権限テスト：無効トークンでのアクセス拒否（IAM-TEST-06）
+
+無効なトークンや権限不足でのアクセス拒否テスト。
+
+#### テストケース一覧
+
+| ID | テストケース | リクエスト | 期待結果 |
+|----|-------------|----------|----------|
+| AUTH-001 | トークンなし | Authorization ヘッダーなし | 401 Unauthorized |
+| AUTH-002 | 不正形式トークン | `Bearer invalid-token` | 401 Unauthorized |
+| AUTH-003 | 期限切れトークン | 有効期限切れのJWT | 401 Unauthorized |
+| AUTH-004 | 失効済みトークン | ログアウト後のトークン | 401 Unauthorized |
+| AUTH-005 | 不正署名トークン | 改ざんされたJWT | 401 Unauthorized |
+| AUTH-006 | 権限不足 | USER権限でADMINエンドポイント | 403 Forbidden |
+| AUTH-007 | 別ユーザーのリソースアクセス | 他人の予約へのアクセス | 403 Forbidden |
+| AUTH-008 | ロック中ユーザーのトークン | LOCKED状態のユーザー | 401 Unauthorized |
+
+---
+
+## 6. Unit Test設計概要
+
+### 6.1 IAM
+
+### 6.2 Booking
 
 | テスト対象 | テストケース | 境界条件 |
 |------------|-------------|----------|
@@ -412,7 +632,7 @@ void booking_statusTransition_onlyAllowedTransitions(
 | Booking集約 | CANCELLED更新拒否 | 終状態からの遷移不可 |
 | ConflictDetector | 衝突検出 | 重複時間帯 |
 
-### 5.3 Payment
+### 6.3 Payment
 
 | テスト対象 | テストケース | 境界条件 |
 |------------|-------------|----------|
@@ -426,9 +646,9 @@ void booking_statusTransition_onlyAllowedTransitions(
 
 ---
 
-## 6. Integration Test設計
+## 7. Integration Test設計
 
-### 6.1 リポジトリテスト
+### 7.1 リポジトリテスト
 
 | テスト対象 | テストケース |
 |------------|-------------|
@@ -440,7 +660,7 @@ void booking_statusTransition_onlyAllowedTransitions(
 | PaymentRepository | 支払い保存・取得 |
 | PaymentRepository | 冪等キー検索 |
 
-### 6.2 外部サービス連携テスト
+### 7.2 外部サービス連携テスト
 
 | テスト対象 | テストケース | テスト方法 |
 |------------|-------------|-----------|
@@ -450,9 +670,9 @@ void booking_statusTransition_onlyAllowedTransitions(
 
 ---
 
-## 7. E2E Test設計
+## 8. E2E Test設計
 
-### 7.1 シナリオ一覧
+### 8.1 シナリオ一覧
 
 | シナリオ | フロー | 検証内容 |
 |----------|--------|----------|
@@ -462,7 +682,7 @@ void booking_statusTransition_onlyAllowedTransitions(
 | 認証失敗フロー | 無効認証情報 → エラー | 401レスポンス |
 | 衝突検出フロー | 予約作成 → 重複予約 → エラー | 409レスポンス |
 
-### 7.2 E2Eテスト実装例
+### 8.2 E2Eテスト実装例
 
 ```java
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -526,7 +746,7 @@ class BookingE2ETest {
 
 ---
 
-## 8. 関連ドキュメント
+## 9. 関連ドキュメント
 
 | ドキュメント | 内容 |
 |--------------|------|
@@ -536,7 +756,7 @@ class BookingE2ETest {
 
 ---
 
-## 9. Evidence（根拠）
+## 10. Evidence（根拠）
 
 | 項目 | 根拠 | 備考 |
 |------|------|------|
@@ -547,7 +767,7 @@ class BookingE2ETest {
 
 ---
 
-## 10. 未決事項
+## 11. 未決事項
 
 | 項目 | 内容 | 優先度 |
 |------|------|--------|
