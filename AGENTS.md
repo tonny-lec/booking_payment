@@ -6,7 +6,7 @@ This repository is a documentation-first DDD template for a booking/payment plat
 - `docs/api/openapi/` for service contracts (YAML).
 - `docs/security/`, `docs/test/`, `docs/plan/`, and `docs/runbook/` for operational guidance.
 - `docs/templates/` for ADRs, PRDs, and other repeatable formats.
-Project-wide references include `spec_slo_booking_payment_ddd_v0.6.md`, `checkpoint.md`, and the PRDs (`docs/prd-*.md`).
+Project-wide references include `checkpoint.md` and the PRDs (`docs/prd-*.md`).
 Primary agent SSOTs live under `docs/agent/`.
 
 ## Build, Test, and Development Commands
