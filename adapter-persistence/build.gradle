@@ -1,0 +1,26 @@
+// =============================================================================
+// Adapter-Persistence Module
+// Outbound adapters - Repository implementations
+// =============================================================================
+
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // Depends on application for port interfaces
+    implementation project(':application')
+    
+    // Spring Data JPA for repository implementations
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    
+    // PostgreSQL driver
+    runtimeOnly 'org.postgresql:postgresql'
+    
+    // Testing with Testcontainers
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
+}
+
+// JPA Repositories, Entity mappings, Database migrations

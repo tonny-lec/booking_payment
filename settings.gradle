@@ -1,1 +1,18 @@
 rootProject.name = 'booking-payment'
+
+// =============================================================================
+// Multi-Module Structure (Hexagonal Architecture)
+// =============================================================================
+// 
+// domain               - Domain layer (Aggregates, Value Objects, Events)
+// application          - Application layer (Use Cases, Ports)
+// adapter-web          - Inbound adapter (REST Controllers)
+// adapter-persistence  - Outbound adapter (Repository implementations)
+// bootstrap            - Spring Boot application entry point
+// =============================================================================
+
+include 'domain'
+include 'application'
+include 'adapter-web'
+include 'adapter-persistence'
+include 'bootstrap'
