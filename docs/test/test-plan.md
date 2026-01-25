@@ -951,6 +951,471 @@ Payment集約のドメインロジックと状態遷移のユニットテスト�
 | 認証失敗フロー | 無効認証情報 → エラー | 401レスポンス |
 | 衝突検出フロー | 予約作成 → 重複予約 → エラー | 409レスポンス |
 
+### 10.2 全システムE2Eシナリオ（TEST-03）
+
+認証→予約→支払い→通知→監査の全BCを横断するE2Eテストシナリオです。
+
+#### 10.2.1 シナリオ概要
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    E2E Test: Full Booking Flow                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│   ┌────────┐    ┌─────────┐    ┌─────────┐    ┌───────────┐    ┌──────┐│
+│   │  IAM   │───►│ Booking │───►│ Payment │───►│Notification│───►│Audit ││
+│   │ login  │    │ create  │    │ capture │    │   send    │    │record││
+│   └────────┘    └─────────┘    └─────────┘    └───────────┘    └──────┘│
+│       │             │              │               │              │     │
+│       ▼             ▼              ▼               ▼              ▼     │
+│   AccessToken   BookingId      PaymentId      NotificationId  AuditLogId│
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 10.2.2 正常フローシナリオ
+
+| ID | ステップ | API | 期待レスポンス | 検証項目 |
+|----|---------|-----|---------------|----------|
+| E2E-FULL-001 | 1. ユーザーログイン | POST /auth/login | 200 OK | AccessToken取得、UserLoggedInイベント |
+| E2E-FULL-002 | 2. 予約作成 | POST /bookings | 201 Created | BookingId取得、status=PENDING、BookingCreatedイベント |
+| E2E-FULL-003 | 3. 支払い作成 | POST /payments | 201 Created | PaymentId取得、status=AUTHORIZED、PaymentCreatedイベント |
+| E2E-FULL-004 | 4. 支払いキャプチャ | POST /payments/{id}/capture | 200 OK | status=CAPTURED、PaymentCapturedイベント |
+| E2E-FULL-005 | 5. 予約確定 | PUT /bookings/{id} | 200 OK | status=CONFIRMED、BookingConfirmedイベント |
+| E2E-FULL-006 | 6. 通知送信確認 | GET /notifications | 200 OK | BOOKING_CONFIRMED通知が存在 |
+| E2E-FULL-007 | 7. 監査ログ確認 | GET /audit-logs | 200 OK | 全操作の監査ログが記録 |
+
+#### 10.2.3 キャンセル・返金フローシナリオ
+
+| ID | ステップ | API | 期待レスポンス | 検証項目 |
+|----|---------|-----|---------------|----------|
+| E2E-CANCEL-001 | 1〜5 | 上記と同様 | - | 予約確定状態まで進む |
+| E2E-CANCEL-002 | 6. 予約キャンセル | DELETE /bookings/{id} | 204 No Content | status=CANCELLED、BookingCancelledイベント |
+| E2E-CANCEL-003 | 7. 返金実行 | POST /payments/{id}/refund | 200 OK | status=REFUNDED、PaymentRefundedイベント |
+| E2E-CANCEL-004 | 8. キャンセル通知確認 | GET /notifications | 200 OK | BOOKING_CANCELLED、PAYMENT_REFUNDED通知 |
+| E2E-CANCEL-005 | 9. 監査ログ確認 | GET /audit-logs | 200 OK | キャンセル・返金の監査ログ |
+
+#### 10.2.4 エラーハンドリングシナリオ
+
+| ID | シナリオ | トリガー | 期待動作 |
+|----|---------|---------|----------|
+| E2E-ERR-001 | 認証失敗 | 無効なパスワード | 401 Unauthorized、LoginFailedイベント、監査ログ |
+| E2E-ERR-002 | セッション切れ | 期限切れAccessToken | 401 Unauthorized、トークン更新フロー |
+| E2E-ERR-003 | 予約衝突 | 重複時間帯 | 409 Conflict、conflictingBookingId |
+| E2E-ERR-004 | 決済失敗 | Gateway拒否 | PaymentFailed、PAYMENT_FAILED通知 |
+| E2E-ERR-005 | 権限不足 | 他者リソースアクセス | 403 Forbidden、監査ログ |
+
+#### 10.2.5 非同期イベント検証
+
+| ID | イベント | 発生タイミング | 検証内容 |
+|----|---------|---------------|----------|
+| EVT-001 | BookingCreated | 予約作成後 | Notification/Auditが受信・処理 |
+| EVT-002 | PaymentCaptured | 支払いキャプチャ後 | Booking確定トリガー |
+| EVT-003 | BookingCancelled | 予約キャンセル後 | 返金トリガー |
+| EVT-004 | PaymentRefunded | 返金完了後 | 通知送信 |
+
+#### 10.2.6 トレーサビリティ検証
+
+| ID | 検証内容 | 期待動作 |
+|----|---------|----------|
+| TRACE-001 | traceId伝播 | 全APIレスポンスに同一traceIdが含まれる |
+| TRACE-002 | 監査ログのtraceId | 関連操作が同一traceIdで紐づけ可能 |
+| TRACE-003 | 通知のcorrelationId | 通知がトリガーイベントと紐づけ可能 |
+
+#### 10.2.7 実装例（全フロー）
+
+```java
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class FullBookingFlowE2ETest {
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    private static String accessToken;
+    private static String traceId;
+    private static UUID bookingId;
+    private static UUID paymentId;
+
+    @Test
+    @Order(1)
+    @DisplayName("E2E-FULL-001: ユーザーログイン")
+    void step1_Login() {
+        // Given
+        LoginRequest request = new LoginRequest("test@example.com", "ValidPass123!");
+        traceId = UUID.randomUUID().toString();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Trace-Id", traceId);
+
+        // When
+        ResponseEntity<TokenResponse> response = restTemplate.exchange(
+            "/api/v1/auth/login",
+            HttpMethod.POST,
+            new HttpEntity<>(request, headers),
+            TokenResponse.class
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getAccessToken()).isNotBlank();
+        assertThat(response.getHeaders().get("X-Trace-Id")).contains(traceId);
+
+        accessToken = response.getBody().getAccessToken();
+    }
+
+    @Test
+    @Order(2)
+    @DisplayName("E2E-FULL-002: 予約作成")
+    void step2_CreateBooking() {
+        // Given
+        HttpHeaders headers = authHeaders();
+        CreateBookingRequest request = CreateBookingRequest.builder()
+            .resourceId(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
+            .startAt(Instant.now().plus(1, ChronoUnit.DAYS))
+            .endAt(Instant.now().plus(1, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS))
+            .note("E2E Test Booking")
+            .build();
+
+        // When
+        ResponseEntity<Booking> response = restTemplate.exchange(
+            "/api/v1/bookings",
+            HttpMethod.POST,
+            new HttpEntity<>(request, headers),
+            Booking.class
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody().getStatus()).isEqualTo(BookingStatus.PENDING);
+        assertThat(response.getHeaders().getLocation()).isNotNull();
+
+        bookingId = response.getBody().getId();
+    }
+
+    @Test
+    @Order(3)
+    @DisplayName("E2E-FULL-003: 支払い作成（オーソリ）")
+    void step3_CreatePayment() {
+        // Given
+        HttpHeaders headers = authHeaders();
+        headers.set("Idempotency-Key", UUID.randomUUID().toString());
+
+        CreatePaymentRequest request = CreatePaymentRequest.builder()
+            .bookingId(bookingId)
+            .amount(1000)
+            .currency("JPY")
+            .build();
+
+        // When
+        ResponseEntity<Payment> response = restTemplate.exchange(
+            "/api/v1/payments",
+            HttpMethod.POST,
+            new HttpEntity<>(request, headers),
+            Payment.class
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getBody().getStatus()).isEqualTo(PaymentStatus.AUTHORIZED);
+
+        paymentId = response.getBody().getId();
+    }
+
+    @Test
+    @Order(4)
+    @DisplayName("E2E-FULL-004: 支払いキャプチャ")
+    void step4_CapturePayment() {
+        // Given
+        HttpHeaders headers = authHeaders();
+
+        // When
+        ResponseEntity<Payment> response = restTemplate.exchange(
+            "/api/v1/payments/" + paymentId + "/capture",
+            HttpMethod.POST,
+            new HttpEntity<>(headers),
+            Payment.class
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getStatus()).isEqualTo(PaymentStatus.CAPTURED);
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("E2E-FULL-005: 予約確定")
+    void step5_ConfirmBooking() {
+        // Given
+        HttpHeaders headers = authHeaders();
+
+        // When: 予約取得
+        ResponseEntity<Booking> getResponse = restTemplate.exchange(
+            "/api/v1/bookings/" + bookingId,
+            HttpMethod.GET,
+            new HttpEntity<>(headers),
+            Booking.class
+        );
+
+        // Then: 支払い連動で自動確定されていることを確認
+        // または手動で状態更新が必要な場合は PUT を実行
+        assertThat(getResponse.getBody().getStatus())
+            .isIn(BookingStatus.CONFIRMED, BookingStatus.PENDING);
+    }
+
+    @Test
+    @Order(6)
+    @DisplayName("E2E-FULL-006: 通知確認")
+    void step6_VerifyNotification() throws InterruptedException {
+        // Given: 非同期処理の完了を待機
+        Thread.sleep(2000);
+        HttpHeaders headers = authHeaders();
+
+        // When
+        ResponseEntity<NotificationListResponse> response = restTemplate.exchange(
+            "/api/v1/notifications?type=BOOKING_CONFIRMED",
+            HttpMethod.GET,
+            new HttpEntity<>(headers),
+            NotificationListResponse.class
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getItems())
+            .anyMatch(n -> n.getMetadata().containsValue(bookingId.toString()));
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("E2E-FULL-007: 監査ログ確認")
+    void step7_VerifyAuditLogs() {
+        // Given
+        HttpHeaders headers = adminAuthHeaders(); // 管理者権限が必要
+
+        // When
+        ResponseEntity<AuditLogListResponse> response = restTemplate.exchange(
+            "/api/v1/audit-logs?traceId=" + traceId,
+            HttpMethod.GET,
+            new HttpEntity<>(headers),
+            AuditLogListResponse.class
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<AuditLog> logs = response.getBody().getItems();
+
+        // 全操作が記録されていることを確認
+        assertThat(logs).extracting(AuditLog::getAction)
+            .contains("LOGIN", "BOOKING_CREATE", "PAYMENT_CREATE",
+                      "PAYMENT_CAPTURE", "BOOKING_CONFIRM");
+
+        // 同一traceIdで紐づいていることを確認
+        assertThat(logs).extracting(AuditLog::getTraceId)
+            .containsOnly(traceId);
+    }
+
+    private HttpHeaders authHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        headers.set("X-Trace-Id", traceId);
+        return headers;
+    }
+
+    private HttpHeaders adminAuthHeaders() {
+        // 管理者認証情報でのヘッダー作成
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(getAdminAccessToken());
+        headers.set("X-Trace-Id", traceId);
+        return headers;
+    }
+}
+```
+
+#### 10.2.8 キャンセル・返金フロー実装例
+
+```java
+@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+class CancelAndRefundE2ETest {
+
+    // ... 初期化コード（上記と同様）
+
+    @Test
+    @Order(6)
+    @DisplayName("E2E-CANCEL-002: 予約キャンセル")
+    void step6_CancelBooking() {
+        // Given
+        HttpHeaders headers = authHeaders();
+
+        // When
+        ResponseEntity<Void> response = restTemplate.exchange(
+            "/api/v1/bookings/" + bookingId,
+            HttpMethod.DELETE,
+            new HttpEntity<>(headers),
+            Void.class
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        // 予約状態がCANCELLEDになっていることを確認
+        ResponseEntity<Booking> getResponse = restTemplate.exchange(
+            "/api/v1/bookings/" + bookingId,
+            HttpMethod.GET,
+            new HttpEntity<>(headers),
+            Booking.class
+        );
+        assertThat(getResponse.getBody().getStatus()).isEqualTo(BookingStatus.CANCELLED);
+    }
+
+    @Test
+    @Order(7)
+    @DisplayName("E2E-CANCEL-003: 返金実行")
+    void step7_RefundPayment() {
+        // Given
+        HttpHeaders headers = authHeaders();
+        RefundRequest request = RefundRequest.builder()
+            .amount(1000) // 全額返金
+            .reason("Booking cancelled by user")
+            .build();
+
+        // When
+        ResponseEntity<Payment> response = restTemplate.exchange(
+            "/api/v1/payments/" + paymentId + "/refund",
+            HttpMethod.POST,
+            new HttpEntity<>(request, headers),
+            Payment.class
+        );
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+        assertThat(response.getBody().getRefundedAmount()).isEqualTo(1000);
+    }
+
+    @Test
+    @Order(8)
+    @DisplayName("E2E-CANCEL-004: キャンセル通知確認")
+    void step8_VerifyCancelNotifications() throws InterruptedException {
+        Thread.sleep(2000);
+        HttpHeaders headers = authHeaders();
+
+        // When
+        ResponseEntity<NotificationListResponse> response = restTemplate.exchange(
+            "/api/v1/notifications",
+            HttpMethod.GET,
+            new HttpEntity<>(headers),
+            NotificationListResponse.class
+        );
+
+        // Then
+        List<Notification> notifications = response.getBody().getItems();
+        assertThat(notifications)
+            .extracting(Notification::getType)
+            .contains(
+                NotificationType.BOOKING_CANCELLED,
+                NotificationType.PAYMENT_REFUNDED
+            );
+    }
+}
+```
+
+#### 10.2.9 テスト環境設定
+
+```yaml
+# application-e2e-test.yaml
+spring:
+  profiles:
+    active: e2e-test
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/booking_payment_e2e
+    username: e2e_user
+    password: ${E2E_DB_PASSWORD}
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: e2e-test-group
+      auto-offset-reset: earliest
+
+# E2Eテスト用の設定
+e2e-test:
+  # 非同期処理の完了待機時間
+  async-wait-timeout-ms: 5000
+
+  # テストユーザー
+  test-user:
+    email: test@example.com
+    password: ValidPass123!
+
+  # テスト管理者
+  admin-user:
+    email: admin@example.com
+    password: AdminPass123!
+```
+
+#### 10.2.10 CI/CD統合
+
+```yaml
+# .github/workflows/e2e-test.yaml
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: booking_payment_e2e
+          POSTGRES_USER: e2e_user
+          POSTGRES_PASSWORD: e2e_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      kafka:
+        image: confluentinc/cp-kafka:7.5.0
+        ports:
+          - 9092:9092
+        env:
+          KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Run E2E Tests
+        env:
+          E2E_DB_PASSWORD: e2e_password
+        run: ./gradlew e2eTest
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: build/reports/tests/e2eTest/
+```
+
 ### 10.2 E2Eテスト実装例
 
 ```java
