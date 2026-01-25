@@ -3,7 +3,7 @@ doc_type: "prd"
 id: "prd-platform"
 version: "0.2"
 last_updated: "2026-01-16"
-status: "proposed"   # proposed | approved | archived
+status: "approved"   # proposed | approved | archived
 ---
 
 # PRD: 予約・決済基盤（Platform）
@@ -26,7 +26,7 @@ status: "proposed"   # proposed | approved | archived
 ## 3. Tech Stack & Constraints（PRD内の制約）
 - SSOT：`docs/tech-stack.md`
 - 最低限の前提：
-  - Java 25 / Spring Boot / Spring Security
+  - Java 25 / Spring Boot (最新の安定版を利用する) / Spring Security (最新の安定版を利用する)
   - OpenTelemetry（相関IDで追えること）
   - PostgreSQL（推奨）
   - OpenAPI 3.0（契約ファースト）
