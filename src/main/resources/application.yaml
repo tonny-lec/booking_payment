@@ -1,0 +1,50 @@
+# =============================================================================
+# Booking Payment Platform - Application Configuration
+# =============================================================================
+
+spring:
+  application:
+    name: booking-payment
+
+# -----------------------------------------------------------------------------
+# Server Configuration
+# -----------------------------------------------------------------------------
+server:
+  port: 8080
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# -----------------------------------------------------------------------------
+# Actuator Endpoints (Health, Metrics, Info)
+# -----------------------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  info:
+    env:
+      enabled: true
+
+# -----------------------------------------------------------------------------
+# Logging (JSON Structured Logs will be configured in observability setup)
+# -----------------------------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    com.booking: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# -----------------------------------------------------------------------------
+# Application Info
+# -----------------------------------------------------------------------------
+info:
+  app:
+    name: Booking Payment Platform
+    description: 予約・決済基盤システム
+    version: 0.0.1-SNAPSHOT

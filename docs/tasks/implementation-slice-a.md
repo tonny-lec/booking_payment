@@ -16,7 +16,7 @@ PRD承認済み、設計ドキュメント完了に基づき、Slice A（最小M
 
 | ID | タスク | 詳細 | 優先度 | 状態 | 依存 |
 |----|--------|------|--------|------|------|
-| INFRA-01 | Spring Boot プロジェクト初期化 | Java 25, Gradle, Spring Boot (最新安定版) | 🔴 | ⬜ | - |
+| INFRA-01 | Spring Boot プロジェクト初期化 | Java 25, Gradle 9.2.1, Spring Boot 4.0.2 | 🔴 | ✅ | - |
 | INFRA-02 | マルチモジュール構成 | domain/application/adapter/infrastructure モジュール分割 | 🔴 | ⬜ | INFRA-01 |
 | INFRA-03 | 共通依存関係設定 | OpenTelemetry, Spring Security, PostgreSQL ドライバ | 🔴 | ⬜ | INFRA-01 |
 | INFRA-04 | PostgreSQL Docker設定 | docker-compose.yml, 初期スキーマ | 🔴 | ⬜ | INFRA-01 |
