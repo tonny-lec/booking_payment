@@ -389,8 +389,8 @@
 
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| PRD-01 | Platform PRD レビュー | `docs/prd-platform.md` | Gate | 🔴 | ⬜ |
-| PRD-02 | Platform PRD 承認（status: approved） | 同上 | Gate | 🔴 | ⬜ |
+| PRD-01 | Platform PRD レビュー | `docs/prd-platform.md` | Gate | 🔴 | ✅ |
+| PRD-02 | Platform PRD 承認（status: approved） | 同上 | Gate | 🔴 | ✅ |
 | PRD-03 | DevEx AI PRD レビュー | `docs/prd-devex-ai.md` | Gate | 🟡 | ⬜ |
 | PRD-04 | DevEx AI PRD 承認（status: approved） | 同上 | Gate | 🟡 | ⬜ |
 
