@@ -1,0 +1,16 @@
+// =============================================================================
+// Domain Module
+// Pure domain logic - no framework dependencies
+// =============================================================================
+
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // No Spring dependencies in domain layer!
+    // Domain should be pure Java
+}
+
+// This module should have NO external dependencies
+// Aggregates, Value Objects, Domain Events, Repository Ports live here

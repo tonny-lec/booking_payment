@@ -1,0 +1,29 @@
+// =============================================================================
+// Bootstrap Module
+// Spring Boot Application Entry Point
+// =============================================================================
+
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    // Wire all modules together
+    implementation project(':domain')
+    implementation project(':application')
+    implementation project(':adapter-web')
+    implementation project(':adapter-persistence')
+    
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
+    // Development tools
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:junit-jupiter'
+}
+
+// Application entry point, Configuration, Component scanning

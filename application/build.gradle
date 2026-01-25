@@ -1,0 +1,21 @@
+// =============================================================================
+// Application Module
+// Use Cases and Application Services
+// =============================================================================
+
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // Depends on domain for aggregates and ports
+    api project(':domain')
+    
+    // Jakarta validation for input validation
+    implementation 'jakarta.validation:jakarta.validation-api'
+    
+    // Transaction annotation (interface only)
+    compileOnly 'org.springframework:spring-tx'
+}
+
+// Use Cases, Application Services, Port interfaces for outbound adapters

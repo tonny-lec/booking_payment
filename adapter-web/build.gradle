@@ -1,0 +1,22 @@
+// =============================================================================
+// Adapter-Web Module
+// Inbound adapters - REST Controllers
+// =============================================================================
+
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    // Depends on application for use cases
+    implementation project(':application')
+    
+    // Spring Web for REST controllers
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+// REST Controllers, Request/Response DTOs, Exception Handlers
