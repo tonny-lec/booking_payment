@@ -1,5 +1,621 @@
 openapi: 3.0.3
 info:
-  title: notification
+  title: Notification API
+  description: |
+    通知管理API。
+    ユーザーへの通知作成・取得・設定管理を提供する。
+
+    ## 通知チャネル
+    - EMAIL: メール通知
+    - PUSH: プッシュ通知
+    - SMS: SMS通知
+
+    ## 通知種別
+    - BOOKING_CREATED: 予約作成完了
+    - BOOKING_CONFIRMED: 予約確定
+    - BOOKING_CANCELLED: 予約キャンセル
+    - PAYMENT_COMPLETED: 支払い完了
+    - PAYMENT_FAILED: 支払い失敗
+    - PAYMENT_REFUNDED: 返金完了
+    - SECURITY_ALERT: セキュリティアラート
+
+    ## 認可
+    - 通知の取得: 自分の通知のみ閲覧可能
+    - 通知作成: 内部サービスのみ（mTLS認証）
+    - 設定変更: 自分の設定のみ変更可能
   version: v1
-paths: {}
+  contact:
+    name: Platform Team
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: notifications
+    description: 通知操作
+  - name: preferences
+    description: 通知設定
+
+security:
+  - bearerAuth: []
+
+paths:
+  /notifications:
+    get:
+      tags:
+        - notifications
+      operationId: listNotifications
+      summary: 通知一覧取得
+      description: |
+        認証ユーザーの通知一覧を取得する。
+        フィルタリングとページネーションをサポート。
+      parameters:
+        - name: channel
+          in: query
+          description: チャネルでフィルタ
+          schema:
+            $ref: '#/components/schemas/NotificationChannel'
+        - name: type
+          in: query
+          description: 通知種別でフィルタ
+          schema:
+            $ref: '#/components/schemas/NotificationType'
+        - name: status
+          in: query
+          description: ステータスでフィルタ
+          schema:
+            $ref: '#/components/schemas/NotificationStatus'
+        - name: since
+          in: query
+          description: 指定日時以降の通知を取得
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: 取得件数の上限
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          description: ページネーション用カーソル
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 通知一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    post:
+      tags:
+        - notifications
+      operationId: createNotification
+      summary: 通知作成（内部用）
+      description: |
+        新しい通知を作成する。
+        内部サービス間通信専用（mTLS認証）。
+
+        ## 処理フロー
+        1. ユーザーの通知設定を確認
+        2. テンプレートを選択しコンテンツ生成
+        3. 通知を作成し配信キューに追加
+
+        ## 冪等性
+        - notificationIdを指定した場合、同一IDでの再リクエストは既存結果を返却
+      security:
+        - mtlsAuth: []
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: 冪等性を保証するためのキー
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNotificationRequest'
+      responses:
+        '201':
+          description: 通知作成成功
+          headers:
+            Location:
+              description: 作成された通知のURI
+              schema:
+                type: string
+                example: /api/v1/notifications/550e8400-e29b-41d4-a716-446655440000
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '200':
+          description: 冪等リクエスト（既存結果を返却）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: 内部サービス以外からのアクセス
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          description: |
+            通知作成不可。
+            - ユーザーが通知を無効化している
+            - テンプレートが見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /notifications/{notificationId}:
+    parameters:
+      - name: notificationId
+        in: path
+        required: true
+        description: 通知ID
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags:
+        - notifications
+      operationId: getNotification
+      summary: 通知詳細取得
+      description: |
+        指定された通知の詳細を取得する。
+        自分の通知のみアクセス可能。
+      responses:
+        '200':
+          description: 通知詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: アクセス権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 通知が見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /notifications/{notificationId}/read:
+    parameters:
+      - name: notificationId
+        in: path
+        required: true
+        description: 通知ID
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags:
+        - notifications
+      operationId: markAsRead
+      summary: 既読にする
+      description: |
+        指定された通知を既読状態にする。
+        自分の通知のみ操作可能。
+      responses:
+        '200':
+          description: 既読に更新
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: アクセス権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 通知が見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /notifications/preferences:
+    get:
+      tags:
+        - preferences
+      operationId: getPreferences
+      summary: 通知設定取得
+      description: |
+        認証ユーザーの通知設定を取得する。
+      responses:
+        '200':
+          description: 通知設定一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferencesResponse'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+    put:
+      tags:
+        - preferences
+      operationId: updatePreferences
+      summary: 通知設定更新
+      description: |
+        認証ユーザーの通知設定を更新する。
+        指定されたチャネル・種別の設定のみ更新される。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePreferencesRequest'
+      responses:
+        '200':
+          description: 設定更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferencesResponse'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT形式のAccessToken。
+        ヘッダー例: `Authorization: Bearer <token>`
+
+    mtlsAuth:
+      type: mutualTLS
+      description: 内部サービス間通信用のmTLS認証
+
+  schemas:
+    CreateNotificationRequest:
+      type: object
+      required:
+        - userId
+        - type
+        - templateId
+        - parameters
+      properties:
+        userId:
+          type: string
+          format: uuid
+          description: 通知先ユーザーID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+          description: 省略時はユーザー設定に基づく
+        templateId:
+          type: string
+          maxLength: 100
+          description: テンプレートID
+          example: "booking.created"
+        parameters:
+          type: object
+          additionalProperties:
+            type: string
+          description: テンプレート変数
+          example:
+            bookingId: "550e8400-e29b-41d4-a716-446655440000"
+            resourceName: "会議室A"
+            startAt: "2026-01-20T10:00:00Z"
+        priority:
+          $ref: '#/components/schemas/NotificationPriority'
+        scheduledAt:
+          type: string
+          format: date-time
+          description: 遅延配信の予定日時（省略時は即時配信）
+          example: "2026-01-20T09:00:00Z"
+
+    Notification:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - channel
+        - status
+        - subject
+        - body
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 通知ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        userId:
+          type: string
+          format: uuid
+          description: 通知先ユーザーID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+        status:
+          $ref: '#/components/schemas/NotificationStatus'
+        subject:
+          type: string
+          description: 通知件名
+          example: "予約が確定しました"
+        body:
+          type: string
+          description: 通知本文（要約）
+          example: "会議室Aの予約が確定しました。"
+        priority:
+          $ref: '#/components/schemas/NotificationPriority'
+        isRead:
+          type: boolean
+          description: 既読フラグ
+          example: false
+        scheduledAt:
+          type: string
+          format: date-time
+          description: 配信予定日時
+        sentAt:
+          type: string
+          format: date-time
+          description: 配信日時
+        deliveredAt:
+          type: string
+          format: date-time
+          description: 到達確認日時
+        failureReason:
+          type: string
+          description: 失敗理由（FAILEDステータス時のみ）
+          example: "INVALID_RECIPIENT"
+        retryCount:
+          type: integer
+          description: リトライ回数
+          example: 0
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: メタデータ（参照情報等）
+          example:
+            bookingId: "550e8400-e29b-41d4-a716-446655440000"
+        createdAt:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2026-01-16T09:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2026-01-16T09:00:00Z"
+
+    NotificationChannel:
+      type: string
+      enum:
+        - EMAIL
+        - PUSH
+        - SMS
+      description: |
+        通知チャネル
+        - EMAIL: メール
+        - PUSH: プッシュ通知
+        - SMS: SMS
+
+    NotificationType:
+      type: string
+      enum:
+        - BOOKING_CREATED
+        - BOOKING_CONFIRMED
+        - BOOKING_CANCELLED
+        - BOOKING_REMINDER
+        - PAYMENT_COMPLETED
+        - PAYMENT_FAILED
+        - PAYMENT_REFUNDED
+        - SECURITY_ALERT
+        - LOGIN_NEW_DEVICE
+      description: |
+        通知種別
+        - BOOKING_CREATED: 予約作成完了
+        - BOOKING_CONFIRMED: 予約確定
+        - BOOKING_CANCELLED: 予約キャンセル
+        - BOOKING_REMINDER: 予約リマインダー
+        - PAYMENT_COMPLETED: 支払い完了
+        - PAYMENT_FAILED: 支払い失敗
+        - PAYMENT_REFUNDED: 返金完了
+        - SECURITY_ALERT: セキュリティアラート
+        - LOGIN_NEW_DEVICE: 新規デバイスログイン
+
+    NotificationStatus:
+      type: string
+      enum:
+        - PENDING
+        - SENT
+        - DELIVERED
+        - FAILED
+        - CANCELLED
+      description: |
+        通知ステータス
+        - PENDING: 配信待ち
+        - SENT: 配信済み
+        - DELIVERED: 到達確認
+        - FAILED: 配信失敗
+        - CANCELLED: キャンセル
+
+    NotificationPriority:
+      type: string
+      enum:
+        - HIGH
+        - NORMAL
+        - LOW
+      default: NORMAL
+      description: |
+        通知優先度
+        - HIGH: 高（セキュリティアラート等）
+        - NORMAL: 通常
+        - LOW: 低
+
+    NotificationListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        nextCursor:
+          type: string
+          description: 次ページ取得用カーソル（最終ページの場合はnull）
+          example: "eyJsYXN0SWQiOiIxMjM..."
+        unreadCount:
+          type: integer
+          description: 未読件数
+          example: 5
+        totalCount:
+          type: integer
+          description: 総件数（フィルタ適用後）
+          example: 42
+
+    NotificationPreference:
+      type: object
+      required:
+        - channel
+        - type
+        - enabled
+      properties:
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        enabled:
+          type: boolean
+          description: 有効/無効
+          example: true
+
+    NotificationPreferencesResponse:
+      type: object
+      required:
+        - preferences
+      properties:
+        preferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationPreference'
+        defaultChannel:
+          $ref: '#/components/schemas/NotificationChannel'
+
+    UpdatePreferencesRequest:
+      type: object
+      required:
+        - preferences
+      properties:
+        preferences:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationPreference'
+          minItems: 1
+          description: 更新する設定一覧
+
+    ProblemDetail:
+      type: object
+      description: RFC 7807準拠のエラーレスポンス
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          description: エラータイプを識別するURI
+          example: "https://api.example.com/errors/notification-failed"
+        title:
+          type: string
+          description: エラーの概要
+          example: "Notification Failed"
+        status:
+          type: integer
+          description: HTTPステータスコード
+          example: 422
+        detail:
+          type: string
+          description: エラーの詳細説明
+          example: "User has disabled this notification type."
+        instance:
+          type: string
+          format: uri
+          description: エラーが発生したリソースのURI
+          example: "/notifications/123"
+        traceId:
+          type: string
+          description: 分散トレーシング用のTraceId
+          example: "abc123def456"
