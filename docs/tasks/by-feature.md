@@ -173,30 +173,30 @@
 #### 3.2.2 支払いキャプチャ
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| PAY-UC-CAPTURE-01 | 目的・背景の記載 | `docs/design/usecases/payment-capture.md` | B | 🟡 | ⬜ |
-| PAY-UC-CAPTURE-02 | 入出力定義（CapturePaymentCommand→PaymentCaptured） | 同上 | B | 🟡 | ⬜ |
-| PAY-UC-CAPTURE-03 | 状態遷移（AUTHORIZED→CAPTURED）の定義 | 同上 | B | 🟡 | ⬜ |
-| PAY-UC-CAPTURE-04 | 失敗モード定義（gateway_error, invalid_state） | 同上 | B | 🟡 | ⬜ |
-| PAY-UC-CAPTURE-05 | 観測性設計 | 同上 | B | 🟡 | ⬜ |
-| PAY-UC-CAPTURE-06 | セキュリティ設計 | 同上 | B | 🟡 | ⬜ |
+| PAY-UC-CAPTURE-01 | 目的・背景の記載 | `docs/design/usecases/payment-capture.md` | B | 🟡 | ✅ |
+| PAY-UC-CAPTURE-02 | 入出力定義（CapturePaymentCommand→PaymentCaptured） | 同上 | B | 🟡 | ✅ |
+| PAY-UC-CAPTURE-03 | 状態遷移（AUTHORIZED→CAPTURED）の定義 | 同上 | B | 🟡 | ✅ |
+| PAY-UC-CAPTURE-04 | 失敗モード定義（gateway_error, invalid_state） | 同上 | B | 🟡 | ✅ |
+| PAY-UC-CAPTURE-05 | 観測性設計 | 同上 | B | 🟡 | ✅ |
+| PAY-UC-CAPTURE-06 | セキュリティ設計 | 同上 | B | 🟡 | ✅ |
 
 #### 3.2.3 返金
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| PAY-UC-REFUND-01 | 目的・背景の記載 | `docs/design/usecases/payment-refund.md` | B | 🟡 | ⬜ |
-| PAY-UC-REFUND-02 | 入出力定義（RefundPaymentCommand→PaymentRefunded） | 同上 | B | 🟡 | ⬜ |
-| PAY-UC-REFUND-03 | 全額/部分返金・返金額制約の定義 | 同上 | B | 🟡 | ⬜ |
-| PAY-UC-REFUND-04 | 失敗モード定義（refund_exceeded, gateway_error） | 同上 | B | 🟡 | ⬜ |
-| PAY-UC-REFUND-05 | 観測性設計 | 同上 | B | 🟡 | ⬜ |
-| PAY-UC-REFUND-06 | セキュリティ設計 | 同上 | B | 🟡 | ⬜ |
+| PAY-UC-REFUND-01 | 目的・背景の記載 | `docs/design/usecases/payment-refund.md` | B | 🟡 | ✅ |
+| PAY-UC-REFUND-02 | 入出力定義（RefundPaymentCommand→PaymentRefunded） | 同上 | B | 🟡 | ✅ |
+| PAY-UC-REFUND-03 | 全額/部分返金・返金額制約の定義 | 同上 | B | 🟡 | ✅ |
+| PAY-UC-REFUND-04 | 失敗モード定義（refund_exceeded, gateway_error） | 同上 | B | 🟡 | ✅ |
+| PAY-UC-REFUND-05 | 観測性設計 | 同上 | B | 🟡 | ✅ |
+| PAY-UC-REFUND-06 | セキュリティ設計 | 同上 | B | 🟡 | ✅ |
 
 ### 3.3 OpenAPI仕様
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
 | PAY-API-01 | POST /payments エンドポイント定義 | `docs/api/openapi/payment.yaml` | A | 🔴 | ✅ |
 | PAY-API-02 | GET /payments/{id} エンドポイント定義 | 同上 | A | 🔴 | ✅ |
-| PAY-API-03 | POST /payments/{id}/capture エンドポイント定義 | 同上 | B | 🟡 | ⬜ |
-| PAY-API-04 | POST /payments/{id}/refund エンドポイント定義 | 同上 | B | 🟡 | ⬜ |
+| PAY-API-03 | POST /payments/{id}/capture エンドポイント定義 | 同上 | B | 🟡 | ✅ |
+| PAY-API-04 | POST /payments/{id}/refund エンドポイント定義 | 同上 | B | 🟡 | ✅ |
 | PAY-API-05 | Idempotency-Key ヘッダー設計 | 同上 | A | 🔴 | ✅ |
 | PAY-API-06 | Payment/PaymentStatus スキーマ定義 | 同上 | A | 🔴 | ✅ |
 
@@ -236,20 +236,20 @@
 ### 4.2 ユースケース設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| NTF-UC-01 | 目的・背景の記載 | `docs/design/usecases/notification-send.md` | B | 🟡 | ⬜ |
-| NTF-UC-02 | 入出力定義（SendNotificationCommand/イベント受信→NotificationSent） | 同上 | B | 🟡 | ⬜ |
-| NTF-UC-03 | ドメインモデル（通知種別、テンプレート）の定義 | 同上 | B | 🟡 | ⬜ |
-| NTF-UC-04 | 失敗モード定義（delivery_failed, retry戦略） | 同上 | B | 🟡 | ⬜ |
-| NTF-UC-05 | 観測性設計（notification_sent/failed メトリクス） | 同上 | B | 🟡 | ⬜ |
-| NTF-UC-06 | セキュリティ設計（PII非出力） | 同上 | B | 🟡 | ⬜ |
+| NTF-UC-01 | 目的・背景の記載 | `docs/design/usecases/notification-send.md` | B | 🟡 | ✅ |
+| NTF-UC-02 | 入出力定義（SendNotificationCommand/イベント受信→NotificationSent） | 同上 | B | 🟡 | ✅ |
+| NTF-UC-03 | ドメインモデル（通知種別、テンプレート）の定義 | 同上 | B | 🟡 | ✅ |
+| NTF-UC-04 | 失敗モード定義（delivery_failed, retry戦略） | 同上 | B | 🟡 | ✅ |
+| NTF-UC-05 | 観測性設計（notification_sent/failed メトリクス） | 同上 | B | 🟡 | ✅ |
+| NTF-UC-06 | セキュリティ設計（PII非出力） | 同上 | B | 🟡 | ✅ |
 
 ### 4.3 OpenAPI仕様
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| NTF-API-01 | POST /notifications エンドポイント定義（内部用） | `docs/api/openapi/notification.yaml` | B | 🟡 | ⬜ |
-| NTF-API-02 | GET /notifications エンドポイント定義 | 同上 | B | 🟡 | ⬜ |
-| NTF-API-03 | GET /notifications/{id} エンドポイント定義 | 同上 | B | 🟡 | ⬜ |
-| NTF-API-04 | Notification/NotificationStatus スキーマ定義 | 同上 | B | 🟡 | ⬜ |
+| NTF-API-01 | POST /notifications エンドポイント定義（内部用） | `docs/api/openapi/notification.yaml` | B | 🟡 | ✅ |
+| NTF-API-02 | GET /notifications エンドポイント定義 | 同上 | B | 🟡 | ✅ |
+| NTF-API-03 | GET /notifications/{id} エンドポイント定義 | 同上 | B | 🟡 | ✅ |
+| NTF-API-04 | Notification/NotificationStatus スキーマ定義 | 同上 | B | 🟡 | ✅ |
 
 ---
 
@@ -268,20 +268,20 @@
 ### 5.2 ユースケース設計
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| AUD-UC-01 | 目的・背景の記載 | `docs/design/usecases/audit-record.md` | B | 🟡 | ⬜ |
-| AUD-UC-02 | 入出力定義（RecordAuditCommand/イベント受信→AuditLogRecorded） | 同上 | B | 🟡 | ⬜ |
-| AUD-UC-03 | ドメインモデル（監査対象操作、actor/action/resource構造）の定義 | 同上 | B | 🟡 | ⬜ |
-| AUD-UC-04 | 失敗モード定義（ストレージ障害時の対応） | 同上 | B | 🟡 | ⬜ |
-| AUD-UC-05 | 観測性設計（audit_log_recorded メトリクス） | 同上 | B | 🟡 | ⬜ |
-| AUD-UC-06 | セキュリティ設計（改ざん防止、管理者権限） | 同上 | B | 🟡 | ⬜ |
+| AUD-UC-01 | 目的・背景の記載 | `docs/design/usecases/audit-record.md` | B | 🟡 | ✅ |
+| AUD-UC-02 | 入出力定義（RecordAuditCommand/イベント受信→AuditLogRecorded） | 同上 | B | 🟡 | ✅ |
+| AUD-UC-03 | ドメインモデル（監査対象操作、actor/action/resource構造）の定義 | 同上 | B | 🟡 | ✅ |
+| AUD-UC-04 | 失敗モード定義（ストレージ障害時の対応） | 同上 | B | 🟡 | ✅ |
+| AUD-UC-05 | 観測性設計（audit_log_recorded メトリクス） | 同上 | B | 🟡 | ✅ |
+| AUD-UC-06 | セキュリティ設計（改ざん防止、管理者権限） | 同上 | B | 🟡 | ✅ |
 
 ### 5.3 OpenAPI仕様
 | ID | タスク | ファイル | Slice | 優先度 | 状態 |
 |----|--------|----------|-------|--------|------|
-| AUD-API-01 | GET /audit-logs エンドポイント定義 | `docs/api/openapi/audit.yaml` | B | 🟡 | ⬜ |
-| AUD-API-02 | GET /audit-logs/{id} エンドポイント定義 | 同上 | B | 🟡 | ⬜ |
-| AUD-API-03 | AuditLog スキーマ定義 | 同上 | B | 🟡 | ⬜ |
-| AUD-API-04 | 管理者権限による認可設計 | 同上 | B | 🟡 | ⬜ |
+| AUD-API-01 | GET /audit-logs エンドポイント定義 | `docs/api/openapi/audit.yaml` | B | 🟡 | ✅ |
+| AUD-API-02 | GET /audit-logs/{id} エンドポイント定義 | 同上 | B | 🟡 | ✅ |
+| AUD-API-03 | AuditLog スキーマ定義 | 同上 | B | 🟡 | ✅ |
+| AUD-API-04 | 管理者権限による認可設計 | 同上 | B | 🟡 | ✅ |
 
 ---
 

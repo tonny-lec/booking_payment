@@ -1,5 +1,801 @@
 openapi: 3.0.3
 info:
-  title: audit
+  title: Audit API
+  description: |
+    監査ログ管理API。
+    システム全体の操作履歴を検索・閲覧する機能を提供する。
+
+    ## 概要
+    - 監査ログはイベント駆動で自動記録される（REST APIでの作成は不可）
+    - すべてのログは追記専用（Append-Only）で改ざん不可
+    - 閲覧は管理者権限（ADMIN）のみ許可
+
+    ## 監査対象イベント
+    - IAM: ログイン、ログアウト、アカウントロック
+    - Booking: 予約作成、更新、キャンセル
+    - Payment: 支払い作成、キャプチャ、返金
+    - Notification: 通知送信
+
+    ## セキュリティ
+    - すべてのエンドポイントは管理者認証必須
+    - 監査ログの閲覧自体も監査対象（監査の監査）
   version: v1
-paths: {}
+  contact:
+    name: Platform Team
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: audit-logs
+    description: 監査ログ操作
+  - name: integrity
+    description: 整合性検証
+
+security:
+  - bearerAuth: []
+
+paths:
+  /audit-logs:
+    get:
+      tags:
+        - audit-logs
+      operationId: listAuditLogs
+      summary: 監査ログ一覧取得
+      description: |
+        監査ログの一覧を取得する。
+        管理者権限（ADMIN）が必要。
+
+        ## フィルタリング
+        - 日時範囲、イベント種別、アクター、リソース等で絞り込み可能
+        - 複数条件はAND結合
+
+        ## ソート
+        - デフォルトは発生日時の降順（最新順）
+      parameters:
+        - name: eventType
+          in: query
+          description: イベント種別でフィルタ
+          schema:
+            type: string
+            example: "BookingCreated"
+        - name: action
+          in: query
+          description: 操作種別でフィルタ
+          schema:
+            $ref: '#/components/schemas/Action'
+        - name: actionCategory
+          in: query
+          description: 操作カテゴリでフィルタ
+          schema:
+            $ref: '#/components/schemas/ActionCategory'
+        - name: actorId
+          in: query
+          description: 実行者IDでフィルタ
+          schema:
+            type: string
+            format: uuid
+        - name: actorType
+          in: query
+          description: 実行者種別でフィルタ
+          schema:
+            $ref: '#/components/schemas/ActorType'
+        - name: resourceType
+          in: query
+          description: リソース種別でフィルタ
+          schema:
+            type: string
+            example: "Booking"
+        - name: resourceId
+          in: query
+          description: リソースIDでフィルタ
+          schema:
+            type: string
+            format: uuid
+        - name: resourceContext
+          in: query
+          description: Bounded Contextでフィルタ
+          schema:
+            type: string
+            example: "Booking"
+        - name: occurredFrom
+          in: query
+          description: 発生日時の開始（inclusive）
+          schema:
+            type: string
+            format: date-time
+        - name: occurredTo
+          in: query
+          description: 発生日時の終了（exclusive）
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: 取得件数の上限
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          description: ページネーション用カーソル
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 監査ログ一覧
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogListResponse'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: 管理者権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /audit-logs/{auditLogId}:
+    parameters:
+      - name: auditLogId
+        in: path
+        required: true
+        description: 監査ログID
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags:
+        - audit-logs
+      operationId: getAuditLog
+      summary: 監査ログ詳細取得
+      description: |
+        指定された監査ログの詳細を取得する。
+        管理者権限（ADMIN）が必要。
+      responses:
+        '200':
+          description: 監査ログ詳細
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLog'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: 管理者権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 監査ログが見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /audit-logs/{auditLogId}/verify:
+    parameters:
+      - name: auditLogId
+        in: path
+        required: true
+        description: 監査ログID
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags:
+        - integrity
+      operationId: verifyAuditLog
+      summary: 監査ログ整合性検証
+      description: |
+        指定された監査ログのチェックサムを検証し、改ざんの有無を確認する。
+        管理者権限（ADMIN）が必要。
+      responses:
+        '200':
+          description: 検証成功（改ざんなし）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyResult'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: 管理者権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '404':
+          description: 監査ログが見つからない
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '422':
+          description: 検証失敗（改ざん検知）
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /audit-logs/verify:
+    post:
+      tags:
+        - integrity
+      operationId: verifyAuditLogRange
+      summary: 監査ログ範囲検証
+      description: |
+        指定された範囲の監査ログの整合性を一括検証する。
+        連鎖ハッシュを使用して、範囲内のすべてのログの整合性を確認。
+        管理者権限（ADMIN）が必要。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyRangeRequest'
+      responses:
+        '200':
+          description: 検証結果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyRangeResult'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: 管理者権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /audit-logs/export:
+    post:
+      tags:
+        - audit-logs
+      operationId: exportAuditLogs
+      summary: 監査ログエクスポート
+      description: |
+        指定された条件の監査ログをエクスポートする。
+        大量データの場合は非同期処理となる。
+        管理者権限（ADMIN）が必要。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportRequest'
+      responses:
+        '202':
+          description: エクスポート開始（非同期）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportResponse'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: 管理者権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /audit-logs/stats:
+    get:
+      tags:
+        - audit-logs
+      operationId: getAuditLogStats
+      summary: 監査ログ統計取得
+      description: |
+        監査ログの統計情報を取得する。
+        管理者権限（ADMIN）が必要。
+      parameters:
+        - name: occurredFrom
+          in: query
+          required: true
+          description: 集計期間の開始
+          schema:
+            type: string
+            format: date-time
+        - name: occurredTo
+          in: query
+          required: true
+          description: 集計期間の終了
+          schema:
+            type: string
+            format: date-time
+        - name: groupBy
+          in: query
+          description: 集計軸
+          schema:
+            type: string
+            enum:
+              - action
+              - actionCategory
+              - actorType
+              - resourceType
+              - resourceContext
+            default: action
+      responses:
+        '200':
+          description: 統計情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogStats'
+        '400':
+          description: バリデーションエラー
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '401':
+          description: 未認証
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+        '403':
+          description: 管理者権限なし
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT形式のAccessToken（管理者権限必須）。
+        ヘッダー例: `Authorization: Bearer <token>`
+
+  schemas:
+    AuditLog:
+      type: object
+      required:
+        - id
+        - eventId
+        - eventType
+        - occurredAt
+        - recordedAt
+        - actorType
+        - action
+        - actionCategory
+        - resourceType
+        - resourceId
+        - resourceContext
+        - checksum
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 監査ログID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        eventId:
+          type: string
+          format: uuid
+          description: 元イベントID
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        eventType:
+          type: string
+          description: イベント種別
+          example: "BookingCreated"
+        occurredAt:
+          type: string
+          format: date-time
+          description: イベント発生日時
+          example: "2026-01-16T09:00:00Z"
+        recordedAt:
+          type: string
+          format: date-time
+          description: 記録日時
+          example: "2026-01-16T09:00:01Z"
+        actorId:
+          type: string
+          format: uuid
+          description: 実行者ID（システムの場合はnull）
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        actorType:
+          $ref: '#/components/schemas/ActorType'
+        actorIp:
+          type: string
+          description: 実行者IPアドレス（マスク済み）
+          example: "192.168.***.***"
+        action:
+          $ref: '#/components/schemas/Action'
+        actionCategory:
+          $ref: '#/components/schemas/ActionCategory'
+        resourceType:
+          type: string
+          description: リソース種別
+          example: "Booking"
+        resourceId:
+          type: string
+          format: uuid
+          description: リソースID
+          example: "770e8400-e29b-41d4-a716-446655440002"
+        resourceContext:
+          type: string
+          description: Bounded Context名
+          example: "Booking"
+        changes:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChangeDetail'
+          description: 変更詳細（マスク済み）
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+          description: メタデータ
+        checksum:
+          type: string
+          description: SHA-256チェックサム
+          example: "a1b2c3d4e5f6..."
+        previousLogId:
+          type: string
+          format: uuid
+          description: 前の監査ログID（連鎖ハッシュ用）
+
+    ChangeDetail:
+      type: object
+      required:
+        - field
+        - changeType
+      properties:
+        field:
+          type: string
+          description: 変更フィールド名
+          example: "status"
+        oldValue:
+          type: string
+          description: 変更前の値（マスク済み）
+          example: "PENDING"
+        newValue:
+          type: string
+          description: 変更後の値（マスク済み）
+          example: "CONFIRMED"
+        changeType:
+          type: string
+          enum:
+            - ADDED
+            - MODIFIED
+            - REMOVED
+          description: 変更種別
+
+    ActorType:
+      type: string
+      enum:
+        - USER
+        - SYSTEM
+        - ADMIN
+      description: |
+        実行者種別
+        - USER: 一般ユーザー
+        - SYSTEM: システム（自動処理）
+        - ADMIN: 管理者
+
+    Action:
+      type: string
+      enum:
+        - CREATE
+        - READ
+        - UPDATE
+        - DELETE
+        - LOGIN
+        - LOGOUT
+        - AUTHORIZE
+        - CAPTURE
+        - REFUND
+      description: |
+        操作種別
+        - CREATE: 作成
+        - READ: 参照
+        - UPDATE: 更新
+        - DELETE: 削除
+        - LOGIN: ログイン
+        - LOGOUT: ログアウト
+        - AUTHORIZE: 与信
+        - CAPTURE: キャプチャ
+        - REFUND: 返金
+
+    ActionCategory:
+      type: string
+      enum:
+        - DATA
+        - AUTH
+        - CONFIG
+        - ADMIN
+      description: |
+        操作カテゴリ
+        - DATA: データ操作
+        - AUTH: 認証・認可
+        - CONFIG: 設定変更
+        - ADMIN: 管理操作
+
+    AuditLogListResponse:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        nextCursor:
+          type: string
+          description: 次ページ取得用カーソル
+          example: "eyJsYXN0SWQiOiIxMjM..."
+        totalCount:
+          type: integer
+          description: 総件数（フィルタ適用後）
+          example: 1234
+
+    VerifyResult:
+      type: object
+      required:
+        - auditLogId
+        - verified
+        - verifiedAt
+      properties:
+        auditLogId:
+          type: string
+          format: uuid
+          description: 検証した監査ログID
+        verified:
+          type: boolean
+          description: 検証結果（true=正常）
+          example: true
+        verifiedAt:
+          type: string
+          format: date-time
+          description: 検証日時
+        expectedChecksum:
+          type: string
+          description: 期待されるチェックサム
+        actualChecksum:
+          type: string
+          description: 実際のチェックサム
+
+    VerifyRangeRequest:
+      type: object
+      required:
+        - occurredFrom
+        - occurredTo
+      properties:
+        occurredFrom:
+          type: string
+          format: date-time
+          description: 検証範囲の開始
+        occurredTo:
+          type: string
+          format: date-time
+          description: 検証範囲の終了
+
+    VerifyRangeResult:
+      type: object
+      required:
+        - totalCount
+        - verifiedCount
+        - failedCount
+        - verified
+        - verifiedAt
+      properties:
+        totalCount:
+          type: integer
+          description: 検証対象件数
+          example: 1000
+        verifiedCount:
+          type: integer
+          description: 検証成功件数
+          example: 1000
+        failedCount:
+          type: integer
+          description: 検証失敗件数
+          example: 0
+        verified:
+          type: boolean
+          description: 全体の検証結果
+          example: true
+        verifiedAt:
+          type: string
+          format: date-time
+          description: 検証日時
+        failedLogs:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: 検証失敗した監査ログIDのリスト
+
+    ExportRequest:
+      type: object
+      required:
+        - occurredFrom
+        - occurredTo
+        - format
+      properties:
+        occurredFrom:
+          type: string
+          format: date-time
+          description: エクスポート範囲の開始
+        occurredTo:
+          type: string
+          format: date-time
+          description: エクスポート範囲の終了
+        format:
+          type: string
+          enum:
+            - JSON
+            - CSV
+          description: 出力形式
+        filters:
+          type: object
+          properties:
+            eventTypes:
+              type: array
+              items:
+                type: string
+            actions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Action'
+            actorTypes:
+              type: array
+              items:
+                $ref: '#/components/schemas/ActorType'
+            resourceTypes:
+              type: array
+              items:
+                type: string
+
+    ExportResponse:
+      type: object
+      required:
+        - exportId
+        - status
+        - createdAt
+      properties:
+        exportId:
+          type: string
+          format: uuid
+          description: エクスポートジョブID
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PROCESSING
+            - COMPLETED
+            - FAILED
+          description: エクスポート状態
+        createdAt:
+          type: string
+          format: date-time
+          description: 開始日時
+        downloadUrl:
+          type: string
+          format: uri
+          description: ダウンロードURL（COMPLETED時のみ）
+        expiresAt:
+          type: string
+          format: date-time
+          description: ダウンロードURL有効期限
+
+    AuditLogStats:
+      type: object
+      required:
+        - period
+        - totalCount
+        - breakdown
+      properties:
+        period:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+            to:
+              type: string
+              format: date-time
+        totalCount:
+          type: integer
+          description: 期間内の総件数
+          example: 5000
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                type: string
+                description: 集計キー
+                example: "CREATE"
+              count:
+                type: integer
+                description: 件数
+                example: 1500
+              percentage:
+                type: number
+                format: float
+                description: 割合（%）
+                example: 30.0
+
+    ProblemDetail:
+      type: object
+      description: RFC 7807準拠のエラーレスポンス
+      required:
+        - type
+        - title
+        - status
+      properties:
+        type:
+          type: string
+          format: uri
+          description: エラータイプを識別するURI
+          example: "https://api.example.com/errors/integrity-check-failed"
+        title:
+          type: string
+          description: エラーの概要
+          example: "Integrity Check Failed"
+        status:
+          type: integer
+          description: HTTPステータスコード
+          example: 422
+        detail:
+          type: string
+          description: エラーの詳細説明
+          example: "Checksum verification failed for audit log."
+        instance:
+          type: string
+          format: uri
+          description: エラーが発生したリソースのURI
+          example: "/audit-logs/123"
+        traceId:
+          type: string
+          description: 分散トレーシング用のTraceId
+          example: "abc123def456"
