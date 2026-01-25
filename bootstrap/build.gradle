@@ -4,7 +4,15 @@
 // =============================================================================
 
 plugins {
+    id 'java'
     id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
 }
 
 dependencies {
@@ -14,8 +22,26 @@ dependencies {
     implementation project(':adapter-web')
     implementation project(':adapter-persistence')
     
-    // Spring Boot Starters
+    // BOM imports using Gradle's native platform() API
+    implementation platform("org.springframework.boot:spring-boot-dependencies:${rootProject.versions.springBoot}")
+    implementation platform("io.opentelemetry:opentelemetry-bom:${rootProject.versions.opentelemetry}")
+    implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom:${rootProject.versions.opentelemetryInstr}")
+    implementation platform("org.testcontainers:testcontainers-bom:${rootProject.versions.testcontainers}")
+    
+    // Spring Boot Starters (versions resolved via Spring Boot BOM)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    
+    // OpenTelemetry for observability (versions resolved via BOMs)
+    implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    
+    // Database migration
+    implementation "org.flywaydb:flyway-core:${rootProject.versions.flyway}"
+    implementation "org.flywaydb:flyway-database-postgresql:${rootProject.versions.flyway}"
+    
+    // Configuration processor for IDE support
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     
     // Development tools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -24,6 +50,16 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.assertj:assertj-core'
+    testImplementation "org.mockito:mockito-core:${rootProject.versions.mockito}"
+    testImplementation "org.mockito:mockito-junit-jupiter:${rootProject.versions.mockito}"
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation "com.tngtech.archunit:archunit-junit5:${rootProject.versions.archunit}"
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }
 
 // Application entry point, Configuration, Component scanning
