@@ -1,10 +1,16 @@
 # =============================================================================
 # Booking Payment Platform - Application Configuration
+# Spring Boot 4.0.2 / Java 25
 # =============================================================================
 
 spring:
   application:
     name: booking-payment
+  # Virtual threads are enabled by default in Spring Boot 4
+  # Explicitly set for clarity
+  threads:
+    virtual:
+      enabled: true
 
 # -----------------------------------------------------------------------------
 # Server Configuration
@@ -17,6 +23,7 @@ server:
 
 # -----------------------------------------------------------------------------
 # Actuator Endpoints (Health, Metrics, Info)
+# Spring Boot 4: management.tracing.enabled renamed to management.tracing.export.enabled
 # -----------------------------------------------------------------------------
 management:
   endpoints:
@@ -29,16 +36,25 @@ management:
   info:
     env:
       enabled: true
+  # Tracing configuration (will be expanded in observability setup)
+  tracing:
+    export:
+      enabled: true
 
 # -----------------------------------------------------------------------------
-# Logging (JSON Structured Logs will be configured in observability setup)
+# Logging
+# Spring Boot 4: logging.console.enabled is new (default: true)
+# JSON Structured Logs will be configured in INFRA-05 observability setup
 # -----------------------------------------------------------------------------
 logging:
+  console:
+    enabled: true
   level:
     root: INFO
     com.booking: DEBUG
+  # Custom pattern (will be replaced with structured logging in INFRA-05)
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - traceId=%X{traceId:-} spanId=%X{spanId:-} - %msg%n"
 
 # -----------------------------------------------------------------------------
 # Application Info
@@ -48,3 +64,6 @@ info:
     name: Booking Payment Platform
     description: 予約・決済基盤システム
     version: 0.0.1-SNAPSHOT
+    java-version: 25
+    spring-boot-version: 4.0.2
+
