@@ -8,8 +8,11 @@ plugins {
 }
 
 dependencies {
-    // Depends on application for use cases
+    // Depends on application for use cases (includes domain via api)
     implementation project(':application')
+    
+    // Direct dependency on domain for exception classes
+    implementation project(':domain')
     
     // Spring Web for REST controllers
     implementation 'org.springframework.boot:spring-boot-starter-web'
