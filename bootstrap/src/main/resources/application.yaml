@@ -72,9 +72,33 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+    prometheus:
+      enabled: true
   info:
     env:
       enabled: true
+  # ---------------------------------------------------------------------------
+  # Prometheus Metrics Configuration
+  # - Exports metrics in Prometheus format at /actuator/prometheus
+  # - Enables histogram buckets for percentile calculations
+  # ---------------------------------------------------------------------------
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    tags:
+      # Common tags applied to all metrics
+      application: ${spring.application.name}
+    distribution:
+      # Enable percentile histograms for all timer and distribution summary metrics
+      percentiles-histogram:
+        http.server.requests: true
+        http_server_request_duration_seconds: true
+      # SLO buckets matching observability.md specification
+      slo:
+        http.server.requests: 10ms,25ms,50ms,100ms,250ms,500ms,1s,2.5s,5s,10s
+        http_server_request_duration_seconds: 10ms,25ms,50ms,100ms,250ms,500ms,1s,2.5s,5s,10s
   # ---------------------------------------------------------------------------
   # OpenTelemetry Tracing Configuration
   # - W3C Trace Context propagation (traceparent, tracestate headers)
