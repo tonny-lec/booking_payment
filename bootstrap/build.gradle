@@ -31,6 +31,9 @@ dependencies {
     // Spring Boot Starters (versions resolved via Spring Boot BOM)
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     
+    // Micrometer Prometheus Registry for metrics export
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    
     // OpenTelemetry for observability (versions resolved via BOMs)
     implementation 'io.opentelemetry.instrumentation:opentelemetry-spring-boot-starter'
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'

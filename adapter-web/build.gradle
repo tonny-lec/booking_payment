@@ -18,6 +18,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     
+    // Micrometer for metrics (MeterRegistry)
+    implementation 'io.micrometer:micrometer-core'
+    
     // Spring Security for authentication/authorization
     implementation 'org.springframework.boot:spring-boot-starter-security'
     
