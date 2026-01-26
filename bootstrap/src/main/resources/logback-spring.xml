@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  =============================================================================
+  Logback Configuration for Booking Payment Platform
+  
+  - Profile-based logging: dev (console), prod (JSON structured)
+  - Includes OpenTelemetry trace context (traceId, spanId)
+  - Follows observability.md design specifications
+  =============================================================================
+-->
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <!-- Import Spring Boot defaults -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- =======================================================================
+         Properties
+         ======================================================================= -->
+    <springProperty scope="context" name="SERVICE_NAME" source="spring.application.name" defaultValue="booking-payment"/>
+    <springProperty scope="context" name="APP_VERSION" source="info.app.version" defaultValue="0.0.1-SNAPSHOT"/>
+
+    <!-- Environment from Spring profile or system property -->
+    <springProperty scope="context" name="ENVIRONMENT" source="spring.profiles.active" defaultValue="development"/>
+
+    <!-- =======================================================================
+         Development Profile - Human-readable console output
+         ======================================================================= -->
+    <springProfile name="default,dev,local">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%thread] %cyan(%logger{36}) - traceId=%X{traceId:-N/A} spanId=%X{spanId:-N/A} - %msg%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <!-- Application logging at DEBUG level for development -->
+        <logger name="com.booking" level="DEBUG"/>
+        <logger name="org.flywaydb" level="DEBUG"/>
+        <logger name="org.springframework.boot.autoconfigure.flyway" level="DEBUG"/>
+    </springProfile>
+
+    <!-- =======================================================================
+         Production Profile - JSON structured logging
+         
+         Required fields (from observability.md 1.2):
+         - timestamp: ISO 8601 UTC
+         - level: Log level
+         - logger: Logger name (class)
+         - message: Log message
+         - traceId: OpenTelemetry trace ID
+         - spanId: OpenTelemetry span ID
+         - service: Service name
+         - version: Application version
+         - environment: Deployment environment
+         ======================================================================= -->
+    <springProfile name="prod,production,staging">
+        <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+                <layout class="ch.qos.logback.contrib.json.classic.JsonLayout">
+                    <jsonFormatter class="ch.qos.logback.contrib.jackson.JacksonJsonFormatter">
+                        <prettyPrint>false</prettyPrint>
+                    </jsonFormatter>
+                    <timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampFormat>
+                    <timestampFormatTimezoneId>UTC</timestampFormatTimezoneId>
+                    <appendLineSeparator>true</appendLineSeparator>
+                    
+                    <!-- Include MDC values (traceId, spanId from OpenTelemetry) -->
+                    <includeMDC>true</includeMDC>
+                    
+                    <!-- Include context properties -->
+                    <includeContextName>false</includeContextName>
+                </layout>
+            </encoder>
+        </appender>
+
+        <!-- Custom JSON appender with all required fields -->
+        <appender name="STRUCTURED_JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <!-- Timestamp in ISO 8601 UTC format -->
+                <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampPattern>
+                <timeZone>UTC</timeZone>
+                
+                <!-- Add custom fields -->
+                <customFields>{"service":"${SERVICE_NAME}","version":"${APP_VERSION}","environment":"${ENVIRONMENT}"}</customFields>
+                
+                <!-- Include MDC for traceId/spanId -->
+                <includeMdcKeyName>traceId</includeMdcKeyName>
+                <includeMdcKeyName>spanId</includeMdcKeyName>
+                
+                <!-- Field names mapping -->
+                <fieldNames>
+                    <timestamp>timestamp</timestamp>
+                    <version>[ignore]</version>
+                    <levelValue>[ignore]</levelValue>
+                </fieldNames>
+                
+                <!-- Shorten logger names -->
+                <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="STRUCTURED_JSON"/>
+        </root>
+
+        <!-- Application logging -->
+        <logger name="com.booking" level="INFO"/>
+        
+        <!-- Reduce noise from frameworks -->
+        <logger name="org.springframework" level="WARN"/>
+        <logger name="org.hibernate" level="WARN"/>
+        <logger name="org.apache" level="WARN"/>
+    </springProfile>
+
+    <!-- =======================================================================
+         Test Profile - Minimal logging for tests
+         ======================================================================= -->
+    <springProfile name="test">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - %msg%n</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <logger name="com.booking" level="DEBUG"/>
+        <logger name="org.testcontainers" level="INFO"/>
+    </springProfile>
+
+</configuration>

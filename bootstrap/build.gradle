@@ -36,8 +36,11 @@ dependencies {
     implementation 'io.micrometer:micrometer-tracing-bridge-otel'
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
     
-    // Database migration
-    implementation "org.flywaydb:flyway-core:${rootProject.versions.flyway}"
+    // JSON Structured Logging (for production profile)
+    implementation 'net.logstash.logback:logstash-logback-encoder:8.0'
+    
+    // Database migration (Spring Boot 4.x requires starter instead of flyway-core)
+    implementation 'org.springframework.boot:spring-boot-starter-flyway'
     implementation "org.flywaydb:flyway-database-postgresql:${rootProject.versions.flyway}"
     
     // Configuration processor for IDE support
@@ -48,6 +51,7 @@ dependencies {
     
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.junit.jupiter:junit-jupiter'
