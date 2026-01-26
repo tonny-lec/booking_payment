@@ -56,7 +56,6 @@ server:
 
 # -----------------------------------------------------------------------------
 # Actuator Endpoints (Health, Metrics, Info)
-# Spring Boot 4: management.tracing.enabled renamed to management.tracing.export.enabled
 # -----------------------------------------------------------------------------
 management:
   endpoints:
@@ -69,27 +68,43 @@ management:
   info:
     env:
       enabled: true
-  # Tracing configuration (will be expanded in observability setup)
+  # ---------------------------------------------------------------------------
+  # OpenTelemetry Tracing Configuration
+  # - W3C Trace Context propagation (traceparent, tracestate headers)
+  # - OTLP exporter for traces
+  # ---------------------------------------------------------------------------
   tracing:
-    export:
-      enabled: true
+    enabled: true
+    sampling:
+      probability: 1.0  # 100% sampling for dev; use 0.1 (10%) in production
+    propagation:
+      type: w3c  # W3C Trace Context (default)
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318/v1/traces}
+      timeout: 10s
+    metrics:
+      endpoint: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:http://localhost:4318/v1/metrics}
+      timeout: 10s
 
 # -----------------------------------------------------------------------------
-# Logging
-# Spring Boot 4: logging.console.enabled is new (default: true)
-# JSON Structured Logs will be configured in INFRA-05 observability setup
+# Logging Configuration
+# 
+# Structured logging is configured in logback-spring.xml:
+# - dev/local profiles: Human-readable console output with traceId/spanId
+# - prod/production profiles: JSON structured logs (Logstash format)
+# 
+# Log levels defined here are applied across all profiles.
 # -----------------------------------------------------------------------------
 logging:
-  console:
-    enabled: true
   level:
     root: INFO
     com.booking: DEBUG
-    org.flywaydb: DEBUG
-    org.springframework.boot.autoconfigure.flyway: DEBUG
-  # Custom pattern (will be replaced with structured logging in INFRA-05)
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - traceId=%X{traceId:-} spanId=%X{spanId:-} - %msg%n"
+    # Flyway logging for migration debugging
+    org.flywaydb: INFO
+    # OpenTelemetry instrumentation logging
+    io.opentelemetry: INFO
+    io.micrometer: INFO
 
 # -----------------------------------------------------------------------------
 # Application Info
