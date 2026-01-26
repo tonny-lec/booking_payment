@@ -11,6 +11,13 @@ spring:
   threads:
     virtual:
       enabled: true
+  # ---------------------------------------------------------------------------
+  # RFC 7807 Problem Details Support
+  # Enables application/problem+json responses for errors
+  # ---------------------------------------------------------------------------
+  mvc:
+    problemdetails:
+      enabled: true
 
   # ---------------------------------------------------------------------------
   # Database Configuration
