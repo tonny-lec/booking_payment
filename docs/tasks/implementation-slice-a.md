@@ -32,7 +32,7 @@ PRD承認済み、設計ドキュメント完了に基づき、Slice A（最小M
 
 | ID | タスク | 詳細 | 優先度 | 状態 | 依存 |
 |----|--------|------|--------|------|------|
-| IAM-D-01 | UserId 値オブジェクト | UUID基盤のID | 🔴 | ⬜ | INFRA-02 |
+| IAM-D-01 | UserId 値オブジェクト | UUID基盤のID | 🔴 | ✅ | INFRA-02 |
 | IAM-D-02 | Email 値オブジェクト | 形式バリデーション付き | 🔴 | ⬜ | INFRA-02 |
 | IAM-D-03 | HashedPassword 値オブジェクト | BCryptハッシュ値保持 | 🔴 | ⬜ | INFRA-02 |
 | IAM-D-04 | UserStatus 列挙型 | ACTIVE, LOCKED, SUSPENDED | 🔴 | ⬜ | INFRA-02 |
