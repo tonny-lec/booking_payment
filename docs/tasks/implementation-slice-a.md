@@ -35,7 +35,7 @@ PRD承認済み、設計ドキュメント完了に基づき、Slice A（最小M
 | IAM-D-01 | UserId 値オブジェクト | UUID基盤のID | 🔴 | ✅ | INFRA-02 |
 | IAM-D-02 | Email 値オブジェクト | 形式バリデーション付き | 🔴 | ✅ | INFRA-02 |
 | IAM-D-03 | HashedPassword 値オブジェクト | BCryptハッシュ値保持 | 🔴 | ✅ | INFRA-02 |
-| IAM-D-04 | UserStatus 列挙型 | ACTIVE, LOCKED, SUSPENDED | 🔴 | ⬜ | INFRA-02 |
+| IAM-D-04 | UserStatus 列挙型 | ACTIVE, LOCKED, SUSPENDED | 🔴 | ✅ | INFRA-02 |
 | IAM-D-05 | User 集約ルート | iam.md セクション3.1 に準拠 | 🔴 | ⬜ | IAM-D-01〜04 |
 | IAM-D-06 | RefreshToken エンティティ | iam.md セクション3.2 に準拠 | 🔴 | ⬜ | IAM-D-01 |
 | IAM-D-07 | UserLoggedIn イベント | ドメインイベント | 🟡 | ⬜ | IAM-D-05 |
