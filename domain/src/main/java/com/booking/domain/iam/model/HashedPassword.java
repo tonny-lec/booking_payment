@@ -26,9 +26,10 @@ import java.util.regex.Pattern;
  * <p><b>Security note:</b> This class never logs or exposes the actual hash value
  * to prevent accidental exposure of sensitive data.
  *
+ * @param value the bcrypt hash string
  * @see <a href="https://en.wikipedia.org/wiki/Bcrypt">Bcrypt</a>
  */
-public final class HashedPassword {
+public record HashedPassword(String value) {
 
     /**
      * Pattern for valid bcrypt hash formats.
@@ -47,10 +48,15 @@ public final class HashedPassword {
             "^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$"
     );
 
-    private final String value;
-
-    private HashedPassword(String value) {
-        this.value = value;
+    /**
+     * Canonical constructor - should not be called directly.
+     * Use {@link #of(String)} or {@link #fromTrustedSource(String)} factory methods instead.
+     *
+     * @param value the bcrypt hash value
+     * @throws NullPointerException if value is null
+     */
+    public HashedPassword {
+        Objects.requireNonNull(value, "Password hash must not be null");
     }
 
     /**
@@ -124,18 +130,6 @@ public final class HashedPassword {
     }
 
     /**
-     * Returns the bcrypt hash value.
-     *
-     * <p><b>Warning:</b> This method exposes the hash for persistence purposes.
-     * Never log or display this value.
-     *
-     * @return the bcrypt hash string
-     */
-    public String value() {
-        return value;
-    }
-
-    /**
      * Returns the bcrypt cost factor (work factor) from the hash.
      *
      * @return the cost factor as an integer (e.g., 12 for $2a$12$...)
@@ -143,19 +137,6 @@ public final class HashedPassword {
     public int costFactor() {
         // Cost factor is at position 4-5 in the hash (after "$2a$")
         return Integer.parseInt(value.substring(4, 6));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        HashedPassword that = (HashedPassword) o;
-        return value.equals(that.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return value.hashCode();
     }
 
     /**

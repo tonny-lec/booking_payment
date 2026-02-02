@@ -22,14 +22,19 @@ import java.util.UUID;
  * UserId parsedId = UserId.fromString("550e8400-e29b-41d4-a716-446655440000");
  * }</pre>
  *
+ * @param value the underlying UUID value
  * @see UUID
  */
-public final class UserId {
+public record UserId(UUID value) {
 
-    private final UUID value;
-
-    private UserId(UUID value) {
-        this.value = Objects.requireNonNull(value, "UserId value must not be null");
+    /**
+     * Canonical constructor with null validation.
+     *
+     * @param value the UUID value
+     * @throws NullPointerException if value is null
+     */
+    public UserId {
+        Objects.requireNonNull(value, "UserId value must not be null");
     }
 
     /**
@@ -68,38 +73,11 @@ public final class UserId {
     }
 
     /**
-     * Returns the underlying UUID value.
-     *
-     * @return the UUID value
-     */
-    public UUID value() {
-        return value;
-    }
-
-    /**
      * Returns the string representation of the underlying UUID.
      *
      * @return the UUID as a string
      */
     public String asString() {
         return value.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        UserId userId = (UserId) o;
-        return value.equals(userId.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return value.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "UserId[" + value + "]";
     }
 }

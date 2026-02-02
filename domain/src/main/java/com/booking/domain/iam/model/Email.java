@@ -24,9 +24,10 @@ import java.util.regex.Pattern;
  * String normalized = email.value(); // Always lowercase
  * }</pre>
  *
+ * @param value the normalized (lowercase) email address
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc5322">RFC 5322</a>
  */
-public final class Email {
+public record Email(String value) {
 
     /**
      * Maximum allowed length for an email address.
@@ -46,10 +47,15 @@ public final class Email {
             "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
     );
 
-    private final String value;
-
-    private Email(String value) {
-        this.value = value;
+    /**
+     * Canonical constructor - should not be called directly.
+     * Use {@link #of(String)} factory method instead.
+     *
+     * @param value the normalized email value
+     * @throws NullPointerException if value is null
+     */
+    public Email {
+        Objects.requireNonNull(value, "Email must not be null");
     }
 
     /**
@@ -83,15 +89,6 @@ public final class Email {
 
         // Normalize to lowercase for case-insensitive comparison
         return new Email(trimmed.toLowerCase());
-    }
-
-    /**
-     * Returns the normalized (lowercase) email address.
-     *
-     * @return the email address in lowercase
-     */
-    public String value() {
-        return value;
     }
 
     /**
@@ -133,28 +130,18 @@ public final class Email {
         if (atIndex <= 0) {
             return "***";
         }
-        if (atIndex == 1) {
-            return email.charAt(0) + "***@" + email.substring(atIndex + 1);
-        }
         return email.charAt(0) + "***@" + email.substring(atIndex + 1);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Email email = (Email) o;
-        return value.equals(email.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return value.hashCode();
-    }
-
+    /**
+     * Returns a masked representation for safe logging.
+     *
+     * <p>Use masked version in toString to prevent accidental PII exposure in logs.
+     *
+     * @return a masked string representation
+     */
     @Override
     public String toString() {
-        // Use masked version in toString to prevent accidental PII exposure in logs
         return "Email[" + masked() + "]";
     }
 }
