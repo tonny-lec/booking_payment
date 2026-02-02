@@ -26,15 +26,20 @@ import java.util.UUID;
  * RefreshTokenId parsedId = RefreshTokenId.fromString("550e8400-e29b-41d4-a716-446655440000");
  * }</pre>
  *
+ * @param value the underlying UUID value
  * @see UUID
  * @see UserId
  */
-public final class RefreshTokenId {
+public record RefreshTokenId(UUID value) {
 
-    private final UUID value;
-
-    private RefreshTokenId(UUID value) {
-        this.value = Objects.requireNonNull(value, "RefreshTokenId value must not be null");
+    /**
+     * Canonical constructor with null validation.
+     *
+     * @param value the UUID value
+     * @throws NullPointerException if value is null
+     */
+    public RefreshTokenId {
+        Objects.requireNonNull(value, "RefreshTokenId value must not be null");
     }
 
     /**
@@ -73,38 +78,11 @@ public final class RefreshTokenId {
     }
 
     /**
-     * Returns the underlying UUID value.
-     *
-     * @return the UUID value
-     */
-    public UUID value() {
-        return value;
-    }
-
-    /**
      * Returns the string representation of the underlying UUID.
      *
      * @return the UUID as a string
      */
     public String asString() {
         return value.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        RefreshTokenId that = (RefreshTokenId) o;
-        return value.equals(that.value);
-    }
-
-    @Override
-    public int hashCode() {
-        return value.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "RefreshTokenId[" + value + "]";
     }
 }
