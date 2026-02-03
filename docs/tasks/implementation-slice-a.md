@@ -38,7 +38,7 @@ PRD承認済み、設計ドキュメント完了に基づき、Slice A（最小M
 | IAM-D-04 | UserStatus 列挙型 | ACTIVE, LOCKED, SUSPENDED | 🔴 | ✅ | INFRA-02 |
 | IAM-D-05 | User 集約ルート | iam.md セクション3.1 に準拠 | 🔴 | ✅ | IAM-D-01〜04 |
 | IAM-D-06 | RefreshToken エンティティ | iam.md セクション3.2 に準拠 | 🔴 | ✅ | IAM-D-01 |
-| IAM-D-07 | UserLoggedIn イベント | ドメインイベント | 🟡 | ⬜ | IAM-D-05 |
+| IAM-D-07 | UserLoggedIn イベント | ドメインイベント | 🟡 | ✅ | IAM-D-05 |
 | IAM-D-08 | LoginFailed イベント | ドメインイベント | 🟡 | ⬜ | IAM-D-05 |
 | IAM-D-09 | AccountLocked イベント | ドメインイベント | 🟡 | ⬜ | IAM-D-05 |
 
