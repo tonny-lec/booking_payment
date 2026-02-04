@@ -2,7 +2,7 @@
 doc_type: "design"
 id: "overview"
 version: "1.0"
-last_updated: "2026-01-17"
+last_updated: "2026-02-04"
 status: "draft"
 ---
 
@@ -135,6 +135,23 @@ status: "draft"
 │  └───────────────────────────────────────────────────────┘  │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
+```
+
+### 1.4 コード構成（パッケージ）
+
+- Bounded Context をトップに置き、層はその配下に配置する。
+- 横断関心（共通例外、共通Adapterなど）は `com.booking.shared` 配下に集約する。
+
+```
+com.booking.iam.domain.*
+com.booking.iam.application.*
+com.booking.iam.adapter.web.*
+com.booking.iam.adapter.persistence.*
+
+com.booking.booking.domain.*
+com.booking.payment.domain.*
+
+com.booking.shared.*
 ```
 
 ---
