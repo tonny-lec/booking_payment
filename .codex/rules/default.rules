@@ -3,18 +3,22 @@
 # Goal: Allow most git operations, but prevent direct pushes to main.
 
 prefix_rule(
+    pattern = [["bash", "sh", "zsh"], ["-lc", "-c"], "cat"],
+    decision = "allow",
+    justification = "cat is safe even when invoked via a shell wrapper.",
+    match = [
+        "bash -lc \"cat README.md\"",
+        "sh -c \"cat README.md\"",
+        "zsh -lc \"cat README.md\"",
+    ],
+)
+
+prefix_rule(
     pattern = [["bash", "sh", "zsh"], ["-lc", "-c"]],
     decision = "prompt",
     justification = "Redirection/heredoc are treated as a shell script; require approval.",
     match = [
         "bash -lc \"cat <<'EOF' > /tmp/pr-body.md\nhello\nEOF\"",
-    ],
-    not_match = [
-        "bash -lc \"cat README.md\"",
-        "bash -lc \"cat /tmp/file\"",
-        "bash -lc \"cat <<'EOF' > /tmp/allowed.md\nhello\nEOF\"",
-        "sh -c \"cat README.md\"",
-        "zsh -lc \"cat README.md\"",
     ],
 )
 
