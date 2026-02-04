@@ -3,7 +3,7 @@ doc_type: "prd"
 id: "prd-platform"
 version: "0.2"
 last_updated: "2026-01-16"
-status: "approved"   # proposed | approved | archived
+status: "proposed"   # proposed | approved | archived
 ---
 
 # PRD: 予約・決済基盤（Platform）
