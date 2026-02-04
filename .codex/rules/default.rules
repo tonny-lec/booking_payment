@@ -41,8 +41,8 @@ prefix_rule(
 # Safer default: always prompt before ANY git push (high-impact side effect).
 prefix_rule(
     pattern = ["git", "push"],
-    decision = "prompt",
-    justification = "Pushing is high-impact; require approval for any push.",
+    decision = "allow",
+    justification = "Allow git push except protected main (blocked below).",
     match = [
         "git push origin feature/x",
         "git push --set-upstream origin feature/x",
