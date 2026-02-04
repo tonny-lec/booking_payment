@@ -69,6 +69,27 @@ springdoc:
         url: /openapi/payment.yaml
 
 # -----------------------------------------------------------------------------
+# Application Settings
+# -----------------------------------------------------------------------------
+app:
+  api-errors:
+    type-base-uri: https://api.booking-payment.com/errors/
+    include-trace-id: true
+    include-timestamp: true
+  openapi:
+    validation:
+      path-to-spec:
+        /api/v1/auth/**: /static/openapi/iam.yaml
+        /api/v1/bookings/**: /static/openapi/booking.yaml
+        /api/v1/payments/**: /static/openapi/payment.yaml
+      ignored-path-patterns:
+        - /actuator/**
+        - /swagger-ui/**
+        - /v3/api-docs/**
+        - /openapi/**
+        - /error
+
+# -----------------------------------------------------------------------------
 # Server Configuration
 # -----------------------------------------------------------------------------
 server:

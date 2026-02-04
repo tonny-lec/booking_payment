@@ -1,5 +1,6 @@
 package com.booking.shared.adapter.web.openapi;
 
+import com.booking.shared.adapter.web.config.OpenApiValidationProperties;
 import com.github.erosb.kappa.autoconfigure.EnableKappaRequestValidation;
 import com.github.erosb.kappa.autoconfigure.KappaSpringConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -14,21 +15,22 @@ import java.util.LinkedHashMap;
 @EnableKappaRequestValidation
 public class OpenApiValidationConfig {
 
+    private final OpenApiValidationProperties properties;
+
+    public OpenApiValidationConfig(OpenApiValidationProperties properties) {
+        this.properties = properties;
+    }
+
     @Bean
     public KappaSpringConfiguration kappaConfig() {
         var config = new KappaSpringConfiguration();
-        var mapping = new LinkedHashMap<String, String>();
-        mapping.put("/api/v1/auth/**", "/static/openapi/iam.yaml");
-        mapping.put("/api/v1/bookings/**", "/static/openapi/booking.yaml");
-        mapping.put("/api/v1/payments/**", "/static/openapi/payment.yaml");
+        var mapping = new LinkedHashMap<>(properties.getPathToSpec());
         config.setOpenapiDescriptions(mapping);
-        config.setIgnoredPathPatterns(
-                "/actuator/**",
-                "/swagger-ui/**",
-                "/v3/api-docs/**",
-                "/openapi/**",
-                "/error"
-        );
+        if (!properties.getIgnoredPathPatterns().isEmpty()) {
+            config.setIgnoredPathPatterns(
+                    properties.getIgnoredPathPatterns().toArray(new String[0])
+            );
+        }
         return config;
     }
 }
