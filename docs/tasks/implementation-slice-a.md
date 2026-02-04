@@ -54,7 +54,7 @@ PRD承認済み、設計ドキュメント完了に基づき、Slice A（最小M
 | IAM-A-04 | PasswordEncoder ポート | BCryptインターフェース | 🔴 | ✅ | INFRA-02 | [IAM-A-04](./02-usecases.md#UC-0-IAM) |
 | IAM-A-05 | LoginUseCase | ログイン処理ユースケース | 🔴 | ✅ | IAM-A-01〜04 | [IAM-A-05](./02-usecases.md#UC-0-IAM) |
 | IAM-A-06 | RefreshTokenUseCase | トークン更新ユースケース | 🔴 | ✅ | IAM-A-02, IAM-A-03 | [IAM-A-06](./02-usecases.md#UC-0-IAM) |
-| IAM-A-07 | LogoutUseCase | ログアウト処理ユースケース | 🔴 | ⬜ | IAM-A-02 | [IAM-A-07](./02-usecases.md#UC-0-IAM) |
+| IAM-A-07 | LogoutUseCase | ログアウト処理ユースケース | 🔴 | ✅ | IAM-A-02 | [IAM-A-07](./02-usecases.md#UC-0-IAM) |
 
 ### 1.3 アダプター層（インフラ）
 
