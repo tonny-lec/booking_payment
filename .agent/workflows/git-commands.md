@@ -135,12 +135,117 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 ### PRタイトル形式
 ```
-docs: <タスクの要約>
+<type>(<scope>): <summary>
 ```
+
+| type | 用途 |
+|------|------|
+| `feat` | 新機能 |
+| `fix` | バグ修正 |
+| `docs` | ドキュメントのみ |
+| `refactor` | リファクタリング |
+| `test` | テスト追加・修正 |
+| `chore` | 設定・ツール変更 |
+
 例：
+- `feat(iam): add RefreshToken entity`
+- `fix(booking): resolve time range overlap detection`
 - `docs: add IAM context design`
-- `docs: complete booking-update usecase`
-- `docs: add POST /auth/login endpoint to OpenAPI`
+
+---
+
+## PR作成ワークフロー
+
+### 1. PR作成前の確認
+```bash
+# 変更内容の確認
+git status
+git diff --stat
+git log main..HEAD --oneline
+```
+
+### 2. PR作成コマンド
+```bash
+gh pr create --title "<type>(<scope>): <summary>" --body "$(cat <<'EOF'
+## Summary
+
+- <変更内容1>
+- <変更内容2>
+
+## Changes
+
+### New Files
+
+| File | Description |
+|------|-------------|
+| `path/to/file` | Description |
+
+### Key Implementation Details
+
+<実装の詳細説明>
+
+## Design Decisions
+
+1. **決定事項** - 理由
+
+## Test Coverage
+
+- <テスト内容>
+
+## Test plan
+
+- [x] テスト項目1
+- [x] テスト項目2
+
+## Related
+
+- Task: <タスクID>
+- Spec: `docs/design/contexts/<context>.md` section X.X
+
+---
+Generated with [Claude Code](https://claude.ai/code)
+EOF
+)"
+```
+
+### 3. PR更新コマンド
+```bash
+# PR本文の更新
+gh pr edit <PR番号> --body "$(cat <<'EOF'
+<更新された本文>
+EOF
+)"
+
+# PRタイトルの更新
+gh pr edit <PR番号> --title "<新しいタイトル>"
+```
+
+### 4. 詳細度ガイドライン
+
+| 変更規模 | Summary | Changes | Design Decisions |
+|----------|---------|---------|------------------|
+| 小（1-2ファイル） | 1-2行 | ファイル一覧のみ | 省略可 |
+| 中（3-5ファイル） | 2-3行 | ファイル一覧＋概要 | 重要な判断のみ |
+| 大（6ファイル以上） | 3行＋背景 | 詳細な実装説明＋コード例 | 全ての設計判断 |
+
+### 5. コード実装PRの必須項目
+
+コード（Java等）を含むPRでは、以下を必ず記載：
+
+- **Key Implementation Details**
+  - 主要クラス/インターフェースの説明
+  - コードスニペット（インターフェース定義、主要メソッド等）
+
+- **入出力例**（該当する場合）
+  ```markdown
+  | Type | Input | Output |
+  |------|-------|--------|
+  | IPv4 | `192.168.1.100` | `192.168.1.***` |
+  ```
+
+- **テスト詳細**
+  - テストケース数
+  - カバー範囲（正常系、異常系、境界値等）
 
 ---
 
@@ -148,4 +253,7 @@ docs: <タスクの要約>
 
 - `agents/rules.md` - システムルール（Must/Must Not、Git Flow）
 - `docs/tasks/by-feature.md` - タスク一覧・進捗管理
+- `.github/pull_request_template.md` - GitHubテンプレート
+- `agents/templates/pr-template.md` - PRテンプレート詳細ガイド
+- `docs/tasks/implementation-slice-a.md` - タスク一覧・進捗管理
 - `AGENTS.md` - エージェント向けガイドライン

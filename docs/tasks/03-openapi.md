@@ -2,71 +2,72 @@
 
 ## 概要
 - 対象フォルダ: `docs/api/openapi/`
-- 状態: 4ファイルが空（paths: {}）、3ファイルは完了済み
+- 状態: 5完了 / 2未完了（gateway, ledger）
 - 優先度: **中**
-
----
-
-## 完了済み
-- [x] `iam.yaml` - Slice A（login/refresh/logout）
-- [x] `booking.yaml` - Slice A（CRUD + 衝突検出）
-- [x] `payment.yaml` - Slice A（create/capture/refund + 冪等性）
+- 関連: [by-feature.md](./by-feature.md), [implementation-slice-a.md](./implementation-slice-a.md)
 
 ---
 
 ## タスク一覧
 
-### API-1: Audit API
+<a id="API-IAM"></a>
+### API-IAM: IAM API
+- ファイル: `docs/api/openapi/iam.yaml`
+- Slice: A
+- 状態: ✅ 完了
+- 関連: [by-feature](./by-feature.md#BF-IAM), [implementation-slice-a](./implementation-slice-a.md#IMPL-IAM)
+
+<a id="API-BOOKING"></a>
+### API-BOOKING: Booking API
+- ファイル: `docs/api/openapi/booking.yaml`
+- Slice: A
+- 状態: ✅ 完了
+- 関連: [by-feature](./by-feature.md#BF-BOOKING), [implementation-slice-a](./implementation-slice-a.md#IMPL-BOOKING)
+
+<a id="API-PAYMENT"></a>
+### API-PAYMENT: Payment API
+- ファイル: `docs/api/openapi/payment.yaml`
+- Slice: A
+- 状態: ✅ 完了
+- 関連: [by-feature](./by-feature.md#BF-PAYMENT), [implementation-slice-a](./implementation-slice-a.md#IMPL-PAYMENT)
+
+<a id="API-AUDIT"></a>
+### API-AUDIT: Audit API
 - ファイル: `docs/api/openapi/audit.yaml`
 - Slice: B
-- 優先度: 中
-- 現状: `paths: {}` （空）
-- 必要なエンドポイント:
-  - [ ] GET /audit-logs - 監査ログ一覧取得
-  - [ ] GET /audit-logs/{id} - 監査ログ詳細取得
-- 必要なスキーマ:
-  - [ ] AuditLog
-  - [ ] AuditLogListResponse
-  - [ ] ProblemDetail（共通）
-- セキュリティ:
-  - [ ] Bearer認証
-  - [ ] 管理者権限のみ閲覧可能
+- 状態: ✅ 完了
+- 関連: [by-feature](./by-feature.md#BF-AUDIT)
 
-### API-2: Notification API
+<a id="API-NOTIFICATION"></a>
+### API-NOTIFICATION: Notification API
 - ファイル: `docs/api/openapi/notification.yaml`
 - Slice: B
-- 優先度: 中
-- 現状: `paths: {}` （空）
-- 必要なエンドポイント:
-  - [ ] POST /notifications - 通知送信（内部用）
-  - [ ] GET /notifications - 通知履歴一覧
-  - [ ] GET /notifications/{id} - 通知詳細
-- 必要なスキーマ:
-  - [ ] Notification
-  - [ ] NotificationStatus
-  - [ ] NotificationListResponse
-  - [ ] ProblemDetail（共通）
-- セキュリティ:
-  - [ ] Bearer認証
-  - [ ] 所有者のみ閲覧可能
+- 状態: ✅ 完了
+- 関連: [by-feature](./by-feature.md#BF-NOTIFICATION)
 
-### API-3: Gateway API
+<a id="API-GATEWAY"></a>
+### API-GATEWAY: Gateway API
 - ファイル: `docs/api/openapi/gateway.yaml`
 - Slice: 共通
-- 優先度: 低
-- 現状: `paths: {}` （空）
-- 必要なエンドポイント:
-  - [ ] API Gatewayルーティング定義（検討中）
-- 備考: 各サービスAPIの集約ポイント、必要性を要検討
+- 状態: ⬜ 未着手
+- 現状: `paths: {}`
+- 関連: [by-feature](./by-feature.md)
 
-### API-4: Ledger API（未作成）
-- ファイル: `docs/api/openapi/ledger.yaml`（新規作成が必要）
+未完了項目:
+- [ ] ルーティング/認可/バージョニング方針
+- [ ] パス定義（必要であれば）
+
+<a id="API-LEDGER"></a>
+### API-LEDGER: Ledger API
+- ファイル: `docs/api/openapi/ledger.yaml`（新規）
 - Slice: D
-- 優先度: 低
-- 必要なエンドポイント:
-  - [ ] GET /ledger/entries - 台帳エントリ一覧
-  - [ ] GET /ledger/balance - 残高照会
-- 備考: Slice D対象、現時点では作成不要
+- 状態: ⬜ 未着手
+- 関連: [by-feature](./by-feature.md#BF-LEDGER)
+
+未完了項目:
+- [ ] GET /ledger/entries
+- [ ] GET /ledger/balance
+- [ ] スキーマ定義（LedgerEntry/Balance）
 
 ---
 
