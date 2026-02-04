@@ -60,7 +60,7 @@ PRD承認済み、設計ドキュメント完了に基づき、Slice A（最小M
 
 | ID | タスク | 詳細 | 優先度 | 状態 | 依存 | 参照 |
 | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
-| IAM-I-01 | users テーブル DDL | Flywayマイグレーション | 🔴 | ⬜ | INFRA-04 | [IAM-I-01](./01-contexts.md#CTX-1) |
+| IAM-I-01 | users テーブル DDL | Flywayマイグレーション | 🔴 | ✅ | INFRA-04 | [IAM-I-01](./01-contexts.md#CTX-1) |
 | IAM-I-02 | refresh_tokens テーブル DDL | Flywayマイグレーション | 🔴 | ⬜ | INFRA-04 | [IAM-I-02](./01-contexts.md#CTX-1) |
 | IAM-I-03 | JpaUserRepository | User永続化実装 | 🔴 | ⬜ | IAM-A-01, IAM-I-01 | [IAM-I-03](./01-contexts.md#CTX-1) |
 | IAM-I-04 | JpaRefreshTokenRepository | RefreshToken永続化実装 | 🔴 | ⬜ | IAM-A-02, IAM-I-02 | [IAM-I-04](./01-contexts.md#CTX-1) |
