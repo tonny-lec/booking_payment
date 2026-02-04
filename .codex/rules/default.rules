@@ -1,0 +1,127 @@
+# ~/.codex/rules/default.rules
+# Codex Rules (Starlark)
+# Goal: Allow most git operations, but prevent direct pushes to main.
+
+# Allow all git commands by default.
+prefix_rule(
+    pattern = ["git"],
+    decision = "allow",
+    justification = "Git operations are generally allowed.",
+    match = [
+        "git status",
+        "git diff",
+        "git add -A",
+        "git commit -m 'wip'",
+        "git fetch",
+        "git pull --rebase",
+        "git switch -c feature/x",
+    ],
+)
+
+# Safer default: always prompt before ANY git push (high-impact side effect).
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "prompt",
+    justification = "Pushing is high-impact; require approval for any push.",
+    match = [
+        "git push origin feature/x",
+        "git push --set-upstream origin feature/x",
+    ],
+    not_match = [
+        "git pushy thing",  # not a real git command; should not match
+    ],
+)
+
+# ---- Hard blocks: anything that directly targets main on origin ----
+
+# Block: git push origin main [--flags...]
+prefix_rule(
+    pattern = ["git", "push", "origin", "main"],
+    decision = "forbidden",
+    justification = "Do not push directly to main. Use a feature branch + PR.",
+    match = [
+        "git push origin main",
+        "git push origin main --force",
+    ],
+)
+
+# Block: flags before remote (common)
+prefix_rule(
+    pattern = ["git", "push", ["--force", "-f", "--force-with-lease"], "origin", "main"],
+    decision = "forbidden",
+    justification = "Never force-push to main. Use PR + protected branch.",
+    match = [
+        "git push --force origin main",
+        "git push -f origin main",
+        "git push --force-with-lease origin main",
+    ],
+)
+
+# Block: refspec variants that still update main
+prefix_rule(
+    pattern = ["git", "push", "origin", "HEAD:main"],
+    decision = "forbidden",
+    justification = "Do not update main directly (refspec). Use a PR.",
+    match = [
+        "git push origin HEAD:main",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "origin", "main:main"],
+    decision = "forbidden",
+    justification = "Do not update main directly (refspec). Use a PR.",
+    match = [
+        "git push origin main:main",
+    ],
+)
+
+# Block: deleting main
+prefix_rule(
+    pattern = ["git", "push", "origin", ":main"],
+    decision = "forbidden",
+    justification = "Never delete main remotely.",
+    match = [
+        "git push origin :main",
+    ],
+)
+
+# riggrep
+prefix_rule(
+    pattern = ["rg"],
+    decision = "allow",
+    justification = "riggrep is a safe command.",
+    match = [
+        "rg -l",
+    ],
+)
+
+# mkdir
+prefix_rule(
+    pattern = ["mkdir"],
+    decision = "allow",
+    justification = "mkdir is a safe command.",
+    match = [
+        "mkdir -p",
+    ],
+)
+
+# cat
+prefix_rule(
+    pattern = ["cat"],
+    decision = "allow",
+    justification = "cat is a safe command.",
+    match = [
+        "cat",
+    ],
+)
+
+# ls
+prefix_rule(
+    pattern = ["ls"],
+    decision = "allow",
+    justification = "ls is a safe command.",
+    match = [
+        "ls",
+    ],
+)
