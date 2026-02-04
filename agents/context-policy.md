@@ -19,9 +19,9 @@ status: "stable"
 
 情報を探す際は、以下の順序で確認する：
 
-1. `docs/agent/rules.md` - システムルール
-2. `docs/agent/workflow.md` - ワークフロー手順
-3. `docs/agent/self-check.md` - セルフチェックリスト
+1. `agents/rules.md` - システムルール
+2. `agents/workflow.md` - ワークフロー手順
+3. `agents/self-check.md` - セルフチェックリスト
 4. PRD（`docs/prd-*.md`） - 製品要件
 5. `docs/domain/glossary.md` - ドメイン用語
 6. `docs/api/openapi/*.yaml` - API契約
@@ -58,7 +58,7 @@ status: "stable"
 | **認証・認可** | `docs/design/contexts/iam.md`, `docs/security/*.md` |
 | **予約機能** | `docs/design/contexts/booking.md`, `docs/design/usecases/booking-*.md` |
 | **決済機能** | `docs/design/contexts/payment.md`, `docs/design/usecases/payment-*.md` |
-| **セキュリティ** | `docs/security/*.md`, `docs/agent/rules.md` |
+| **セキュリティ** | `docs/security/*.md`, `agents/rules.md` |
 | **テスト設計** | `docs/test/*.md`, `docs/design/usecases/*.md` |
 | **観測性** | `docs/design/observability.md` |
 

@@ -26,7 +26,7 @@ Follow this 7-phase workflow for all development tasks:
 | 5 | **Validate** | Run tests, lint, build, manual verification |
 | 6 | **Report** | Document what changed, how it was verified, remaining tasks |
 
-**Reference**: `docs/agent/workflow.md` for detailed phase instructions.
+**Reference**: `agents/workflow.md` for detailed phase instructions.
 
 ## Self-Check (Before Task Completion)
 
@@ -36,7 +36,7 @@ Follow this 7-phase workflow for all development tasks:
 - [ ] Proposed rule updates for any errors encountered?
 - [ ] All tests pass?
 
-**Reference**: `docs/agent/self-check.md` for phase-specific checklists.
+**Reference**: `agents/self-check.md` for phase-specific checklists.
 
 ## Commands
 
@@ -89,15 +89,16 @@ src/main/java/.../<module>/
 
 **Forbidden dependencies**: `domain → adapter`, `domain → spring`
 
-## Key Rules (from docs/agent/rules.md)
+## Key Rules (from agents/rules.md)
 
 ### Must
 1. **PRD-First**: No code changes without approved PRD (`status: approved`)
 2. **Evidence-First**: All proposals/changes require evidence (diff/log/metrics/spec)
-3. **Small Changes**: Minimal changes, verify each increment
-4. **Tests Gate**: Failing tests = rejected changes
-5. **No Secrets/PII**: Never output secrets or PII to logs, traces, or AI output
-6. **Git Flow**: Always use feature branches, never push directly to main
+3. **Context Management**: SSOT reference order, Modular rules, Context reset procedures (`agents/context-policy.md`)
+4. **Small Changes**: Minimal changes, verify each increment
+5. **Tests Gate**: Failing tests = rejected changes
+6. **No Secrets/PII**: Never output secrets or PII to logs, traces, or AI output
+7. **Git Flow**: Always use feature branches, never push directly to main
 
 ### Must Not
 - Ignore SSOT and change only code
@@ -117,28 +118,3 @@ git checkout -b <type>/<description>
 # Commit format: <type>: <summary>
 # Types: feat, fix, docs, refactor, test, chore
 ```
-
-## SSOT Reference Order
-
-When seeking information, check in this order:
-1. `docs/agent/rules.md` - System rules
-2. `docs/agent/workflow.md` - Workflow procedures
-3. `docs/prd-*.md` - Product requirements
-4. `docs/domain/glossary.md` - Domain terminology
-5. `docs/api/openapi/*.yaml` - API contracts
-6. `docs/design/usecases/*.md` - Use case designs
-7. `docs/design/contexts/*.md` - Context designs
-8. `docs/plan/*.md` - Plans
-9. `docs/test/*.md` - Test guidance
-10. `checkpoint.md` - Session state
-
-## Before Starting Work
-
-Ask yourself:
-- Which domain area? (Frontend / Backend / Auth / DB / Messaging / Observability / Security)
-- What type of change? (feature / bugfix / performance / compatibility / security)
-- What verification? (unit / integration / contract / e2e / load)
-
-## Long Conversations
-
-When context grows large, update `checkpoint.md` to summarize state and use it as SSOT going forward.

@@ -84,4 +84,4 @@
 - OWASP Top 10相当の脅威を考慮
 - PIIマスキングルールが明確
 - シークレット管理方針が定義
-- `docs/agent/rules.md` と整合（No Secrets / No PII）
+- `agents/rules.md` と整合（No Secrets / No PII）
