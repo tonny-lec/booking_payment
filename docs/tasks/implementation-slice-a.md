@@ -63,7 +63,7 @@ PRD承認済み、設計ドキュメント完了に基づき、Slice A（最小M
 | IAM-I-01 | users テーブル DDL | Flywayマイグレーション | 🔴 | ✅ | INFRA-04 | [IAM-I-01](./01-contexts.md#CTX-1) |
 | IAM-I-02 | refresh_tokens テーブル DDL | Flywayマイグレーション | 🔴 | ✅ | INFRA-04 | [IAM-I-02](./01-contexts.md#CTX-1) |
 | IAM-I-03 | JpaUserRepository | User永続化実装 | 🔴 | ✅ | IAM-A-01, IAM-I-01 | [IAM-I-03](./01-contexts.md#CTX-1) |
-| IAM-I-04 | JpaRefreshTokenRepository | RefreshToken永続化実装 | 🔴 | ⬜ | IAM-A-02, IAM-I-02 | [IAM-I-04](./01-contexts.md#CTX-1) |
+| IAM-I-04 | JpaRefreshTokenRepository | RefreshToken永続化実装 | 🔴 | ✅ | IAM-A-02, IAM-I-02 | [IAM-I-04](./01-contexts.md#CTX-1) |
 | IAM-I-05 | JwtTokenGenerator | JWT生成実装 (RS256) | 🔴 | ⬜ | IAM-A-03 | [IAM-I-05](./01-contexts.md#CTX-1) |
 | IAM-I-06 | BCryptPasswordEncoder | BCrypt実装 (cost=12) | 🔴 | ⬜ | IAM-A-04 | [IAM-I-06](./01-contexts.md#CTX-1) |
 
