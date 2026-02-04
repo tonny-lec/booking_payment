@@ -118,6 +118,20 @@ git checkout -b <type>/<description>
 # Types: feat, fix, docs, refactor, test, chore
 ```
 
+## Pull Request Guidelines
+
+PRを作成する際は、テンプレート（`.github/pull_request_template.md`）に従い、以下を必ず含める：
+
+1. **Summary**: 変更内容の要約（1-3箇条書き）
+2. **Changes**: 変更ファイル一覧と実装詳細
+3. **Test plan**: 検証チェックリスト
+4. **Related**: 関連タスクID・仕様へのリンク
+
+**PRタイトル形式**: `<type>(<scope>): <summary>`
+- 例: `feat(iam): add RefreshToken entity`
+
+**Reference**: `docs/templates/pr-template.md` for detailed guidelines.
+
 ## SSOT Reference Order
 
 When seeking information, check in this order:

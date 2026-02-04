@@ -135,17 +135,58 @@ docs/<context>-<document>
 
 ### PRタイトル形式
 ```
-docs: <タスクの要約>
+<type>(<scope>): <summary>
 ```
+
+| type | 用途 |
+|------|------|
+| `feat` | 新機能 |
+| `fix` | バグ修正 |
+| `docs` | ドキュメントのみ |
+| `refactor` | リファクタリング |
+| `test` | テスト追加・修正 |
+| `chore` | 設定・ツール変更 |
+
 例：
+- `feat(iam): add RefreshToken entity`
+- `fix(booking): resolve time range overlap detection`
 - `docs: add IAM context design`
-- `docs: complete booking-update usecase`
-- `docs: add POST /auth/login endpoint to OpenAPI` （OpenAPI）
-- `docs: add POST /payments endpoint with idempotency` （OpenAPI）
+- `docs: add POST /auth/login endpoint to OpenAPI`
 
 ### タスク参照
-- PRの説明にタスクID（例：`IAM-CTX-01`）を記載
-- 完了後は `docs/tasks/by-feature.md` のステータスを更新
+- PRの説明にタスクID（例：`IAM-D-06`）を記載
+- 完了後は `docs/tasks/implementation-slice-a.md` のステータスを更新
+
+---
+
+## PR作成ルール
+
+### 必須セクション
+PRを作成する際は、以下のセクションを必ず含めること：
+
+1. **Summary**：変更内容の要約（1-3箇条書き）
+2. **Changes**：変更ファイル一覧と実装詳細
+3. **Test Coverage**：テスト内容
+4. **Test plan**：検証チェックリスト
+5. **Related**：関連タスクID・仕様へのリンク
+
+### 詳細度ガイドライン
+
+| 変更規模 | Summary | Changes | Design Decisions |
+|----------|---------|---------|------------------|
+| 小（1-2ファイル） | 1-2行 | ファイル一覧のみ | 省略可 |
+| 中（3-5ファイル） | 2-3行 | ファイル一覧＋概要 | 重要な判断のみ |
+| 大（6ファイル以上） | 3行＋背景 | 詳細な実装説明＋コード例 | 全ての設計判断 |
+
+### コード実装PRの必須項目
+コード（Java等）を含むPRでは、以下を必ず記載：
+- **Key Implementation Details**：主要クラス/インターフェースの説明
+- **コードスニペット**：重要な構造を示す（インターフェース定義、主要メソッド等）
+- **入出力例**：該当する場合（マスキング処理、変換処理等）
+
+### テンプレート参照
+- `.github/pull_request_template.md` - GitHubテンプレート（自動適用）
+- `docs/templates/pr-template.md` - 詳細ガイドライン
 
 ---
 
