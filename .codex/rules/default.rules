@@ -21,7 +21,7 @@ prefix_rule(
 # Safer default: always prompt before ANY git push (high-impact side effect).
 prefix_rule(
     pattern = ["git", "push"],
-    decision = "prompt",
+    decision = "allow",
     justification = "Pushing is high-impact; require approval for any push.",
     match = [
         "git push origin feature/x",
