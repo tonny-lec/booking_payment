@@ -2,7 +2,7 @@
 doc_type: "plan"
 id: "file-map"
 version: "0.3"
-last_updated: "2026-01-22"
+last_updated: "2026-02-04"
 status: "draft"
 ---
 
@@ -11,13 +11,13 @@ status: "draft"
 ## ディレクトリ構成（モジュール別）
 
 ```text
-src/main/java/.../
-  <module>/
-    domain/       # ドメインモデル（集約、値オブジェクト、ドメインイベント）
-    application/  # ユースケース（アプリケーションサービス）
-    adapter/in/   # 入力アダプタ（REST Controller）
-    adapter/out/  # 出力アダプタ（Repository実装、外部API）
-    config/       # Spring設定
+domain/src/main/java/com/booking/<context>/domain/...          # ドメインモデル
+application/src/main/java/com/booking/<context>/application/... # ユースケース
+adapter-web/src/main/java/com/booking/<context>/adapter/web/... # 入力アダプタ
+adapter-persistence/src/main/java/com/booking/<context>/adapter/persistence/... # 出力アダプタ
+bootstrap/src/main/java/com/booking/...                         # Spring Boot エントリポイント/設定
+
+*/src/main/java/com/booking/shared/...                          # 横断関心（共通例外/共通Adapter等）
 ```
 
 ## 禁止依存
