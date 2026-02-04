@@ -3,6 +3,15 @@
 # Goal: Allow most git operations, but prevent direct pushes to main.
 
 prefix_rule(
+    pattern = [["bash", "sh", "zsh"], ["-lc", "-c"]],
+    decision = "prompt",
+    justification = "Redirection/heredoc are treated as a shell script; require approval.",
+    match = [
+        "bash -lc \"cat <<'EOF' > /tmp/pr-body.md\nhello\nEOF\"",
+    ],
+)
+
+prefix_rule(
     pattern = [["bash", "sh", "zsh"], ["-lc", "-c"], "cat"],
     decision = "allow",
     justification = "cat is safe even when invoked via a shell wrapper.",
@@ -10,15 +19,6 @@ prefix_rule(
         "bash -lc \"cat README.md\"",
         "sh -c \"cat README.md\"",
         "zsh -lc \"cat README.md\"",
-    ],
-)
-
-prefix_rule(
-    pattern = [["bash", "sh", "zsh"], ["-lc", "-c"]],
-    decision = "prompt",
-    justification = "Redirection/heredoc are treated as a shell script; require approval.",
-    match = [
-        "bash -lc \"cat <<'EOF' > /tmp/pr-body.md\nhello\nEOF\"",
     ],
 )
 
@@ -41,7 +41,7 @@ prefix_rule(
 # Safer default: always prompt before ANY git push (high-impact side effect).
 prefix_rule(
     pattern = ["git", "push"],
-    decision = "allow",
+    decision = "prompt",
     justification = "Pushing is high-impact; require approval for any push.",
     match = [
         "git push origin feature/x",
@@ -110,7 +110,7 @@ prefix_rule(
 prefix_rule(
     pattern = ["gh", "pr", ["view", "list", "status", "diff", "checks", "create", "checkout"]],
     decision = "allow",
-    justification = "Read-only PR inspection.",
+    justification = "PR operations are generally allowed.",
     match = [
         "gh pr list",
         "gh pr view 123",
