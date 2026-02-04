@@ -69,4 +69,11 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
+tasks.named('processResources') {
+    from("${rootDir}/docs/api/openapi") {
+        include '*.yaml'
+        into 'static/openapi'
+    }
+}
+
 // Application entry point, Configuration, Component scanning

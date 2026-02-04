@@ -23,6 +23,12 @@ dependencies {
     
     // Spring Security for authentication/authorization
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // OpenAPI (contract-first) + Swagger UI
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${rootProject.versions.springdoc}"
+
+    // OpenAPI request validation
+    implementation "com.github.erosb:kappa-spring:${rootProject.versions.kappa}"
     
     // JWT support (version managed in root build.gradle)
     implementation "io.jsonwebtoken:jjwt-api:${rootProject.versions.jjwt}"

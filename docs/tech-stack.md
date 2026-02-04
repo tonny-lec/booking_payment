@@ -15,6 +15,8 @@ status: "draft"
 ## Framework / Libraries（推奨）
 - Spring Boot（Web）
 - Spring Security（AuthN/AuthZ）
+- Springdoc OpenAPI（Swagger UI）
+- Kappa（OpenAPIリクエスト検証）
 - OpenTelemetry（トレース/メトリクス/ログ相関）
 - OpenAPI 3.0（契約ファースト）
 

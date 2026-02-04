@@ -15,13 +15,15 @@ plugins {
 ext {
     versions = [
         springBoot              : '4.0.2',
+        springdoc               : '3.0.1',
         opentelemetry           : '1.45.0',
         opentelemetryInstr      : '2.24.0',  // OpenTelemetry Instrumentation (separate versioning)
         testcontainers          : '1.20.5',
         archunit                : '1.4.0',
         mockito                 : '5.17.0',
         jjwt                    : '0.12.6',
-        flyway                  : '11.2.0'
+        flyway                  : '11.2.0',
+        kappa                   : '2.0.4'
     ]
 }
 
@@ -76,7 +78,6 @@ tasks.wrapper {
     gradleVersion = '9.2.1'
     distributionType = Wrapper.DistributionType.BIN
 }
-
 
 
 
