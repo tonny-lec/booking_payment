@@ -34,6 +34,9 @@ dependencies {
     implementation "io.jsonwebtoken:jjwt-api:${rootProject.versions.jjwt}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${rootProject.versions.jjwt}"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${rootProject.versions.jjwt}"
+
+    // Configuration metadata for @ConfigurationProperties
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

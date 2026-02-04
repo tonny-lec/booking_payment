@@ -1,5 +1,6 @@
 package com.booking.shared.adapter.web.exception;
 
+import com.booking.shared.adapter.web.config.ApiErrorProperties;
 import com.booking.shared.exception.BusinessRuleViolationException;
 import com.booking.shared.exception.ConflictException;
 import com.booking.shared.exception.ForbiddenException;
@@ -32,7 +33,7 @@ class GlobalExceptionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new GlobalExceptionHandler();
+        handler = new GlobalExceptionHandler(new ApiErrorProperties());
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRequestURI("/bookings/123");
         webRequest = new ServletWebRequest(request);

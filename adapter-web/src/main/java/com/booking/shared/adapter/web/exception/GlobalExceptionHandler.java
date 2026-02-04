@@ -1,5 +1,6 @@
 package com.booking.shared.adapter.web.exception;
 
+import com.booking.shared.adapter.web.config.ApiErrorProperties;
 import com.booking.shared.exception.BusinessRuleViolationException;
 import com.booking.shared.exception.ConflictException;
 import com.booking.shared.exception.DomainException;
@@ -51,10 +52,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    private static final String ERROR_TYPE_BASE_URI = "https://api.booking-payment.com/errors/";
     private static final String TRACE_ID_KEY = "traceId";
     private static final String ERROR_CODE_KEY = "errorCode";
     private static final String TIMESTAMP_KEY = "timestamp";
+
+    private final ApiErrorProperties apiErrorProperties;
+
+    public GlobalExceptionHandler(ApiErrorProperties apiErrorProperties) {
+        this.apiErrorProperties = apiErrorProperties;
+    }
 
     // =========================================================================
     // Domain Exception Handlers
@@ -271,7 +277,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
 
-        problem.setType(URI.create(ERROR_TYPE_BASE_URI + errorCode.toLowerCase().replace("_", "-")));
+        problem.setType(resolveTypeUri(errorCode));
         problem.setTitle(title);
 
         // Set instance to the request URI if available
@@ -282,15 +288,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         // Add custom properties
         problem.setProperty(ERROR_CODE_KEY, errorCode);
-        problem.setProperty(TIMESTAMP_KEY, Instant.now().toString());
+        if (apiErrorProperties.isIncludeTimestamp()) {
+            problem.setProperty(TIMESTAMP_KEY, Instant.now().toString());
+        }
 
-        // Add traceId from MDC if available
-        String traceId = MDC.get(TRACE_ID_KEY);
-        if (traceId != null) {
-            problem.setProperty(TRACE_ID_KEY, traceId);
+        if (apiErrorProperties.isIncludeTraceId()) {
+            String traceId = MDC.get(TRACE_ID_KEY);
+            if (traceId != null) {
+                problem.setProperty(TRACE_ID_KEY, traceId);
+            }
         }
 
         return problem;
+    }
+
+    private URI resolveTypeUri(String errorCode) {
+        String normalized = errorCode.toLowerCase().replace("_", "-");
+        String baseUri = apiErrorProperties.getTypeBaseUri();
+        if (!baseUri.endsWith("/")) {
+            baseUri = baseUri + "/";
+        }
+        return URI.create(baseUri + normalized);
     }
 
     /**
