@@ -9,6 +9,13 @@ prefix_rule(
     match = [
         "bash -lc \"cat <<'EOF' > /tmp/pr-body.md\nhello\nEOF\"",
     ],
+    not_match = [
+        "bash -lc \"cat README.md\"",
+        "bash -lc \"cat /tmp/file\"",
+        "bash -lc \"cat <<'EOF' > /tmp/allowed.md\nhello\nEOF\"",
+        "sh -c \"cat README.md\"",
+        "zsh -lc \"cat README.md\"",
+    ],
 )
 
 # Allow all git commands by default.
