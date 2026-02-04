@@ -2,6 +2,15 @@
 # Codex Rules (Starlark)
 # Goal: Allow most git operations, but prevent direct pushes to main.
 
+prefix_rule(
+    pattern = [["bash", "sh", "zsh"], ["-lc", "-c"]],
+    decision = "prompt",
+    justification = "Redirection/heredoc are treated as a shell script; require approval.",
+    match = [
+        "bash -lc \"cat <<'EOF' > /tmp/pr-body.md\nhello\nEOF\"",
+    ],
+)
+
 # Allow all git commands by default.
 prefix_rule(
     pattern = ["git"],
