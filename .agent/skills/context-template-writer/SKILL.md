@@ -1,25 +1,31 @@
-# SKILL: context-template-writer
+---
+name: context-template-writer
+description: Create or update context documents using the repository context template. Use when adding or revising context docs.
+---
 
-**Purpose**
-- Create a bounded context design document using the template.
+# Context Template Writer
 
-**Trigger**
-- A new context design is required or an existing one needs standardization.
+## Scope
+- Produce context documents aligned to the template.
 
-**Inputs**
-- Context ID and name
-- Aggregates, domain events, persistence, non-functional requirements
+## Inputs
+- Provide context name, scope, and key references.
 
-**Outputs**
-- Context design document in `docs/design/contexts/`
+## Outputs
+- Produce a context document using the template structure.
 
-**Procedure**
-1. Copy the structure from `agents/templates/context-template.md`.
-2. Fill sections 1–10 with concise, factual content.
-3. Ensure Evidence and Open Questions are present.
+## Procedure
+1. Copy `agents/templates/context-template.md` to the target file.
+2. Fill all sections with concrete context details.
+3. Keep references consistent with repository naming rules.
 
-**Do Not**
-- Skip domain events or non-functional sections.
+## Evaluation
+- Define must-pass checks for required sections.
+- Validate structure against the template.
+- Record missing sections as failures in evals.
 
-**References**
+## Do Not
+- Leave required sections empty.
+
+## References
 - `agents/templates/context-template.md`

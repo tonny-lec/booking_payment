@@ -1,28 +1,32 @@
-# SKILL: incident-response
+---
+name: incident-response
+description: Follow incident response policy and produce required artifacts. Use when handling outages, security incidents, or critical failures.
+---
 
-**Purpose**
-- Standardize response to incidents and system-fix updates.
+# Incident Response
 
-**Trigger**
-- Major incidents, recurring failures, or rule violations.
+## Scope
+- Execute incident policy and required documentation.
 
-**Inputs**
-- Incident description
-- Logs or evidence
+## Inputs
+- Provide incident summary, timeline, impact, and mitigations.
 
-**Outputs**
-- Postmortem draft
-- Rule or template updates to prevent recurrence
+## Outputs
+- Produce incident notes and required follow-up artifacts.
 
-**Procedure**
-1. Capture evidence and impact scope.
-2. Draft postmortem using the template.
-3. Update rules or templates to prevent recurrence.
-4. Document follow-up tasks and owners.
+## Procedure
+1. Follow the incident policy steps in order.
+2. Capture timeline, impact, and root cause evidence.
+3. Record mitigations and action items.
+4. Prepare a postmortem if required by policy.
 
-**Do Not**
-- Close the incident without a system-fix update.
+## Evaluation
+- Define must-pass response steps and artifacts.
+- Capture trace and artifacts for review.
+- Score missing timeline, root cause, or action items as failures.
 
-**References**
+## Do Not
+- Close an incident without required artifacts.
+
+## References
 - `agents/incident-policy.md`
-- `agents/templates/postmortem-template.md`

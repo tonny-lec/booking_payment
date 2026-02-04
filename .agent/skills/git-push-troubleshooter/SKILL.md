@@ -1,33 +1,34 @@
-# SKILL: git-push-troubleshooter
+---
+name: git-push-troubleshooter
+description: Diagnose and resolve Git push failures, especially SSH and WSL issues. Use when git push fails.
+---
 
-**Purpose**
-- Diagnose and resolve Git push failures, especially SSH and WSL issues.
+# Git Push Troubleshooter
 
-**Trigger**
-- `git push` fails with SSH or network errors.
+## Scope
+- Restore git push capability by addressing SSH and network issues.
 
-**Inputs**
-- Error message
-- Remote URL (`git remote -v`)
-- Environment (WSL/VS Code Remote)
+## Inputs
+- Provide the error message.
+- Provide remote URL and environment details.
 
-**Outputs**
-- Steps to restore push capability
+## Outputs
+- Produce steps to restore push capability.
 
-**Procedure**
-1. Identify the error type:
-   - DNS resolution failure (`could not resolve hostname`).
-   - SSH authentication agent failure.
-2. Verify SSH connectivity:
-   - `ssh -T git@github.com` for auth check.
-3. If `ssh-add` fails, start agent and add key:
-   - `eval "$(ssh-agent -s)"`
-   - `ssh-add ~/.ssh/id_ed25519`
+## Procedure
+1. Identify the error type (DNS, SSH auth, agent). 
+2. Verify SSH connectivity with `ssh -T git@github.com`.
+3. If `ssh-add` fails, start agent and add key.
 4. Confirm agent variables and process exist.
 5. If DNS/network issues persist, retry later or switch to HTTPS if approved.
 
-**Do Not**
+## Evaluation
+- Define must-pass checks for successful push.
+- Capture command trace and outcomes.
+- Score remaining push failures as unresolved.
+
+## Do Not
 - Regenerate keys or change remotes without approval.
 
-**References**
+## References
 - `agents/knowledge/git-push-failure.md`

@@ -1,36 +1,33 @@
-# SKILL: gradle-troubleshooter
+---
+name: gradle-troubleshooter
+description: Diagnose and resolve common Gradle build failures documented in the repo. Use when Gradle build or test tasks fail.
+---
 
-**Purpose**
-- Diagnose and resolve common Gradle build failures documented in the repo.
+# Gradle Troubleshooter
 
-**Trigger**
-- Gradle build or test fails with dependency or configuration errors.
+## Scope
+- Resolve common Gradle dependency and configuration failures.
 
-**Inputs**
-- Exact error message
-- Module name and task
-- Gradle dependency versions
+## Inputs
+- Provide the exact error message.
+- Provide module name and task.
+- Provide relevant dependency versions.
 
-**Outputs**
-- Concrete remediation steps tied to the failure cause
+## Outputs
+- Produce concrete remediation steps tied to the failure cause.
 
-**Procedure**
-1. Identify the failure category from the error output:
-   - Missing OpenTelemetry Instrumentation BOM
-   - Spring Boot version incompatibility
-   - DataSource auto-configuration failure
-   - Gradle binary store/cache errors
-   - BOM import not resolving versions
-2. Apply the corresponding fix:
-   - Separate OpenTelemetry core vs instrumentation versions.
-   - Align OpenTelemetry Instrumentation with Spring Boot version.
-   - Use Testcontainers for DataSource in tests, or temporarily exclude auto-config.
-   - Clear Gradle cache or run without daemon/build cache when binary store errors occur.
-   - Use `platform()` API or apply dependency-management plugin correctly.
+## Procedure
+1. Classify the failure category from the error output.
+2. Apply the matching fix from the knowledge base.
 3. Re-run the failing task with `--stacktrace` and confirm resolution.
 
-**Do Not**
-- Change versions without confirming the compatible ranges.
+## Evaluation
+- Define must-pass checks for build success.
+- Capture error logs and fix steps as artifacts.
+- Score unresolved errors as failures.
 
-**References**
+## Do Not
+- Change versions without confirming compatibility.
+
+## References
 - `agents/knowledge/gradle-build-issues.md`

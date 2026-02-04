@@ -1,27 +1,34 @@
-# SKILL: completion-self-check
+---
+name: completion-self-check
+description: Run the repository completion checklist before declaring work done. Use before reporting completion.
+---
 
-**Purpose**
-- Run the required self-checks before declaring work complete.
+# Completion Self Check
 
-**Trigger**
-- When preparing to finish a task, deliver a report, or request review.
+## Scope
+- Verify required completion items before final reporting.
 
-**Inputs**
-- PRD or task requirements
-- Test results
+## Inputs
+- Provide the PRD and plan reference.
+- Provide test or validation results.
 
-**Outputs**
-- Checklist confirmation or identified gaps
+## Outputs
+- Produce a completion checklist with pass/fail notes.
 
-**Procedure**
-1. Verify changes match PRD or task specification.
-2. Confirm no context pollution or unrelated edits.
-3. Ensure modular rules were followed.
-4. Propose rule/template updates for any errors.
-5. Confirm tests passed or document why they did not.
+## Procedure
+1. Confirm changes match the PRD specification.
+2. Confirm no context pollution occurred.
+3. Confirm modular rules were followed.
+4. Propose rule updates for any errors.
+5. Confirm tests and checks passed or note omissions.
 
-**Do Not**
-- Declare completion without passing the self-check.
+## Evaluation
+- Define must-pass checklist items.
+- Capture artifact evidence (test logs, commands) where possible.
+- Score any missing checklist items as failures.
 
-**References**
+## Do Not
+- Declare completion without the checklist.
+
+## References
 - `agents/self-check.md`

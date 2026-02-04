@@ -1,34 +1,34 @@
-# SKILL: usecase-template-writer
+---
+name: usecase-template-writer
+description: Create use-case documents using the repository template. Use when defining or updating use cases.
+---
 
-**Purpose**
-- Create use-case documents using the repository template.
+# Usecase Template Writer
 
-**Trigger**
-- A new use case is defined or an existing one needs updating.
+## Scope
+- Produce use-case docs aligned to the template.
 
-**Inputs**
-- Use case id
-- Bounded context
-- Related features and skills
-- Commands/queries/events
-- Domain model and invariants
-- API and persistence details
-- Failure modes and recovery
-- Observability and security needs
-- Test strategy and evidence
+## Inputs
+- Provide use case id and bounded context.
+- Provide related features/skills and domain details.
 
-**Outputs**
-- `docs/design/usecases/<usecase-id>.md` following the template
+## Outputs
+- Produce `docs/design/usecases/<usecase-id>.md` following the template.
 
-**Procedure**
+## Procedure
 1. Copy `agents/templates/usecase-template.md` to the target file.
 2. Fill front matter (`id`, `bounded_context`, `related_features`, `related_skills`, `status`).
 3. Complete all numbered sections with concrete details.
 4. Ensure the Evidence section includes rationale or references.
 
-**Do Not**
+## Evaluation
+- Define must-pass sections including Evidence and Failure Modes.
+- Verify the document follows the template structure.
+- Score missing Evidence or Failure Modes as failures.
+
+## Do Not
 - Leave Evidence or Failure Modes empty.
 
-**References**
+## References
 - `agents/templates/usecase-template.md`
 - `scripts/evidence-lint.sh`

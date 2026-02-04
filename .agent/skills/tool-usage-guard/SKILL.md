@@ -1,26 +1,33 @@
-# SKILL: tool-usage-guard
+---
+name: tool-usage-guard
+description: Enforce tool usage rules and write scope constraints. Use when running commands, editing files, or choosing tools.
+---
 
-**Purpose**
-- Enforce tool usage rules and write-scope constraints.
+# Tool Usage Guard
 
-**Trigger**
-- Before running commands or editing files.
+## Scope
+- Apply tool contract rules and write scope boundaries.
 
-**Inputs**
-- Intended tool actions
+## Inputs
+- Provide the intended command or file operation.
 
-**Outputs**
-- Approved tool usage plan
-- Warnings for unsafe operations
+## Outputs
+- Produce a compliant tool/command plan.
 
-**Procedure**
-1. Identify whether the action is read-only or mutating.
-2. Confirm the target files are within write scope.
-3. Prefer safe commands and avoid destructive operations.
-4. Request approval when required by policy.
+## Procedure
+1. Check the tool contract for allowed operations.
+2. Prefer `rg` for searches and non-interactive git commands.
+3. Avoid destructive git commands unless explicitly approved.
+4. Keep edits within writable roots.
 
-**Do Not**
-- Run destructive commands or edit outside allowed roots.
+## Evaluation
+- Define must-pass checks for tool compliance.
+- Capture command trace when evaluating via `codex exec --json`.
+- Score any disallowed command usage as failures.
 
-**References**
+## Do Not
+- Run destructive git operations without approval.
+
+## References
 - `agents/tool-contract.md`
+- `.agent/workflows/git-commands.md`

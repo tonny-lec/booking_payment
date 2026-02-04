@@ -1,28 +1,37 @@
-# SKILL: git-flow-guard
+---
+name: git-flow-guard
+description: Enforce repository git flow, branch naming, and PR rules. Use when starting work, creating branches, committing, or opening PRs.
+---
 
-**Purpose**
-- Enforce repository git flow, branch naming, and PR rules.
+# Git Flow Guard
 
-**Trigger**
-- Any request to start work, create a branch, or open a PR.
+## Scope
+- Enforce branch naming, commit format, and PR rules.
 
-**Inputs**
-- Task scope and type (docs, feature, fix, refactor, chore)
+## Inputs
+- Provide task scope and type (docs, feat, fix, refactor, test, chore).
 
-**Outputs**
-- Correct branch name
-- Correct commit message format
-- PR checklist with required sections
+## Outputs
+- Create a correct branch name.
+- Produce a compliant commit message.
+- Produce a PR checklist aligned to repo rules.
 
-**Procedure**
-1. Ensure work starts from `main` and `git pull origin main` is run.
+## Procedure
+1. Start from `main` and pull latest changes.
 2. Create a feature branch with the correct prefix.
-3. Use commit message format `<type>: <summary>`.
-4. Verify main is never pushed directly.
-5. Ensure PR includes required sections and task IDs when applicable.
+3. Use commit format `<type>: <summary>`.
+4. Ensure direct pushes to `main` never occur.
+5. Ensure PR content follows required template sections.
 
-**Do Not**
-- Push directly to `main` or work on `main`.
+## Evaluation
+- Define success criteria for branch, commit, and PR compliance.
+- Capture git command trace if evaluating via `codex exec --json`.
+- Score for violations (wrong branch, wrong commit format, missing PR sections).
 
-**References**
+## Do Not
+- Work directly on `main`.
+- Push directly to `main`.
+
+## References
 - `agents/rules.md`
+- `.agent/workflows/git-commands.md`

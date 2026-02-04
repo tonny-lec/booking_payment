@@ -1,30 +1,37 @@
-# SKILL: dev-workflow-runner
+---
+name: dev-workflow-runner
+description: Apply the 7-phase workflow (Prime, PRD, Plan, Reset, Implement, Validate, Report). Use when starting a task or switching phases.
+---
 
-**Purpose**
-- Apply the 7-phase workflow consistently (Prime, PRD, Plan, Reset, Implement, Validate, Report).
+# Dev Workflow Runner
 
-**Trigger**
-- New task starts or a phase change is requested.
+## Scope
+- Apply the 7-phase workflow consistently.
 
-**Inputs**
-- Task request
-- PRD and relevant docs
+## Inputs
+- Provide the task request.
+- Provide relevant PRDs and docs.
 
-**Outputs**
-- Clear phase-by-phase checklist
-- Phase-appropriate actions and artifacts
+## Outputs
+- Produce a phase-by-phase checklist.
+- Produce phase-appropriate actions and artifacts.
 
-**Procedure**
+## Procedure
 1. Prime: read the smallest set of docs needed to define scope and impact.
 2. PRD: confirm requirements, non-goals, constraints, and acceptance criteria.
-3. Plan: create an ordered plan with implementation and validation steps.
+3. Plan: write an ordered plan with implementation and validation steps.
 4. Reset: state that only the plan and required refs will be used.
 5. Implement: make small, reversible changes aligned to the plan.
-6. Validate: run tests or checks tied to acceptance criteria.
+6. Validate: run checks tied to acceptance criteria.
 7. Report: summarize changes, verification, and remaining work.
 
-**Do Not**
+## Evaluation
+- Define must-pass success criteria (outcome, process, style, efficiency) before running.
+- Capture trace and artifacts when executing via `codex exec --json` if available.
+- Score results against criteria and add failures as new eval prompts.
+
+## Do Not
 - Skip a phase when the task requires it.
 
-**References**
+## References
 - `agents/workflow.md`

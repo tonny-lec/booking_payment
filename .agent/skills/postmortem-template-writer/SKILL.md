@@ -1,25 +1,32 @@
-# SKILL: postmortem-template-writer
+---
+name: postmortem-template-writer
+description: Create postmortems using the repository template. Use after incidents that require a post-incident report.
+---
 
-**Purpose**
-- Produce a postmortem using the standard template.
+# Postmortem Template Writer
 
-**Trigger**
-- An incident or major failure needs documented analysis.
+## Scope
+- Produce postmortems aligned to the template.
 
-**Inputs**
-- Incident summary, timeline, root cause, corrective actions
+## Inputs
+- Provide summary, timeline, impact, root cause, and action items.
 
-**Outputs**
-- Postmortem document with System Fix notes
+## Outputs
+- Produce a postmortem document using the template.
 
-**Procedure**
-1. Use `agents/templates/postmortem-template.md` as the structure.
-2. Fill overview, timeline, detection, root cause, response, prevention, learnings, actions.
-3. Explicitly record which rules/workflows/templates were updated as System Fix.
+## Procedure
+1. Open `agents/templates/postmortem-template.md`.
+2. Fill Summary, Timeline, Impact, Root Cause, and Actions sections.
+3. Record System Fix items for recurrence prevention.
 
-**Do Not**
-- Close an incident without a System Fix entry.
+## Evaluation
+- Define must-pass sections and action items.
+- Verify System Fix items are included.
+- Score missing root cause or actions as failures.
 
-**References**
+## Do Not
+- Close a postmortem without System Fix items.
+
+## References
 - `agents/templates/postmortem-template.md`
 - `agents/incident-policy.md`

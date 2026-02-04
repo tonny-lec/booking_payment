@@ -1,25 +1,31 @@
-# SKILL: task-kickoff
+---
+name: task-kickoff
+description: Start new work using the repository initial command workflow. Use when a new task begins.
+---
 
-**Purpose**
-- Standardize how new tasks are initiated and framed.
+# Task Kickoff
 
-**Trigger**
-- A new task request arrives.
+## Scope
+- Start tasks with the required initial command and context.
 
-**Inputs**
-- User request
+## Inputs
+- Provide task request and any referenced PRDs.
 
-**Outputs**
-- Initial response that sets expectations and next steps
+## Outputs
+- Produce the initial command response and next-step guidance.
 
-**Procedure**
-1. Restate the task in one sentence.
-2. Ask for missing requirements or constraints.
-3. Identify required references (PRD, design, API).
-4. Propose the next action (plan or implementation).
+## Procedure
+1. Follow the instructions in `agents/initial-command.md`.
+2. Identify required PRDs and gating status.
+3. Establish scope and next actions.
 
-**Do Not**
-- Start implementation without confirming scope and constraints.
+## Evaluation
+- Define must-pass kickoff steps.
+- Capture initial response and verify required references are included.
+- Score missing PRD gating as failures.
 
-**References**
+## Do Not
+- Start implementation without required PRD status.
+
+## References
 - `agents/initial-command.md`

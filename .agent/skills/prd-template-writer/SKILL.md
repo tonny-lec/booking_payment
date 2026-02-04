@@ -1,33 +1,35 @@
-# SKILL: prd-template-writer
+---
+name: prd-template-writer
+description: Create or update PRDs using the repository template. Use when a change requires a PRD.
+---
 
-**Purpose**
-- Create or update PRDs using the repository template.
+# PRD Template Writer
 
-**Trigger**
-- A new feature or change requires a PRD.
+## Scope
+- Produce PRDs aligned to the template and gating rules.
 
-**Inputs**
-- PRD id
-- Status (proposed or approved)
-- User story
-- In-scope / out-of-scope items
-- Tech stack and constraints
-- Architecture and data flow
-- Acceptance criteria and test strategy
+## Inputs
+- Provide PRD id and status.
+- Provide user story, scope, constraints, architecture, and acceptance criteria.
 
-**Outputs**
-- `docs/prd-<id>.md` following the template
+## Outputs
+- Produce `docs/prd-<id>.md` following the template.
 
-**Procedure**
+## Procedure
 1. Copy `agents/templates/prd-template.md` into `docs/prd-<id>.md`.
-2. Set `doc_type`, `id`, and `status` in the front matter.
+2. Set `doc_type`, `id`, and `status` in front matter.
 3. Fill all sections with concrete requirements and constraints.
 4. Keep `status: proposed` until explicit approval is granted.
 
-**Do Not**
+## Evaluation
+- Define must-pass sections for the PRD.
+- Verify the PRD follows the template structure.
+- Score missing sections or invalid status as failures.
+
+## Do Not
 - Leave required sections empty.
 - Mark a PRD as approved without approval.
 
-**References**
+## References
 - `agents/templates/prd-template.md`
 - `scripts/prd-gate.sh`

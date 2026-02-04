@@ -1,25 +1,32 @@
-# SKILL: checkpoint-template-writer
+---
+name: checkpoint-template-writer
+description: Update checkpoint summaries using the repository checkpoint template. Use when summarizing long-running work.
+---
 
-**Purpose**
-- Record a checkpoint summary using the repository template.
+# Checkpoint Template Writer
 
-**Trigger**
-- Context is large or a task needs a durable summary.
+## Scope
+- Produce checkpoint updates aligned to the template.
 
-**Inputs**
-- Background, key issues, SSOT links, decisions, open questions, next actions
+## Inputs
+- Provide current task status, completed work, and next steps.
 
-**Outputs**
-- Updated `checkpoint.md` or a new checkpoint doc based on the template
+## Outputs
+- Produce an updated `checkpoint.md` using the template structure.
 
-**Procedure**
-1. Use the template structure from `agents/templates/checkpoint-template.md`.
-2. Fill each section with concise, factual summaries.
-3. Ensure `Next Actions` include file paths and verification steps.
+## Procedure
+1. Open `agents/templates/checkpoint-template.md`.
+2. Update `checkpoint.md` with current status and next steps.
+3. Keep references concise and actionable.
 
-**Do Not**
-- Omit SSOT references or leave sections blank.
+## Evaluation
+- Define must-pass sections for checkpoint updates.
+- Verify the summary is concise and complete.
+- Score missing next steps as failures.
 
-**References**
+## Do Not
+- Overwrite unrelated checkpoints without noting impact.
+
+## References
 - `agents/templates/checkpoint-template.md`
-- `scripts/context-reset.sh` (template refresh)
+- `checkpoint.md`

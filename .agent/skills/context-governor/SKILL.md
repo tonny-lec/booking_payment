@@ -1,26 +1,33 @@
-# SKILL: context-governor
+---
+name: context-governor
+description: Apply the repository context policy and reference order. Use when loading or summarizing context for a task.
+---
 
-**Purpose**
-- Enforce SSOT and reference order when making decisions.
+# Context Governor
 
-**Trigger**
-- Any decision that depends on policy, rules, or design sources.
+## Scope
+- Enforce context policy and reference order.
 
-**Inputs**
-- Task scope and relevant domain area
+## Inputs
+- Provide the task request and candidate references.
 
-**Outputs**
-- Ordered list of references to consult
-- Decision grounded in SSOT
+## Outputs
+- Produce a minimal context set aligned to policy.
 
-**Procedure**
-1. Identify the task domain (security, API, context design, etc.).
-2. Load the highest-priority SSOT references for that domain.
-3. Confirm any conflicts and state which source wins.
-4. Proceed only with information from the chosen references.
+## Procedure
+1. Load required PRDs and policy docs first.
+2. Minimize context by reading only needed files.
+3. Avoid deep reference chasing unless blocked.
+4. Use `checkpoint.md` for long-running summaries.
 
-**Do Not**
-- Skip SSOT references or assume facts without checking.
+## Evaluation
+- Define success criteria for minimal yet sufficient context.
+- Record which files were loaded and why.
+- Score violations for loading unnecessary or disallowed context.
 
-**References**
+## Do Not
+- Load bulk documents without a blocking reason.
+
+## References
 - `agents/context-policy.md`
+- `checkpoint.md`
