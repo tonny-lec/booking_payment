@@ -15,4 +15,4 @@ status: "stable"
 - 指摘採用率：採用された提案/指摘の割合
 
 ## 出力例の置き場
-- `docs/agent/output/`
+- `agents/output/`

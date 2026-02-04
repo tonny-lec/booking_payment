@@ -73,7 +73,7 @@ src/main/java/.../
 ## 開発者向け情報
 
 - **エージェント向けガイド**: [AGENTS.md](./AGENTS.md), [CLAUDE.md](./CLAUDE.md)
-- **プロジェクトルール**: [docs/agent/rules.md](./docs/agent/rules.md)
+- **プロジェクトルール**: [agents/rules.md](./agents/rules.md)
 - **PRD**: [docs/prd-platform.md](./docs/prd-platform.md)
 
 ## ステータス

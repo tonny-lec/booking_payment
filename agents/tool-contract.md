@@ -9,7 +9,7 @@ status: "stable"
 # ツール契約（権限とガードレール）
 
 ## 前提（SSOT）
-- `docs/agent/rules.md` が最上位
+- `agents/rules.md` が最上位
 
 ## 書き込み可能
 - `docs/`（設計/PRD/運用）

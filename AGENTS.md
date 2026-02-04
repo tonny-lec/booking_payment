@@ -5,9 +5,9 @@ This repository is a documentation-first DDD template for a booking/payment plat
 - `docs/design/` for contexts and use cases.
 - `docs/api/openapi/` for service contracts (YAML).
 - `docs/security/`, `docs/test/`, `docs/plan/`, and `docs/runbook/` for operational guidance.
-- `docs/templates/` for ADRs, PRDs, and other repeatable formats.
 Project-wide references include `checkpoint.md` and the PRDs (`docs/prd-*.md`).
-Primary agent SSOTs live under `docs/agent/`.
+
+Agent-specific documents (rules, workflows, templates) live under `agents/`.
 
 ---
 
@@ -35,7 +35,7 @@ Phase 5: Validate   → Test, lint, build, verify
 Phase 6: Report     → Document changes and remaining work
 ```
 
-**Full details**: `docs/agent/workflow.md`
+**Full details**: `agents/workflow.md`
 
 ---
 
@@ -48,7 +48,7 @@ Before declaring any task complete:
 - [ ] Proposed rule updates for errors?
 - [ ] Tests pass?
 
-**Full checklists**: `docs/agent/self-check.md`
+**Full checklists**: `agents/self-check.md`
 
 ---
 
@@ -61,7 +61,7 @@ This repo is template-mode (no `src/` yet). Use the provided scripts:
 - `bash scripts/context-reset.sh`: refreshes `checkpoint.md` from template.
 
 ## Coding Style & Naming Conventions
-- Follow existing Markdown conventions in `docs/` and reuse `docs/templates/*`.
+- Follow existing Markdown conventions in `docs/` and reuse `agents/templates/*`.
 - Use kebab-case for new document filenames (e.g., `docs/adr/0001-decision-slug.md`).
 - OpenAPI specs are YAML under `docs/api/openapi/`.
 
@@ -70,26 +70,26 @@ This repo is template-mode (no `src/` yet). Use the provided scripts:
 
 ## Commit & Pull Request Guidelines
 - Commit message format: `<type>: <summary>` with optional body. Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
-- Use feature branches; never push directly to `main`. See `docs/agent/rules.md` for the full Git flow.
-- Git flow details and branching rules: `docs/agent/rules.md`.
+- Use feature branches; never push directly to `main`. See `agents/rules.md` for the full Git flow.
+- Git flow details and branching rules: `agents/rules.md`.
 - PRs should reference the relevant PRD and include evidence for changes.
 
 ## Agent-Specific Instructions
 - PRD-first is mandatory: no code/infra changes without a PRD in `status: approved`.
 - `docs/prd-*.md` is treated as persistent context for Codex.
 - Use `checkpoint.md` to summarize long-running work.
-- Always review the Git flow rules before starting work: `docs/agent/rules.md`.
+- Always review the Git flow rules before starting work: `agents/rules.md`.
 - Create a new branch for each new task; do not work directly on `main`.
 
 ## Agent SSOT & Policies (Read First)
-- System rules (Must/Must Not, Git flow): `docs/agent/rules.md`.
-- Workflow (7-phase development): `docs/agent/workflow.md`.
-- Self-check checklists: `docs/agent/self-check.md`.
-- Context policy & reference order: `docs/agent/context-policy.md`.
-- Tool contract & write scope: `docs/agent/tool-contract.md`.
-- Incident response (postmortem + rules update): `docs/agent/incident-policy.md`.
-- Initial prompt to start new work: `docs/agent/initial-command.md`.
-- Evaluation metrics and outputs: `docs/agent/evaluation.md`, `docs/agent/output/`.
+- System rules (Must/Must Not, Git flow): `agents/rules.md`.
+- Workflow (7-phase development): `agents/workflow.md`.
+- Self-check checklists: `agents/self-check.md`.
+- Context policy & reference order: `agents/context-policy.md`.
+- Tool contract & write scope: `agents/tool-contract.md`.
+- Initial prompt to start new work: `agents/initial-command.md`.
+- Evaluation metrics and outputs: `agents/evaluation.md`, `agents/output/`.
+- Git workflows: `.agent/workflows/git-commands.md`.
 
 ## Common References by Task
 - Product requirements: `docs/prd-*.md`.

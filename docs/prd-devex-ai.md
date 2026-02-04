@@ -24,7 +24,7 @@ status: "proposed"   # proposed | approved | archived
 4. ADR草案生成（トレードオフ整理）
 
 ## 4. ツール前提 / ゲート（Engineering Assumptions）
-- SSOT：`docs/agent/rules.md`
+- SSOT：`agents/rules.md`
 - CI: GitHub Actions（`.github/workflows/agent-qa.yml`）
 - 標準コマンド：
   - PRDゲート：`scripts/prd-gate.sh`

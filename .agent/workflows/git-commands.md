@@ -6,7 +6,7 @@ description: Git commands auto-run policy
 # Git Commands Workflow
 
 このワークフローは、Gitコマンドの自動実行ポリシーを定義します。
-プロジェクトのGitフロールール（`docs/agent/rules.md`）に準拠しています。
+プロジェクトのGitフロールール（`agents/rules.md`）に準拠しています。
 
 ---
 
@@ -114,7 +114,7 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 
 ## Must Not（禁止事項）
 
-プロジェクトルール（`docs/agent/rules.md`）より：
+プロジェクトルール（`agents/rules.md`）より：
 
 - mainブランチへの直接push
 - mainブランチ上での直接作業
@@ -251,8 +251,9 @@ gh pr edit <PR番号> --title "<新しいタイトル>"
 
 ## 参照ドキュメント
 
-- `docs/agent/rules.md` - システムルール（Must/Must Not、Git Flow、PR作成ルール）
-- `docs/templates/pr-template.md` - PRテンプレート詳細ガイド
+- `agents/rules.md` - システムルール（Must/Must Not、Git Flow）
+- `docs/tasks/by-feature.md` - タスク一覧・進捗管理
 - `.github/pull_request_template.md` - GitHubテンプレート
+- `agents/templates/pr-template.md` - PRテンプレート詳細ガイド
 - `docs/tasks/implementation-slice-a.md` - タスク一覧・進捗管理
 - `AGENTS.md` - エージェント向けガイドライン
