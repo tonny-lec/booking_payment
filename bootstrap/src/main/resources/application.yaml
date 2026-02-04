@@ -53,6 +53,22 @@ spring:
     validate-on-migrate: true
 
 # -----------------------------------------------------------------------------
+# OpenAPI / Swagger UI (contract-first)
+# -----------------------------------------------------------------------------
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    disable-swagger-default-url: true
+    urls:
+      - name: IAM API
+        url: /openapi/iam.yaml
+      - name: Booking API
+        url: /openapi/booking.yaml
+      - name: Payment API
+        url: /openapi/payment.yaml
+
+# -----------------------------------------------------------------------------
 # Server Configuration
 # -----------------------------------------------------------------------------
 server:
@@ -147,4 +163,3 @@ info:
     version: 0.0.1-SNAPSHOT
     java-version: 25
     spring-boot-version: 4.0.2
-
