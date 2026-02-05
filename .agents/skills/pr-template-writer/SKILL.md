@@ -26,6 +26,9 @@ description: Draft PR descriptions using the repository PR template. Use when cr
 4. Add Design Decisions when applicable.
 5. Complete Test Coverage and Test plan with commands and results.
 6. Add Related links to tasks/specs/PRDs.
+7. Edit the single PR body draft at `.agents/skills/pr-template-writer/pr-body/pr-body.md`.
+8. Run `bash scripts/pr-body.sh` to copy the draft to `/tmp/pr-body.md`.
+9. Create the PR with `gh pr create --body-file /tmp/pr-body.md`.
 
 ## Evaluation
 - Define must-pass sections (Summary, Test Coverage, Test plan, Related).
@@ -34,11 +37,11 @@ description: Draft PR descriptions using the repository PR template. Use when cr
 
 ## Do Not
 - Omit Summary, Test Coverage, Test plan, or Related.
+- Use heredocs or inline shell redirection for PR body generation.
 
 ### Allowed command shapes
-- OK: `bash -lc "cat <<'EOF' > /tmp/pr-body.md ... EOF"`
-- OK: `cat <<'EOF' > /tmp/pr-body.md ... EOF`
-- NOT OK: `<<EOF` (without quotes)
+- OK: `bash scripts/pr-body.sh`
+- NOT OK: any heredoc or inline redirection for PR body generation
 - NOT OK: redirecting to any path other than `/tmp/pr-body.md`
 - NOT OK: mixing `>>`, `|`, `;`, `&&`, or `||` into the PR body generation step
 
@@ -46,3 +49,4 @@ description: Draft PR descriptions using the repository PR template. Use when cr
 - `agents/templates/pr-template.md`
 - `.github/pull_request_template.md`
 - `.agent/workflows/git-commands.md`
+- `scripts/pr-body.sh`

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-src="${1:-}"
-if [[ -z "${src}" ]]; then
-  echo "Usage: bash scripts/pr-body.sh <src>" >&2
+if [[ "$#" -ne 0 ]]; then
+  echo "Usage: bash scripts/pr-body.sh" >&2
   exit 1
 fi
+
+src=".agents/skills/pr-template-writer/pr-body/pr-body.md"
 
 if [[ ! -f "${src}" ]]; then
   echo "Source file not found: ${src}" >&2
