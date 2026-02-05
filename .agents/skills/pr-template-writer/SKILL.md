@@ -35,6 +35,13 @@ description: Draft PR descriptions using the repository PR template. Use when cr
 ## Do Not
 - Omit Summary, Test Coverage, Test plan, or Related.
 
+### Allowed command shapes
+- OK: `bash -lc "cat <<'EOF' > /tmp/pr-body.md ... EOF"`
+- OK: `cat <<'EOF' > /tmp/pr-body.md ... EOF`
+- NOT OK: `<<EOF` (without quotes)
+- NOT OK: redirecting to any path other than `/tmp/pr-body.md`
+- NOT OK: mixing `>>`, `|`, `;`, `&&`, or `||` into the PR body generation step
+
 ## References
 - `agents/templates/pr-template.md`
 - `.github/pull_request_template.md`

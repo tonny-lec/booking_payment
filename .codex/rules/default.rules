@@ -7,13 +7,13 @@ prefix_rule(
     decision = "prompt",
     justification = "Redirection/heredoc are treated as a shell script; require approval.",
     match = [
-        "bash -lc \"cat <<'EOF' > /tmp/pr-body.md\nhello\nEOF\"",
+        "bash -lc \"cat <<'EOF' > /tmp/pr-body.md\nhello\nEOF\"", # codex don't apply this rule
     ],
 )
 
 # Allow all git commands by default.
 prefix_rule(
-    pattern = ["git"],
+    pattern = ["git",["status","diff","add","commit","fetch","pull","switch","stash","checkout"]],
     decision = "allow",
     justification = "Git operations are generally allowed.",
     match = [
