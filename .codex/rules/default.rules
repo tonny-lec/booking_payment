@@ -11,17 +11,6 @@ prefix_rule(
     ],
 )
 
-prefix_rule(
-    pattern = [["bash", "sh", "zsh"], ["-lc", "-c"], "cat"],
-    decision = "allow",
-    justification = "cat is safe even when invoked via a shell wrapper.",
-    match = [
-        "bash -lc \"cat README.md\"",
-        "sh -c \"cat README.md\"",
-        "zsh -lc \"cat README.md\"",
-    ],
-)
-
 # Allow all git commands by default.
 prefix_rule(
     pattern = ["git"],
