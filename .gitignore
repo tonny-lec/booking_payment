@@ -80,3 +80,6 @@ Thumbs.db
 # =============================================================================
 postgres-data/
 
+
+# Local PR bodies
+.agent/pr-bodies/
