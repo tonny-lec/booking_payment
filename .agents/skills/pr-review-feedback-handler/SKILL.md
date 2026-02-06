@@ -35,6 +35,7 @@ description: Triage PR review comments, decide fix/no-fix with evidence, apply m
    - What changed.
    - Why the chosen status/behavior is correct.
    - Commit hash.
+7. When requesting re-review after the reply, append `@codex review` in the comment body.
 
 ## Decision Rules
 - Fix immediately when at least one is true:
