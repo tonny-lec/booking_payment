@@ -201,6 +201,61 @@ class GlobalExceptionHandlerTest {
             assertThat(problem.getTitle()).isEqualTo("Forbidden");
             assertThat(problem.getDetail()).isEqualTo("You do not have permission to cancel this booking");
         }
+
+        @Test
+        @DisplayName("should return 403 Forbidden for account_not_active")
+        void shouldReturn403ForbiddenForAccountNotActive() {
+            // Given
+            ForbiddenException ex = new ForbiddenException(
+                    "account_not_active", "Account is not active");
+
+            // When
+            ResponseEntity<ProblemDetail> response = handler.handleForbidden(ex, webRequest);
+
+            // Then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+            ProblemDetail problem = response.getBody();
+            assertThat(problem).isNotNull();
+            assertThat(problem.getStatus()).isEqualTo(403);
+            assertThat(problem.getTitle()).isEqualTo("Forbidden");
+        }
+
+        @Test
+        @DisplayName("should return 423 Locked for account_locked")
+        void shouldReturn423LockedForAccountLocked() {
+            // Given
+            ForbiddenException ex = new ForbiddenException(
+                    "account_locked", "Account is locked");
+
+            // When
+            ResponseEntity<ProblemDetail> response = handler.handleForbidden(ex, webRequest);
+
+            // Then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.LOCKED);
+            ProblemDetail problem = response.getBody();
+            assertThat(problem).isNotNull();
+            assertThat(problem.getStatus()).isEqualTo(423);
+            assertThat(problem.getTitle()).isEqualTo("Locked");
+        }
+
+        @Test
+        @DisplayName("should return 429 Too Many Requests for rate_limited")
+        void shouldReturn429TooManyRequestsForRateLimited() {
+            // Given
+            ForbiddenException ex = new ForbiddenException(
+                    "rate_limited", "Too many login attempts");
+
+            // When
+            ResponseEntity<ProblemDetail> response = handler.handleForbidden(ex, webRequest);
+
+            // Then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+            assertThat(response.getHeaders().getFirst("Retry-After")).isEqualTo("60");
+            ProblemDetail problem = response.getBody();
+            assertThat(problem).isNotNull();
+            assertThat(problem.getStatus()).isEqualTo(429);
+            assertThat(problem.getTitle()).isEqualTo("Too Many Requests");
+        }
     }
 
     @Nested
