@@ -203,6 +203,24 @@ class GlobalExceptionHandlerTest {
         }
 
         @Test
+        @DisplayName("should return 403 Forbidden for account_not_active")
+        void shouldReturn403ForbiddenForAccountNotActive() {
+            // Given
+            ForbiddenException ex = new ForbiddenException(
+                    "account_not_active", "Account is not active");
+
+            // When
+            ResponseEntity<ProblemDetail> response = handler.handleForbidden(ex, webRequest);
+
+            // Then
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+            ProblemDetail problem = response.getBody();
+            assertThat(problem).isNotNull();
+            assertThat(problem.getStatus()).isEqualTo(403);
+            assertThat(problem.getTitle()).isEqualTo("Forbidden");
+        }
+
+        @Test
         @DisplayName("should return 423 Locked for account_locked")
         void shouldReturn423LockedForAccountLocked() {
             // Given

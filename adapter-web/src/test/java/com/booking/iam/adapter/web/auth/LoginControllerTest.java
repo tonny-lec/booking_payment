@@ -108,6 +108,25 @@ class LoginControllerTest {
     }
 
     @Test
+    @DisplayName("should return 403 when account is not active")
+    void shouldReturn403WhenAccountIsNotActive() throws Exception {
+        when(loginUseCase.execute(any())).thenThrow(
+                new ForbiddenException("account_not_active", "Account is not active")
+        );
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "email": "inactive@example.com",
+                                  "password": "password123"
+                                }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403));
+    }
+
+    @Test
     @DisplayName("should return 429 with Retry-After when rate limited")
     void shouldReturn429WhenRateLimited() throws Exception {
         when(loginUseCase.execute(any())).thenThrow(
