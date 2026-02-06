@@ -151,15 +151,20 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         log.warn("Access forbidden: {}", ex.getMessage());
 
+        HttpStatus status = resolveForbiddenStatus(ex.getErrorCode());
         ProblemDetail problem = createProblemDetail(
-                HttpStatus.FORBIDDEN,
+                status,
                 ex.getErrorCode(),
-                "Forbidden",
+                resolveForbiddenTitle(status),
                 ex.getMessage(),
                 request
         );
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
+        ResponseEntity.BodyBuilder response = ResponseEntity.status(status);
+        if (status == HttpStatus.TOO_MANY_REQUESTS) {
+            response.header(HttpHeaders.RETRY_AFTER, "60");
+        }
+        return response.body(problem);
     }
 
     @ExceptionHandler(DomainException.class)
@@ -325,5 +330,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             log.debug("Could not extract request URI", e);
         }
         return null;
+    }
+
+    private HttpStatus resolveForbiddenStatus(String errorCode) {
+        if ("account_locked".equalsIgnoreCase(errorCode)) {
+            return HttpStatus.LOCKED;
+        }
+        if ("rate_limited".equalsIgnoreCase(errorCode)) {
+            return HttpStatus.TOO_MANY_REQUESTS;
+        }
+        return HttpStatus.FORBIDDEN;
+    }
+
+    private String resolveForbiddenTitle(HttpStatus status) {
+        if (status == HttpStatus.LOCKED) {
+            return "Locked";
+        }
+        if (status == HttpStatus.TOO_MANY_REQUESTS) {
+            return "Too Many Requests";
+        }
+        return "Forbidden";
     }
 }
