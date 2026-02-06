@@ -1,0 +1,359 @@
+name: AI Implement / Fix (Builder) - Optional
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "fix or implement"
+        required: true
+        default: "fix"
+      number:
+        description: "PR number (fix) or Issue number (implement)"
+        required: true
+
+# デフォルトは読み取り寄り
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      run_mode: ${{ steps.decide.outputs.run_mode }}
+      target_number: ${{ steps.decide.outputs.target_number }}
+      allowed: ${{ steps.decide.outputs.allowed }}
+    steps:
+      - name: Decide mode and authorize
+        id: decide
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          AUTHOR_ASSOC: ${{ github.event.comment.author_association }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          DISPATCH_MODE: ${{ github.event.inputs.mode }}
+          DISPATCH_NUMBER: ${{ github.event.inputs.number }}
+        run: |
+          set -euo pipefail
+
+          allowed="false"
+          run_mode=""
+          target=""
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            run_mode="$DISPATCH_MODE"
+            target="$DISPATCH_NUMBER"
+            allowed="true"
+          else
+            # PR/Issueコメントイベント
+            body="${COMMENT_BODY:-}"
+            target="${ISSUE_NUMBER:-}"
+
+            case "$body" in
+              *"/ai-fix"*) run_mode="fix" ;;
+              *"/ai-implement"*) run_mode="implement" ;;
+              *) run_mode="" ;;
+            esac
+
+            # 書き込みを伴うので、最低限「権限ある人だけ」
+            case "$AUTHOR_ASSOC" in
+              OWNER|MEMBER|COLLABORATOR) allowed="true" ;;
+              *) allowed="false" ;;
+            esac
+          fi
+
+          echo "run_mode=$run_mode" >> "$GITHUB_OUTPUT"
+          echo "target_number=$target" >> "$GITHUB_OUTPUT"
+          echo "allowed=$allowed" >> "$GITHUB_OUTPUT"
+
+  apply:
+    needs: gate
+    if: ${{ needs.gate.outputs.allowed == 'true' && needs.gate.outputs.run_mode != '' }}
+    runs-on: ubuntu-latest
+
+    # ここで初めて書き込み権限を付与（最小権限の考え方）
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    # GitHub Environments で「Required reviewers」を設定すると、
+    # このジョブは承認されるまで開始されない（人間の安全装置）
+    environment:
+      name: ai-write
+
+    steps:
+      - name: Install tools (jq optional)
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y jq
+
+      - name: Resolve target (PR/Issue) and basic safety checks
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODE: ${{ needs.gate.outputs.run_mode }}
+          N: ${{ needs.gate.outputs.target_number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          echo "MODE=$MODE" >> "$GITHUB_ENV"
+          echo "TARGET_NUMBER=$N" >> "$GITHUB_ENV"
+
+          if [ "$MODE" = "fix" ]; then
+            # issue_comment は PR番号で来る（PRはIssueの一種）
+            pr=$(gh api "repos/$REPO/pulls/$N")
+            head_repo=$(echo "$pr" | jq -r '.head.repo.full_name')
+            base_repo=$(echo "$pr" | jq -r '.base.repo.full_name')
+            head_ref=$(echo "$pr" | jq -r '.head.ref')
+
+            # フォークは拒否（Secrets事故の温床）
+            if [ "$head_repo" != "$base_repo" ]; then
+              gh pr comment "$N" --repo "$REPO" --body "安全のため、フォークPRの /ai-fix は無効です（Mode Aでローカル修正してください）。"
+              exit 0
+            fi
+
+            echo "HEAD_REPO=$head_repo" >> "$GITHUB_ENV"
+            echo "HEAD_REF=$head_ref" >> "$GITHUB_ENV"
+          fi
+
+      - name: Loop limit check (max 2)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODE: ${{ env.MODE }}
+          N: ${{ env.TARGET_NUMBER }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "$MODE" != "fix" ]; then exit 0; fi
+
+          # 過去の bot コメントから回数を数える
+          comments=$(gh api "repos/$REPO/issues/$N/comments?per_page=100")
+          last=$(echo "$comments" | jq -r '[.[] | select(.body|contains("<!-- ai-fix-loop:"))] | last | .body // ""')
+          if [ -z "$last" ]; then
+            loop=0
+          else
+            loop=$(echo "$last" | sed -n 's/.*<!-- ai-fix-loop:\([0-9]\+\).*/\1/p' | tail -n 1)
+            loop=${loop:-0}
+          fi
+
+          if [ "$loop" -ge 2 ]; then
+            gh pr comment "$N" --repo "$REPO" --body "停止条件：自動修正ループが上限（2回）に達しました。以降は手動で対応してください。"
+            exit 0
+          fi
+
+          next=$((loop+1))
+          echo "AI_FIX_LOOP=$next" >> "$GITHUB_ENV"
+
+      - name: Checkout target branch (fix only)
+        if: ${{ env.MODE == 'fix' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.HEAD_REPO }}
+          ref: ${{ env.HEAD_REF }}
+          fetch-depth: 0
+
+      - name: Fetch latest AI review findings (from PR comments)
+        if: ${{ env.MODE == 'fix' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          N: ${{ env.TARGET_NUMBER }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, re, subprocess, pathlib
+
+          repo = pathlib.Path().read_text if False else None
+          # gh apiでコメント取得
+          cmd = ["gh","api",f"repos/{subprocess.check_output(['bash','-lc','echo $REPO'], text=True).strip()}/issues/{subprocess.check_output(['bash','-lc','echo $N'], text=True).strip()}/comments?per_page=100"]
+          comments = json.loads(subprocess.check_output(cmd, text=True))
+
+          # 最新の ai-reviewer コメントを探す
+          target = None
+          for c in reversed(comments):
+            body = c.get("body","")
+            if "<!-- ai-reviewer -->" in body and "AI_FINDINGS_JSON" in body:
+              target = body
+              break
+
+          if not target:
+            raise SystemExit("AI review comment not found. Run ai_review first.")
+
+          m = re.search(r"```json\s*(\{.*?\})\s*```", target, re.S)
+          if not m:
+            raise SystemExit("AI findings JSON block not found in comment.")
+
+          obj = json.loads(m.group(1))
+
+          # 念のため findings は最大3に丸める
+          obj["findings"] = (obj.get("findings") or [])[:3]
+
+          pathlib.Path("findings.json").write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+          print("findings.json written")
+          PY
+
+      - name: Prepare diff context
+        if: ${{ env.MODE == 'fix' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          N: ${{ env.TARGET_NUMBER }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          pr=$(gh api "repos/$REPO/pulls/$N")
+          base_sha=$(echo "$pr" | jq -r '.base.sha')
+          head_sha=$(echo "$pr" | jq -r '.head.sha')
+
+          git diff --unified=3 "$base_sha" "$head_sha" > pr.diff
+          MAX_BYTES=180000
+          head -c "$MAX_BYTES" pr.diff > pr.diff.trunc || true
+          echo "DIFF_PATH=pr.diff.trunc" >> "$GITHUB_ENV"
+
+      - name: Build OpenAI request (implement/fix)
+        shell: bash
+        env:
+          MODE: ${{ env.MODE }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+
+          mode = os.environ["MODE"]
+          if mode == "fix":
+            prompt = pathlib.Path(".github/ai/prompts/implement.md").read_text(encoding="utf-8")
+            diff = pathlib.Path(os.environ["DIFF_PATH"]).read_text(encoding="utf-8", errors="replace")
+            findings = json.loads(pathlib.Path("findings.json").read_text(encoding="utf-8"))
+
+            schema = {
+              "type":"object",
+              "properties":{
+                "summary":{"type":"string"},
+                "patch":{"type":"string","pattern":"^diff --git"},
+                "touched_files":{"type":"array","maxItems":20,"items":{"type":"string"}},
+                "notes":{"type":"string"}
+              },
+              "required":["summary","patch","touched_files","notes"],
+              "additionalProperties": False
+            }
+
+            user_content = f"""以下を満たす修正パッチを作ってください。
+
+                            # 制約
+                            - 修正対象は findings の最大3件のみ
+                            - 最小差分
+                            - 依存関係変更なし
+                            - 秘密情報・外部送信なし
+
+                            # Reviewer指摘（JSON）
+                            {json.dumps(findings, ensure_ascii=False)}
+
+                            # 現在のPR差分（参考：truncate済）
+                            {diff}
+                            """
+
+            req = {
+              "model":"gpt-5.2-codex",
+              "reasoning":{"effort":"none"},
+              "input":[
+                {"role":"system","content": prompt},
+                {"role":"user","content": user_content}
+              ],
+              "text":{
+                "verbosity":"low",
+                "format":{
+                  "type":"json_schema",
+                  "name":"apply_fix",
+                  "schema": schema,
+                  "strict": True
+                }
+              }
+            }
+
+            pathlib.Path("request.json").write_text(json.dumps(req, ensure_ascii=False), encoding="utf-8")
+            print("request.json written")
+          else:
+            # implement は「ここでは安全のため plan-only」に寄せる（PR作成は後段で）
+            # 必要なら自分で拡張してください
+            pathlib.Path("request.json").write_text("{}", encoding="utf-8")
+            print("implement mode: request.json placeholder")
+          PY
+
+      - name: Call OpenAI and extract patch
+        if: ${{ env.MODE == 'fix' }}
+        shell: bash
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo "OPENAI_API_KEY is missing."
+            exit 1
+          fi
+
+          curl -sS https://api.openai.com/v1/responses \
+            -H "Authorization: Bearer $OPENAI_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d @request.json > response.json
+
+          python - <<'PY'
+          import json, pathlib
+          data = json.loads(pathlib.Path("response.json").read_text(encoding="utf-8"))
+          text = None
+          try:
+            text = data["output"][0]["content"][0]["text"]
+          except Exception:
+            text = data.get("output_text")
+          if not text:
+            raise SystemExit("No output text")
+
+          obj = json.loads(text)
+          pathlib.Path("fix.json").write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
+          pathlib.Path("fix.patch").write_text(obj["patch"], encoding="utf-8")
+          print("fix.patch written")
+          PY
+
+      - name: Apply patch (no tests by default)
+        if: ${{ env.MODE == 'fix' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git apply --whitespace=fix fix.patch
+
+      - name: Commit & push
+        if: ${{ env.MODE == 'fix' }}
+        shell: bash
+        env:
+          N: ${{ env.TARGET_NUMBER }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git commit -m "ai-fix: address reviewer findings (loop $AI_FIX_LOOP/2)" || {
+            echo "No changes to commit."
+            exit 0
+          }
+          git push
+
+      - name: Notify PR
+        if: ${{ env.MODE == 'fix' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          N: ${{ env.TARGET_NUMBER }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh pr comment "$N" --repo "$REPO" --body "自動修正をpushしました。<!-- ai-fix-loop:$AI_FIX_LOOP --> 次のpushにより ai_review が再実行されます。"
