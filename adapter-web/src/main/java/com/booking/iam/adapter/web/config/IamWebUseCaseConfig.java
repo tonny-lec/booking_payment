@@ -6,6 +6,7 @@ import com.booking.iam.application.port.RefreshTokenRepository;
 import com.booking.iam.application.port.TokenGenerator;
 import com.booking.iam.application.port.UserRepository;
 import com.booking.iam.application.usecase.LoginUseCase;
+import com.booking.iam.application.usecase.RefreshTokenUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -46,6 +47,19 @@ public class IamWebUseCaseConfig {
                 refreshTokenRepository,
                 tokenGenerator,
                 passwordEncoder
+        );
+    }
+
+    @Bean
+    public RefreshTokenUseCase refreshTokenUseCase(
+            RefreshTokenRepository refreshTokenRepository,
+            UserRepository userRepository,
+            TokenGenerator tokenGenerator
+    ) {
+        return new RefreshTokenUseCase(
+                refreshTokenRepository,
+                userRepository,
+                tokenGenerator
         );
     }
 
