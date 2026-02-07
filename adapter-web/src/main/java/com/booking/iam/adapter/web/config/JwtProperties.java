@@ -14,6 +14,7 @@ public class JwtProperties {
     private String issuer = "booking-payment";
     private String audience = "booking-payment-api";
     private String privateKeyPem;
+    private String publicKeyPem;
 
     public String getKeyId() {
         return keyId;
@@ -45,5 +46,13 @@ public class JwtProperties {
 
     public void setPrivateKeyPem(String privateKeyPem) {
         this.privateKeyPem = privateKeyPem;
+    }
+
+    public String getPublicKeyPem() {
+        return publicKeyPem;
+    }
+
+    public void setPublicKeyPem(String publicKeyPem) {
+        this.publicKeyPem = publicKeyPem;
     }
 }
