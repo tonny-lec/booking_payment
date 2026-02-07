@@ -74,7 +74,7 @@ PRD承認済み、設計ドキュメント完了に基づき、Slice A（最小M
 | IAM-W-01 | POST /auth/login エンドポイント | OpenAPI iam.yaml 準拠 | 🔴 | ✅ | IAM-A-05 | [IAM-W-01](./03-openapi.md#API-IAM) |
 | IAM-W-02 | POST /auth/refresh エンドポイント | OpenAPI iam.yaml 準拠 | 🔴 | ⬜ | IAM-A-06 | [IAM-W-02](./03-openapi.md#API-IAM) |
 | IAM-W-03 | POST /auth/logout エンドポイント | OpenAPI iam.yaml 準拠 | 🔴 | ⬜ | IAM-A-07 | [IAM-W-03](./03-openapi.md#API-IAM) |
-| IAM-W-04 | JwtAuthenticationFilter | Bearer Token検証フィルタ | 🔴 | ✅ | IAM-I-05 | [IAM-W-04](./03-openapi.md#API-IAM) |
+| IAM-W-04 | JwtAuthenticationFilter | Bearer Token検証フィルタ | 🔴 | ⬜ | IAM-I-05 | [IAM-W-04](./03-openapi.md#API-IAM) |
 | IAM-W-05 | SecurityConfig | Spring Security設定 | 🔴 | ⬜ | IAM-W-04 | [IAM-W-05](./03-openapi.md#API-IAM) |
 
 <a id="IMPL-TEST"></a>
