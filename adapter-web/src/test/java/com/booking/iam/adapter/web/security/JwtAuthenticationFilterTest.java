@@ -73,6 +73,19 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    @DisplayName("should authenticate request with lowercase bearer scheme")
+    void shouldAuthenticateWithLowercaseBearerScheme() throws ServletException, IOException {
+        request.addHeader("Authorization", "bearer " + createTokenSignedBy(keyPair, "access"));
+
+        filter.doFilter(request, response, filterChain);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(authentication).isNotNull();
+        assertThat(authentication.getName()).isEqualTo("user-123");
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
     @DisplayName("should leave context unauthenticated when token signature is invalid")
     void shouldNotAuthenticateWhenSignatureInvalid() throws Exception {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");

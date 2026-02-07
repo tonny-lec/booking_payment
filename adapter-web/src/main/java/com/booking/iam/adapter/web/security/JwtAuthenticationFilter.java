@@ -51,7 +51,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+        if (authHeader == null || !startsWithBearerPrefixIgnoreCase(authHeader)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -130,6 +130,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         return false;
+    }
+
+    private boolean startsWithBearerPrefixIgnoreCase(String headerValue) {
+        return headerValue.length() >= BEARER_PREFIX.length()
+                && headerValue.regionMatches(true, 0, BEARER_PREFIX, 0, BEARER_PREFIX.length());
     }
 
     private boolean accessTokenTypeMatches(Object typeClaim) {
