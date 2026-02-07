@@ -59,7 +59,7 @@ class JwtAuthenticationFilterTest {
     @Test
     @DisplayName("should authenticate request with valid bearer token")
     void shouldAuthenticateWithValidToken() throws ServletException, IOException {
-        request.addHeader("Authorization", "Bearer " + createValidToken());
+        request.addHeader("Authorization", "Bearer " + createTokenSignedBy(keyPair, "access"));
 
         filter.doFilter(request, response, filterChain);
 
@@ -79,7 +79,18 @@ class JwtAuthenticationFilterTest {
         generator.initialize(2048);
         KeyPair otherKeyPair = generator.generateKeyPair();
 
-        request.addHeader("Authorization", "Bearer " + createTokenSignedBy(otherKeyPair));
+        request.addHeader("Authorization", "Bearer " + createTokenSignedBy(otherKeyPair, "access"));
+
+        filter.doFilter(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("should leave context unauthenticated when token type is refresh")
+    void shouldNotAuthenticateWhenTokenTypeIsRefresh() throws ServletException, IOException {
+        request.addHeader("Authorization", "Bearer " + createTokenSignedBy(keyPair, "refresh"));
 
         filter.doFilter(request, response, filterChain);
 
@@ -96,11 +107,7 @@ class JwtAuthenticationFilterTest {
         verify(filterChain).doFilter(request, response);
     }
 
-    private String createValidToken() {
-        return createTokenSignedBy(keyPair);
-    }
-
-    private String createTokenSignedBy(KeyPair signingKeyPair) {
+    private String createTokenSignedBy(KeyPair signingKeyPair, String tokenType) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
@@ -108,7 +115,7 @@ class JwtAuthenticationFilterTest {
                 .issuer(ISSUER)
                 .subject("user-123")
                 .claim("aud", AUDIENCE)
-                .claim("type", "access")
+                .claim("type", tokenType)
                 .claim("roles", List.of("user"))
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plusSeconds(300)))

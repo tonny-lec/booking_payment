@@ -32,6 +32,7 @@ import java.util.Objects;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String TOKEN_TYPE_ACCESS = "access";
 
     private final PublicKey publicKey;
     private final String issuer;
@@ -68,7 +69,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            if (!issuer.equals(claims.getIssuer()) || !audienceMatches(claims.get("aud"))) {
+            if (!issuer.equals(claims.getIssuer())
+                    || !audienceMatches(claims.get("aud"))
+                    || !accessTokenTypeMatches(claims.get("type"))) {
                 SecurityContextHolder.clearContext();
                 filterChain.doFilter(request, response);
                 return;
@@ -127,6 +130,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
         return false;
+    }
+
+    private boolean accessTokenTypeMatches(Object typeClaim) {
+        return typeClaim instanceof String tokenType
+                && TOKEN_TYPE_ACCESS.equalsIgnoreCase(tokenType);
     }
 
     private List<GrantedAuthority> toAuthorities(Object rolesClaim) {
