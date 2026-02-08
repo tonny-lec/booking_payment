@@ -34,6 +34,22 @@ spring:
     locations: classpath:db/migration
     clean-disabled: false
 
+# OpenAPI validation mapping required by OpenApiValidationProperties
+app:
+  openapi:
+    validation:
+      path-to-spec:
+        /api/v1/auth/**: /static/openapi/iam.yaml
+        /api/v1/bookings/**: /static/openapi/booking.yaml
+        /api/v1/payments/**: /static/openapi/payment.yaml
+      ignored-path-patterns:
+        - /api/v1/auth/**
+        - /actuator/**
+        - /swagger-ui/**
+        - /v3/api-docs/**
+        - /openapi/**
+        - /error
+
 # Minimal server config for tests
 server:
   port: 0
