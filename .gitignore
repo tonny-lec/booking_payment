@@ -83,3 +83,6 @@ postgres-data/
 
 # Local PR bodies
 .agents/skills/pr-template-writer/pr-body/
+
+# Codex intelligence cache
+.codex-intel/

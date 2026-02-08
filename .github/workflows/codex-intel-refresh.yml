@@ -1,0 +1,89 @@
+name: codex-intel-refresh
+
+on:
+  schedule:
+    - cron: "0 0 * * 1"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "full or incremental"
+        required: true
+        default: incremental
+        type: choice
+        options:
+          - full
+          - incremental
+      include_external:
+        description: "include external sources"
+        required: true
+        default: true
+        type: boolean
+      open_pr:
+        description: "open pull request when docs changed"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    env:
+      MODE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.mode || 'incremental' }}
+      INCLUDE_EXTERNAL: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.include_external || 'true' }}
+      OPEN_PR: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.open_pr || 'true' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pyyaml
+
+      - name: Refresh Codex intelligence docs
+        run: |
+          python3 scripts/codex/fetch_sources.py \
+            --manifest docs/codex/sources.yaml \
+            --out .codex-intel/raw.json \
+            --mode "$MODE" \
+            --include-external "$INCLUDE_EXTERNAL"
+
+          python3 scripts/codex/build_digest.py \
+            --in .codex-intel/raw.json \
+            --out .codex-intel/digest.json
+
+          python3 scripts/codex/update_docs.py \
+            --digest .codex-intel/digest.json \
+            --docs-root docs/codex
+
+      - name: Validate
+        env:
+          CHECK_LINKS: "1"
+        run: |
+          bash scripts/codex/validate.sh
+
+      - name: Create Pull Request
+        if: ${{ env.OPEN_PR == 'true' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "docs: refresh codex intelligence"
+          title: "docs: refresh codex intelligence"
+          body: |
+            ## Summary
+            - refresh Codex intelligence sources and classifications
+            - update timeline and source matrix
+            - run codex validation checks
+          branch: chore/codex-intel-refresh
+          delete-branch: true
+          add-paths: |
+            docs/codex/**

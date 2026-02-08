@@ -1,0 +1,236 @@
+version: 1
+default_user_agent: "booking-payment-codex-intel-bot/1.0"
+
+sources:
+  - id: codex-explore
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations, strategy_org]
+    url: https://developers.openai.com/codex/explore/
+
+  - id: codex-topic-blog
+    source_type: official
+    category: timeline
+    expected_update: frequent
+    tags: [timeline, use_cases_lessons]
+    url: https://developers.openai.com/blog/topic/codex/
+
+  - id: openai-cookbook-home
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations]
+    url: https://cookbook.openai.com/
+
+  - id: codex-prompting-guide
+    source_type: official
+    category: operations
+    expected_update: occasional
+    tags: [operations, strategy_org]
+    url: https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide/
+
+  - id: agents-md-guide
+    source_type: official
+    category: strategy
+    expected_update: occasional
+    tags: [strategy_org, operations]
+    url: https://developers.openai.com/codex/guides/agents-md/
+
+  - id: codex-exec-plans
+    source_type: official
+    category: strategy
+    expected_update: occasional
+    tags: [strategy_org, operations]
+    url: https://developers.openai.com/cookbook/articles/codex_exec_plans/
+
+  - id: codex-security
+    source_type: official
+    category: security
+    expected_update: occasional
+    tags: [security_governance]
+    url: https://developers.openai.com/codex/security/
+
+  - id: how-openai-uses-codex
+    name: How OpenAI uses Codex
+    source_type: official
+    category: strategy
+    expected_update: occasional
+    tags: [strategy_org, operations, security_governance]
+    url: https://cdn.openai.com/pdf/6a2631dc-783e-479b-b1a4-af0cfbd38630/how-openai-uses-codex.pdf
+
+  - id: codex-skills
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations, strategy_org]
+    url: https://developers.openai.com/codex/skills/
+
+  - id: codex-create-skill
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations, strategy_org]
+    url: https://developers.openai.com/codex/skills/#create-a-skill
+
+  - id: codex-agents-sdk
+    source_type: official
+    category: strategy
+    expected_update: occasional
+    tags: [strategy_org, operations]
+    url: https://developers.openai.com/codex/guides/agents-sdk/
+
+  - id: ai-native-engineering-team
+    source_type: official
+    category: strategy
+    expected_update: occasional
+    tags: [strategy_org, security_governance]
+    url: https://developers.openai.com/codex/guides/build-ai-native-engineering-team/
+
+  - id: codex-workflows
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations]
+    url: https://developers.openai.com/codex/workflows/
+
+  - id: codex-cli-features
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations]
+    url: https://developers.openai.com/codex/cli/features/
+
+  - id: codex-config-basic
+    source_type: official
+    category: strategy
+    expected_update: occasional
+    tags: [operations, security_governance]
+    url: https://developers.openai.com/codex/config-basic/
+
+  - id: codex-github-integration
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations]
+    url: https://developers.openai.com/codex/integrations/github/
+
+  - id: introducing-codex-app
+    name: Introducing the Codex app
+    known_date: 2026-02-02
+    source_type: official
+    category: timeline
+    expected_update: rare
+    tags: [timeline, operations, strategy_org]
+    url: https://openai.com/index/introducing-the-codex-app/
+
+  - id: codex-app-worktrees
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations]
+    url: https://developers.openai.com/codex/app/worktrees/
+
+  - id: codex-app-local-environments
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations]
+    url: https://developers.openai.com/codex/app/local-environments/
+
+  - id: codex-app-automations
+    source_type: official
+    category: operations
+    expected_update: frequent
+    tags: [operations, security_governance]
+    url: https://developers.openai.com/codex/app/automations/
+
+  - id: blog-eval-skills
+    source_type: official
+    category: use_case
+    expected_update: occasional
+    tags: [use_cases_lessons, operations]
+    url: https://developers.openai.com/blog/eval-skills/
+
+  - id: blog-skyscanner-mcp
+    source_type: official
+    category: use_case
+    expected_update: occasional
+    tags: [use_cases_lessons, strategy_org]
+    url: https://developers.openai.com/blog/skyscanner-codex-jetbrains-mcp/
+
+  - id: blog-dagster-documentation
+    source_type: official
+    category: use_case
+    expected_update: occasional
+    tags: [use_cases_lessons]
+    url: https://developers.openai.com/blog/codex-for-documentation-dagster/
+
+  - id: blog-codex-devday
+    source_type: official
+    category: use_case
+    expected_update: occasional
+    tags: [use_cases_lessons, strategy_org]
+    url: https://developers.openai.com/blog/codex-at-devday/
+
+  - id: openai-community-best-practices
+    source_type: external
+    category: use_case
+    expected_update: frequent
+    tags: [use_cases_lessons, operations]
+    url: https://community.openai.com/t/best-practices-for-using-codex/1373143
+
+  - id: latent-space-missing-manual
+    source_type: external
+    category: use_case
+    expected_update: occasional
+    tags: [use_cases_lessons, strategy_org]
+    url: https://www.latent.space/p/codex
+
+  - id: codecademy-codex-app
+    source_type: external
+    category: use_case
+    expected_update: occasional
+    tags: [use_cases_lessons, operations]
+    url: https://www.codecademy.com/article/open-ai-codex-app-for-mac-os
+
+  - id: zenn-agents-practice
+    source_type: external
+    category: use_case
+    expected_update: occasional
+    tags: [use_cases_lessons, operations]
+    url: https://zenn.dev/shinpr_p/articles/80cef7ed8421a8
+
+  - id: qiita-plans-practice
+    source_type: external
+    category: use_case
+    expected_update: occasional
+    tags: [use_cases_lessons, operations]
+    url: https://qiita.com/masakinihirota/items/62367ca7ab1766cbd012
+
+  - id: introducing-gpt-5-3-codex
+    name: Introducing GPT-5.3-Codex
+    known_date: 2026-02-05
+    source_type: official
+    category: timeline
+    expected_update: rare
+    tags: [timeline, strategy_org]
+    url: https://openai.com/index/introducing-gpt-5-3-codex/
+
+  - id: codex-ga-announcement
+    name: Codex now generally available
+    known_date: 2025-10-06
+    source_type: official
+    category: timeline
+    expected_update: rare
+    tags: [timeline, strategy_org]
+    url: https://openai.com/index/codex-now-generally-available/
+
+  - id: introducing-codex-research-preview
+    name: Introducing Codex (research preview)
+    known_date: 2025-05-16
+    source_type: official
+    category: timeline
+    expected_update: rare
+    tags: [timeline]
+    url: https://openai.com/index/introducing-codex/
