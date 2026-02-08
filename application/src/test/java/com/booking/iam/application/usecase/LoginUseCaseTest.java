@@ -145,7 +145,7 @@ class LoginUseCaseTest {
     @Test
     @DisplayName("should throw forbidden when account is locked")
     void shouldThrowForbiddenWhenAccountIsLocked() {
-        User user = userWithStatus(UserStatus.LOCKED, NOW.plus(Duration.ofMinutes(10)));
+        User user = userWithStatus(UserStatus.LOCKED, null);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> useCase.execute(new LoginUseCase.LoginCommand(email, RAW_PASSWORD, null, null)))
