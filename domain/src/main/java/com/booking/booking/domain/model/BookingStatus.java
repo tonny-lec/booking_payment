@@ -8,17 +8,17 @@ public enum BookingStatus {
     /**
      * Booking is created and waiting for payment confirmation.
      */
-    PENDING("pending", true, true, true),
+    PENDING("PENDING", true, true, true),
 
     /**
      * Booking is confirmed after successful payment.
      */
-    CONFIRMED("confirmed", true, true, false),
+    CONFIRMED("CONFIRMED", true, true, false),
 
     /**
      * Booking is cancelled and cannot be changed anymore.
      */
-    CANCELLED("cancelled", false, false, false);
+    CANCELLED("CANCELLED", false, false, false);
 
     private final String code;
     private final boolean modifiable;
@@ -33,7 +33,7 @@ public enum BookingStatus {
     }
 
     /**
-     * Returns lowercase code for persistence and APIs.
+     * Returns uppercase code for persistence and APIs.
      *
      * @return status code
      */
@@ -78,7 +78,7 @@ public enum BookingStatus {
     }
 
     /**
-     * Looks up a status by lowercase code.
+     * Looks up a status by code.
      *
      * @param code status code
      * @return matching BookingStatus
@@ -89,7 +89,7 @@ public enum BookingStatus {
         }
 
         for (BookingStatus status : values()) {
-            if (status.code.equals(code)) {
+            if (status.code.equalsIgnoreCase(code)) {
                 return status;
             }
         }

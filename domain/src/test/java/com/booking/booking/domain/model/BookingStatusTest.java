@@ -20,19 +20,19 @@ class BookingStatusTest {
         @Test
         @DisplayName("PENDING should have correct code")
         void pendingShouldHaveCorrectCode() {
-            assertThat(BookingStatus.PENDING.code()).isEqualTo("pending");
+            assertThat(BookingStatus.PENDING.code()).isEqualTo("PENDING");
         }
 
         @Test
         @DisplayName("CONFIRMED should have correct code")
         void confirmedShouldHaveCorrectCode() {
-            assertThat(BookingStatus.CONFIRMED.code()).isEqualTo("confirmed");
+            assertThat(BookingStatus.CONFIRMED.code()).isEqualTo("CONFIRMED");
         }
 
         @Test
         @DisplayName("CANCELLED should have correct code")
         void cancelledShouldHaveCorrectCode() {
-            assertThat(BookingStatus.CANCELLED.code()).isEqualTo("cancelled");
+            assertThat(BookingStatus.CANCELLED.code()).isEqualTo("CANCELLED");
         }
     }
 
@@ -88,20 +88,28 @@ class BookingStatusTest {
     class FromCode {
 
         @Test
-        @DisplayName("should return PENDING for pending code")
-        void shouldReturnPendingForPendingCode() {
+        @DisplayName("should return PENDING for uppercase code")
+        void shouldReturnPendingForUppercaseCode() {
+            assertThat(BookingStatus.fromCode("PENDING")).isEqualTo(BookingStatus.PENDING);
+        }
+
+        @Test
+        @DisplayName("should return CONFIRMED for uppercase code")
+        void shouldReturnConfirmedForUppercaseCode() {
+            assertThat(BookingStatus.fromCode("CONFIRMED")).isEqualTo(BookingStatus.CONFIRMED);
+        }
+
+        @Test
+        @DisplayName("should return CANCELLED for uppercase code")
+        void shouldReturnCancelledForUppercaseCode() {
+            assertThat(BookingStatus.fromCode("CANCELLED")).isEqualTo(BookingStatus.CANCELLED);
+        }
+
+        @Test
+        @DisplayName("should accept lowercase code for compatibility")
+        void shouldAcceptLowercaseCodeForCompatibility() {
             assertThat(BookingStatus.fromCode("pending")).isEqualTo(BookingStatus.PENDING);
-        }
-
-        @Test
-        @DisplayName("should return CONFIRMED for confirmed code")
-        void shouldReturnConfirmedForConfirmedCode() {
             assertThat(BookingStatus.fromCode("confirmed")).isEqualTo(BookingStatus.CONFIRMED);
-        }
-
-        @Test
-        @DisplayName("should return CANCELLED for cancelled code")
-        void shouldReturnCancelledForCancelledCode() {
             assertThat(BookingStatus.fromCode("cancelled")).isEqualTo(BookingStatus.CANCELLED);
         }
 
@@ -114,7 +122,7 @@ class BookingStatusTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = {"", "PENDING", "unknown", "confirmed_status"})
+        @ValueSource(strings = {"", "unknown", "confirmed_status"})
         @DisplayName("should reject unknown code")
         void shouldRejectUnknownCode(String code) {
             assertThatThrownBy(() -> BookingStatus.fromCode(code))
