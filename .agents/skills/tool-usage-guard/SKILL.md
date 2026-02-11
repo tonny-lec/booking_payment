@@ -30,4 +30,4 @@ description: Enforce tool usage rules and write scope constraints. Use when runn
 
 ## References
 - `agents/tool-contract.md`
-- `.agent/workflows/git-commands.md`
+- `.agent/workflows/graphite-commands.md`

@@ -181,6 +181,6 @@ public interface DomainEvent {
 
 ## 参照
 
-- `docs/agent/rules.md` - PR作成ルール
-- `.agent/workflows/git-commands.md` - Git操作ワークフロー
+- `agents/rules.md` - PR作成ルール
+- `.agent/workflows/graphite-commands.md` - Graphite操作ワークフロー
 - `.github/pull_request_template.md` - GitHubテンプレート（本ファイルと同期）

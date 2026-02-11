@@ -70,26 +70,26 @@ This repo is template-mode (no `src/` yet). Use the provided scripts:
 
 ## Commit & Pull Request Guidelines
 - Commit message format: `<type>: <summary>` with optional body. Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
-- Use feature branches; never push directly to `main`. See `agents/rules.md` for the full Git flow.
-- Git flow details and branching rules: `agents/rules.md`.
+- Use Graphite stacked PR workflow; never push directly to `main`. See `agents/rules.md` for the full flow.
+- Graphite flow details and branching rules: `agents/rules.md`.
 - PRs should reference the relevant PRD and include evidence for changes.
 
 ## Agent-Specific Instructions
 - PRD-first is mandatory: no code/infra changes without a PRD in `status: approved`.
 - `docs/prd-*.md` is treated as persistent context for Codex.
 - Use `checkpoint.md` to summarize long-running work.
-- Always review the Git flow rules before starting work: `agents/rules.md`.
+- Always review the Graphite flow rules before starting work: `agents/rules.md`.
 - Create a new branch for each new task; do not work directly on `main`.
 
 ## Agent SSOT & Policies (Read First)
-- System rules (Must/Must Not, Git flow): `agents/rules.md`.
+- System rules (Must/Must Not, Graphite flow): `agents/rules.md`.
 - Workflow (7-phase development): `agents/workflow.md`.
 - Self-check checklists: `agents/self-check.md`.
 - Context policy & reference order: `agents/context-policy.md`.
 - Tool contract & write scope: `agents/tool-contract.md`.
 - Initial prompt to start new work: `agents/initial-command.md`.
 - Evaluation metrics and outputs: `agents/evaluation.md`, `agents/output/`.
-- Git workflows: `.agent/workflows/git-commands.md`.
+- Graphite workflows: `.agent/workflows/graphite-commands.md`.
 
 ## Common References by Task
 - Product requirements: `docs/prd-*.md`.
