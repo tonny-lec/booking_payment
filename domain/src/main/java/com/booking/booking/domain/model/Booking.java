@@ -122,6 +122,26 @@ public class Booking {
     }
 
     /**
+     * Normalizes note input using the same rules as aggregate mutation.
+     *
+     * @param note candidate note
+     * @return normalized note (nullable)
+     */
+    public static String normalizeNote(String note) {
+        return normalizeOptionalText(note, MAX_NOTE_LENGTH, "note");
+    }
+
+    /**
+     * Verifies optimistic-lock and modifiable-state guards without mutating the aggregate.
+     *
+     * @param expectedVersion expected current version
+     */
+    public void assertUpdatable(int expectedVersion) {
+        assertVersion(expectedVersion);
+        assertModifiable();
+    }
+
+    /**
      * Transitions booking from PENDING to CONFIRMED.
      */
     public void confirm() {
