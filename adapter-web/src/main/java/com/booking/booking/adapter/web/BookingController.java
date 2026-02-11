@@ -99,7 +99,7 @@ public class BookingController {
      */
     @DeleteMapping("/{bookingId}")
     public ResponseEntity<BookingResponse> cancelBooking(
-            @PathVariable String bookingId,
+            @PathVariable("bookingId") String bookingId,
             Principal principal
     ) {
         UserId requestUserId = resolveAuthenticatedUserId(principal);
