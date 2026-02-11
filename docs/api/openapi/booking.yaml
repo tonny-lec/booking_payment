@@ -364,6 +364,7 @@ components:
           description: 予約メモ
         version:
           type: integer
+          minimum: 1
           description: 楽観的ロック用バージョン
           example: 1
 
