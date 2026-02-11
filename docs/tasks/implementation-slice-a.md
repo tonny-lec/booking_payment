@@ -85,7 +85,7 @@ PRD承認済み、設計ドキュメント完了に基づき、Slice A（最小M
 | IAM-T-01 | User集約ユニットテスト | 不変条件、振る舞いテスト | 🔴 | ⬜ | IAM-D-05 | [IAM-T-01](./04-test-observability.md#TEST-1) |
 | IAM-T-02 | Email値オブジェクトテスト | バリデーションテスト | 🔴 | ⬜ | IAM-D-02 | [IAM-T-02](./04-test-observability.md#TEST-1) |
 | IAM-T-03 | LoginUseCase ユニットテスト | 正常系/異常系 | 🔴 | ⬜ | IAM-A-05 | [IAM-T-03](./04-test-observability.md#TEST-1) |
-| IAM-T-04 | UserRepository 統合テスト | DB連携テスト | 🟡 | ⬜ | IAM-I-03 | [IAM-T-04](./04-test-observability.md#TEST-1) |
+| IAM-T-04 | UserRepository 統合テスト | DB連携テスト | 🟡 | ✅ | IAM-I-03 | [IAM-T-04](./04-test-observability.md#TEST-1) |
 | IAM-T-05 | E2E: login→refresh→logout | 認証フロー完全テスト | 🔴 | ⬜ | IAM-W-01〜03 | [IAM-T-05](./04-test-observability.md#TEST-1) |
 | IAM-T-06 | Brute-force対策テスト | アカウントロック確認 | 🟡 | ⬜ | IAM-A-05 | [IAM-T-06](./04-test-observability.md#TEST-1) |
 
