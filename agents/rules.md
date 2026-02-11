@@ -31,7 +31,7 @@ status: "stable"
 3. **Small Changes**：変更は最小。分割して各分割ごとに検証
 4. **Tests Gate**：テストが落ちる変更はReject（例外なし）
 5. **No Secrets / No PII**：Secrets/PIIを出力・埋め込みしない（SSOT：`docs/security/pii-policy.md`）
-6. **Git Flow**：ブランチ運用ルールを遵守する（下記参照）
+6. **Graphite Flow**：Graphite stacked PR運用ルールを遵守する（下記参照）
 7. **One Task, One PR**：細分化されたタスク単位でブランチを作成しPRを出す（下記参照）
 
 ## Must Not（禁止）
@@ -44,28 +44,21 @@ status: "stable"
 
 ---
 
-## Git Flow（ブランチ運用ルール）
+## Graphite Flow（stacked PR運用ルール）
 
 ### 作業開始時（必須手順）
 ```bash
-# 1. mainブランチに切り替え
-git checkout main
+# 1. trunk(main)に切り替え
+gt checkout main
 
-# 2. mainブランチを最新化
-git pull origin main
-
-# 3. 作業用ブランチを作成
-git checkout -b <branch-type>/<description>
+# 2. trunkとopen stackを同期
+gt sync
 ```
 
-### ブランチ命名規則
-| タイプ | 用途 | 例 |
-|--------|------|-----|
-| `feature/` | 新機能・ドキュメント追加 | `feature/slice-a-docs` |
-| `fix/` | バグ修正 | `fix/login-validation` |
-| `refactor/` | リファクタリング | `refactor/payment-service` |
-| `docs/` | ドキュメントのみの変更 | `docs/update-glossary` |
-| `chore/` | 設定・ツール変更 | `chore/ci-config` |
+### ブランチ・コミット作成ルール
+- 変更を実装した後に `git add` でステージする
+- `gt create --message "<type>: <summary>"` で branch + commit を作成する
+- type: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
 ### コミットルール
 - コミットメッセージは意図を明確に記述
@@ -78,24 +71,24 @@ git checkout -b <branch-type>/<description>
 
   Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
   ```
-- type: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+- Graphite運用では `git commit` より `gt create` / `gt modify` を優先する
 
 ### プッシュ・マージルール
-1. 作業ブランチにプッシュ：`git push -u origin <branch-name>`
-2. Pull Request を作成
+1. PRスタックを提出：`gt submit --no-interactive`
+2. Pull Request を作成/更新（Graphite経由）
 3. レビュー後にmainへマージ（人間が実行）
 4. **mainへの直接pushは禁止**
 
 ### 作業中断・再開時
 ```bash
 # 中断前：変更をコミット or スタッシュ
-git stash  # または git commit
+git stash  # または gt create / gt modify
 
-# 再開時：mainを最新化してからリベース（必要に応じて）
-git checkout main
-git pull origin main
-git checkout <作業ブランチ>
-git rebase main  # コンフリクトがあれば解決
+# 再開時：trunkとstackを同期
+gt checkout main
+gt sync
+gt checkout <作業ブランチ>
+# 必要に応じて: gt restack
 ```
 
 ---
@@ -125,10 +118,10 @@ docs/<context>-<document>
 
 ### ワークフロー
 ```
-1. mainブランチから新規ブランチ作成
+1. gt checkout main / gt sync
 2. タスクを完了（ドキュメント編集）
-3. コミット＆プッシュ
-4. PR作成
+3. git add -> gt create
+4. gt submit --no-interactive
 5. （必要に応じて）レビュー・修正
 6. マージ後、次のタスクへ
 ```

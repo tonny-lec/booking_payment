@@ -28,7 +28,7 @@ description: Draft PR descriptions using the repository PR template. Use when cr
 6. Add Related links to tasks/specs/PRDs.
 7. Edit the single PR body draft at `.agents/skills/pr-template-writer/pr-body/pr-body.md`.
 8. Run `bash scripts/pr-body.sh` to copy the draft to `/tmp/pr-body.md`.
-9. Create the PR with `gh pr create --body-file /tmp/pr-body.md`.
+9. Submit the current branch/stack with `gt submit --no-interactive`.
 
 ## Evaluation
 - Define must-pass sections (Summary, Test Coverage, Test plan, Related).
@@ -48,5 +48,5 @@ description: Draft PR descriptions using the repository PR template. Use when cr
 ## References
 - `agents/templates/pr-template.md`
 - `.github/pull_request_template.md`
-- `.agent/workflows/git-commands.md`
+- `.agent/workflows/graphite-commands.md`
 - `scripts/pr-body.sh`
