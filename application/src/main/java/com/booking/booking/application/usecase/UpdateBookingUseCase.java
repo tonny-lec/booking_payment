@@ -45,16 +45,31 @@ public class UpdateBookingUseCase {
             );
         }
 
-        if (bookingRepository.hasConflict(booking.resourceId(), command.timeRange(), booking.id())) {
-            throw new ConflictException(
-                    "booking_time_conflict",
-                    "Booking time range conflicts with an existing booking"
-            );
+        boolean changed = false;
+
+        if (command.timeRange() != null) {
+            if (bookingRepository.hasConflict(booking.resourceId(), command.timeRange(), booking.id())) {
+                throw new ConflictException(
+                        "booking_time_conflict",
+                        "Booking time range conflicts with an existing booking"
+                );
+            }
+            booking.updateTimeRange(command.timeRange(), command.expectedVersion());
+            changed = true;
         }
 
-        booking.updateTimeRange(command.timeRange(), command.expectedVersion());
-        if (!Objects.equals(booking.note(), command.note())) {
-            booking.updateNote(command.note(), booking.version());
+        if (command.note() != null) {
+            String normalizedNote = Booking.normalizeNote(command.note());
+            if (!Objects.equals(booking.note(), normalizedNote)) {
+                int expectedVersion = changed ? booking.version() : command.expectedVersion();
+                booking.updateNote(normalizedNote, expectedVersion);
+                changed = true;
+            }
+        }
+
+        if (!changed) {
+            booking.assertUpdatable(command.expectedVersion());
+            return booking;
         }
 
         return bookingRepository.save(booking);
@@ -70,7 +85,6 @@ public class UpdateBookingUseCase {
         public UpdateBookingCommand {
             Objects.requireNonNull(bookingId, "bookingId must not be null");
             Objects.requireNonNull(requestUserId, "requestUserId must not be null");
-            Objects.requireNonNull(timeRange, "timeRange must not be null");
             if (expectedVersion < Booking.INITIAL_VERSION) {
                 throw new IllegalArgumentException("expectedVersion must be positive");
             }
