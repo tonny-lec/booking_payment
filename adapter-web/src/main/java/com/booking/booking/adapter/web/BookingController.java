@@ -1,7 +1,9 @@
 package com.booking.booking.adapter.web;
 
 import com.booking.booking.application.usecase.CreateBookingUseCase;
+import com.booking.booking.application.usecase.GetBookingUseCase;
 import com.booking.booking.domain.model.Booking;
+import com.booking.booking.domain.model.BookingId;
 import com.booking.booking.domain.model.ResourceId;
 import com.booking.booking.domain.model.TimeRange;
 import com.booking.iam.domain.model.UserId;
@@ -12,6 +14,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,9 +36,14 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 public class BookingController {
 
     private final CreateBookingUseCase createBookingUseCase;
+    private final GetBookingUseCase getBookingUseCase;
 
-    public BookingController(CreateBookingUseCase createBookingUseCase) {
+    public BookingController(
+            CreateBookingUseCase createBookingUseCase,
+            GetBookingUseCase getBookingUseCase
+    ) {
         this.createBookingUseCase = Objects.requireNonNull(createBookingUseCase, "createBookingUseCase must not be null");
+        this.getBookingUseCase = Objects.requireNonNull(getBookingUseCase, "getBookingUseCase must not be null");
     }
 
     /**
@@ -56,6 +65,22 @@ public class BookingController {
 
         return ResponseEntity.created(URI.create("/api/v1/bookings/" + booking.id().asString()))
                 .body(BookingResponse.from(booking));
+    }
+
+    /**
+     * Gets a booking detail.
+     */
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<BookingResponse> getBooking(
+            @PathVariable String bookingId,
+            Principal principal
+    ) {
+        UserId requestUserId = resolveAuthenticatedUserId(principal);
+        Booking booking = getBookingUseCase.execute(new GetBookingUseCase.GetBookingQuery(
+                BookingId.fromString(bookingId),
+                requestUserId
+        ));
+        return ResponseEntity.ok(BookingResponse.from(booking));
     }
 
     private UserId resolveAuthenticatedUserId(Principal principal) {
