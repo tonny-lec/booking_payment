@@ -2,7 +2,7 @@
 doc_type: "codex_intel"
 id: "codex-security-governance"
 version: "0.1"
-last_updated: "2026-02-08"
+last_updated: "2026-03-02"
 status: "draft"
 ---
 
@@ -22,11 +22,11 @@ status: "draft"
 <!-- AUTO-GENERATED:START -->
 | Date | Type | Claim | Source | Confidence |
 |---|---|---|---|---|
-| 2026-02-08 | official | Building an AI-Native Engineering Team | [ai-native-engineering-team](https://developers.openai.com/codex/guides/build-ai-native-engineering-team/) | high |
-| 2026-02-08 | official | Automations | [codex-app-automations](https://developers.openai.com/codex/app/automations/) | high |
-| 2026-02-08 | official | Config basics | [codex-config-basic](https://developers.openai.com/codex/config-basic/) | high |
-| 2026-02-08 | official | Security | [codex-security](https://developers.openai.com/codex/security/) | high |
-| 2026-02-08 | official | How OpenAI uses Codex | [how-openai-uses-codex](https://cdn.openai.com/pdf/6a2631dc-783e-479b-b1a4-af0cfbd38630/how-openai-uses-codex.pdf) | high |
+| 2026-03-02 | official | Building an AI-Native Engineering Team | [ai-native-engineering-team](https://developers.openai.com/codex/guides/build-ai-native-engineering-team/) | high |
+| 2026-03-02 | official | Automations | [codex-app-automations](https://developers.openai.com/codex/app/automations/) | high |
+| 2026-03-02 | official | Config basics | [codex-config-basic](https://developers.openai.com/codex/config-basic/) | high |
+| 2026-03-02 | official | Security | [codex-security](https://developers.openai.com/codex/security/) | high |
+| 2026-03-02 | official | How OpenAI uses Codex | [how-openai-uses-codex](https://cdn.openai.com/pdf/6a2631dc-783e-479b-b1a4-af0cfbd38630/how-openai-uses-codex.pdf) | high |
 ### Source Matrix
 | claim_id | status | url |
 |---|---|---|
