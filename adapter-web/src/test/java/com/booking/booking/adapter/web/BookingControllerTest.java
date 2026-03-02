@@ -1,6 +1,8 @@
 package com.booking.booking.adapter.web;
 
 import com.booking.booking.application.usecase.CreateBookingUseCase;
+import com.booking.booking.application.usecase.GetBookingUseCase;
+import com.booking.booking.application.usecase.UpdateBookingUseCase;
 import com.booking.shared.adapter.web.config.ApiErrorProperties;
 import com.booking.shared.adapter.web.exception.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +16,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,12 +24,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class BookingControllerTest {
 
     private CreateBookingUseCase createBookingUseCase;
+    private GetBookingUseCase getBookingUseCase;
+    private UpdateBookingUseCase updateBookingUseCase;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         createBookingUseCase = mock(CreateBookingUseCase.class);
-        BookingController controller = new BookingController(createBookingUseCase);
+        getBookingUseCase = mock(GetBookingUseCase.class);
+        updateBookingUseCase = mock(UpdateBookingUseCase.class);
+
+        BookingController controller = new BookingController(
+                createBookingUseCase,
+                getBookingUseCase,
+                updateBookingUseCase
+        );
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
 
@@ -75,5 +87,42 @@ class BookingControllerTest {
                 .andExpect(jsonPath("$.status").value(400));
 
         verifyNoInteractions(createBookingUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 400 when update version is not positive")
+    void shouldReturn400WhenUpdateVersionIsNotPositive() throws Exception {
+        mockMvc.perform(put("/api/v1/bookings/33333333-3333-3333-3333-333333333333")
+                        .principal(() -> "11111111-1111-1111-1111-111111111111")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "note": "updated",
+                                  "version": 0
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.errors.version").exists());
+
+        verifyNoInteractions(updateBookingUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 400 when update bookingId is malformed")
+    void shouldReturn400WhenUpdateBookingIdIsMalformed() throws Exception {
+        mockMvc.perform(put("/api/v1/bookings/not-a-uuid")
+                        .principal(() -> "11111111-1111-1111-1111-111111111111")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "note": "updated",
+                                  "version": 1
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
+
+        verifyNoInteractions(updateBookingUseCase);
     }
 }
