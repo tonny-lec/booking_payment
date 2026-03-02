@@ -17,6 +17,8 @@ import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -84,6 +86,18 @@ public class PaymentController {
         return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
     }
 
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<PaymentResponse> getPayment(
+            @PathVariable("paymentId") String paymentId,
+            Principal principal
+    ) {
+        UserId userId = resolveAuthenticatedUserId(principal);
+        Payment payment = getPaymentUseCase.execute(
+                new GetPaymentUseCase.Query(parsePaymentId(paymentId), userId)
+        );
+        return ResponseEntity.ok(toResponse(payment));
+    }
+
     private PaymentResponse toResponse(Payment payment) {
         return new PaymentResponse(
                 payment.id().asString(),
@@ -123,6 +137,14 @@ public class PaymentController {
             return IdempotencyKey.of(UUID.fromString(value));
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Idempotency-Key", ex);
+        }
+    }
+
+    private PaymentId parsePaymentId(String value) {
+        try {
+            return PaymentId.fromString(value);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid paymentId", ex);
         }
     }
 
