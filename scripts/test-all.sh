@@ -6,5 +6,5 @@ if [ -d "docs/codex" ]; then
   CHECK_LINKS=0 bash scripts/codex/validate.sh
 fi
 
-echo "[test-all] Template mode: no additional code tests configured."
-exit 0
+echo "[test-all] Running Gradle test suite..."
+./gradlew test

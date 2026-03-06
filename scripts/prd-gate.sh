@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # PRD-First gate:
-# If changes touch src/ infra/ .github/ -> require docs/prd-platform.md status: approved
+# If changes touch implementation or workflow paths -> require docs/prd-platform.md status: approved
 
 if ! command -v git >/dev/null 2>&1; then
   echo "[prd-gate] git not found. Skipping."
@@ -17,7 +17,7 @@ BASE_REF="${1:-origin/main}"
 changed="$(git diff --name-only "${BASE_REF}"...HEAD || true)"
 
 needs_prd=0
-if echo "${changed}" | grep -E '^(src/|infra/|\.github/)' >/dev/null 2>&1; then
+if echo "${changed}" | grep -E '^(domain/|application/|adapter-web/|adapter-persistence/|bootstrap/|infra/|\.github/)' >/dev/null 2>&1; then
   needs_prd=1
 fi
 
