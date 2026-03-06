@@ -1,152 +1,116 @@
 # ~/.codex/rules/default.rules
 # Codex Rules (Starlark)
-# Goal: Allow most git operations, but prevent direct pushes to main.
+# Goal: Block git/gh usage and prefer Graphite workflow.
 
+# Shell scripts can hide complex side effects, so require explicit approval.
 prefix_rule(
     pattern = [["bash", "sh", "zsh"], ["-lc", "-c"]],
     decision = "prompt",
-    justification = "Redirection/heredoc are treated as a shell script; require approval.",
+    justification = "Shell script execution may include hidden side effects.",
     match = [
-        "bash -lc \"cat <<'EOF' > /tmp/pr-body.md\nhello\nEOF\"", # codex don't apply this rule
+        "bash -lc 'echo hello'",
+        "sh -c 'cat <<EOF > /tmp/a.txt\nx\nEOF'",
     ],
 )
 
-# Allow all git commands by default.
+# Hard block: git is forbidden.
 prefix_rule(
-    pattern = ["git",["status","diff","add","commit","fetch","pull","switch","stash","checkout"]],
-    decision = "allow",
-    justification = "Git operations are generally allowed.",
+    pattern = ["git"],
+    decision = "forbidden",
+    justification = "git commands are prohibited in this environment. Use Graphite (gt) workflow.",
     match = [
         "git status",
-        "git diff",
         "git add -A",
         "git commit -m 'wip'",
-        "git fetch",
-        "git pull --rebase",
-        "git switch -c feature/x",
-    ],
-)
-
-# Safer default: always prompt before ANY git push (high-impact side effect).
-prefix_rule(
-    pattern = ["git", "push"],
-    decision = "allow",
-    justification = "Allow git push except protected main (blocked below).",
-    match = [
-        "git push origin feature/x",
-        "git push --set-upstream origin feature/x",
-    ],
-    not_match = [
-        "git pushy thing",  # not a real git command; should not match
-    ],
-)
-
-# ---- Hard blocks: anything that directly targets main on origin ----
-
-# Block: git push origin main [--flags...]
-prefix_rule(
-    pattern = ["git", "push", "origin", "main"],
-    decision = "forbidden",
-    justification = "Do not push directly to main. Use a feature branch + PR.",
-    match = [
         "git push origin main",
-        "git push origin main --force",
     ],
 )
 
-# Block: flags before remote (common)
+# Graphite local workflow commands.
 prefix_rule(
-    pattern = ["git", "push", ["--force", "-f", "--force-with-lease"], "origin", "main"],
-    decision = "forbidden",
-    justification = "Never force-push to main. Use PR + protected branch.",
-    match = [
-        "git push --force origin main",
-        "git push -f origin main",
-        "git push --force-with-lease origin main",
-    ],
-)
-
-# Block: refspec variants that still update main
-prefix_rule(
-    pattern = ["git", "push", "origin", "HEAD:main"],
-    decision = "forbidden",
-    justification = "Do not update main directly (refspec). Use a PR.",
-    match = [
-        "git push origin HEAD:main",
-    ],
-)
-
-prefix_rule(
-    pattern = ["git", "push", "origin", "main:main"],
-    decision = "forbidden",
-    justification = "Do not update main directly (refspec). Use a PR.",
-    match = [
-        "git push origin main:main",
-    ],
-)
-
-# Block: deleting main
-prefix_rule(
-    pattern = ["git", "push", "origin", ":main"],
-    decision = "forbidden",
-    justification = "Never delete main remotely.",
-    match = [
-        "git push origin :main",
-    ],
-)
-
-# Pull requests (read-only)
-prefix_rule(
-    pattern = ["gh", "pr", ["view", "list", "status", "diff", "checks", "create", "checkout"]],
+    pattern = ["gt", ["state", "checkout", "up", "down", "sync", "restack", "create", "modify"]],
     decision = "allow",
-    justification = "PR operations are generally allowed.",
+    justification = "Graphite commands are the default workflow for local stack management.",
     match = [
-        "gh pr list",
-        "gh pr view 123",
-        "gh pr status",
-        "gh pr diff 123",
-        "gh pr checks 123",
-        "gh pr create",
-        "gh pr checkout 123",
+        "gt state",
+        "gt checkout main",
+        "gt sync",
+        "gt create --message 'docs: update default rules'",
+        "gt modify",
     ],
 )
 
-# riggrep
+# Submitting a stack updates remote state: require confirmation.
+prefix_rule(
+    pattern = ["gt", "submit"],
+    decision = "allow",
+    justification = "Submitting a stack has remote side effects.",
+    match = [
+        "gt submit --no-interactive",
+    ],
+)
+
+# Safe utility commands.
 prefix_rule(
     pattern = ["rg"],
     decision = "allow",
-    justification = "riggrep is a safe command.",
+    justification = "ripgrep is safe for search.",
     match = [
-        "rg -l",
+        "rg -n TODO .",
     ],
 )
 
-# mkdir
 prefix_rule(
     pattern = ["mkdir"],
     decision = "allow",
-    justification = "mkdir is a safe command.",
+    justification = "mkdir is safe.",
     match = [
-        "mkdir -p",
+        "mkdir -p /tmp/work",
     ],
 )
 
-# cat
 prefix_rule(
     pattern = ["cat"],
     decision = "allow",
-    justification = "cat is a safe command.",
+    justification = "cat is safe.",
     match = [
-        "cat",
+        "cat README.md",
     ],
 )
 
-# ls
 prefix_rule(
     pattern = ["ls"],
     decision = "allow",
-    justification = "ls is a safe command.",
+    justification = "ls is safe.",
     match = [
-        "ls",
+        "ls -la",
     ],
+)
+
+# Allow: PRの閲覧（コメント含む）
+prefix_rule(
+  pattern = ["gh", "pr", "view"],
+  decision = "allow",
+  justification = "Allow reading PR summary and comments for review triage",
+  match = [
+      "gh pr view 116 --repo tonny-lec/booking_payment --comments",
+      "gh pr view 91 --repo tonny-lec/booking_payment --json title,body,comments",
+  ],
+  not_match = [
+      "gh pr list --repo tonny-lec/booking_payment",
+  ],
+)
+
+# Allow: GitHub APIでレビューコメント取得
+prefix_rule(
+  pattern = ["gh", "api"],
+  decision = "allow",
+  justification = "Allow fetching review comments/reviews from GitHub API",
+  match = [
+      "gh api repos/tonny-lec/booking_payment/pulls/116/comments --paginate",
+      "gh api repos/tonny-lec/booking_payment/pulls/116/reviews --paginate",
+  ],
+  not_match = [
+      "gh pr view 116 --repo tonny-lec/booking_payment",
+  ],
 )
