@@ -1,9 +1,9 @@
 ---
 doc_type: "prd"
 id: "prd-devex-ai"
-version: "0.2"
-last_updated: "2026-01-16"
-status: "proposed"   # proposed | approved | archived
+version: "0.3"
+last_updated: "2026-03-07"
+status: "approved"   # proposed | approved | archived
 ---
 
 # PRD: DevEx AI（CI組み込み）
