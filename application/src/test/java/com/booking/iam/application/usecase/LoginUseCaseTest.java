@@ -97,6 +97,7 @@ class LoginUseCaseTest {
         RefreshToken persisted = tokenCaptor.getValue();
         assertThat(persisted.userId()).isEqualTo(user.id());
         assertThat(persisted.tokenHash()).isEqualTo(TokenHasher.hash("refresh-token"));
+        assertThat(persisted.createdAt()).isEqualTo(NOW);
         assertThat(persisted.expiresAt()).isEqualTo(NOW.plus(Duration.ofDays(7)));
     }
 
