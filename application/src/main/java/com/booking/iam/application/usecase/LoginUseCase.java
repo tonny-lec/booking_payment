@@ -86,10 +86,12 @@ public class LoginUseCase {
                 REFRESH_TOKEN_TTL
         );
 
-        Instant expiresAt = Instant.now(clock).plus(REFRESH_TOKEN_TTL);
+        Instant issuedAt = Instant.now(clock);
+        Instant expiresAt = issuedAt.plus(REFRESH_TOKEN_TTL);
         RefreshToken refreshToken = RefreshToken.create(
                 user.id(),
                 TokenHasher.hash(tokens.refreshToken()),
+                issuedAt,
                 expiresAt
         );
         refreshTokenRepository.save(refreshToken);

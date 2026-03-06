@@ -65,12 +65,25 @@ public class RefreshToken {
      * @throws IllegalArgumentException if expiresAt is not in the future
      */
     public static RefreshToken create(UserId userId, HashedToken tokenHash, Instant expiresAt) {
+        return create(userId, tokenHash, Instant.now(), expiresAt);
+    }
+
+    /**
+     * Creates a new RefreshToken with a generated ID and explicit creation time.
+     *
+     * @param userId the ID of the user this token belongs to
+     * @param tokenHash the hashed token value
+     * @param createdAt the creation time
+     * @param expiresAt the expiration time
+     * @return a new RefreshToken instance
+     */
+    public static RefreshToken create(UserId userId, HashedToken tokenHash, Instant createdAt, Instant expiresAt) {
         return builder()
                 .id(RefreshTokenId.generate())
                 .userId(userId)
                 .tokenHash(tokenHash)
                 .expiresAt(expiresAt)
-                .createdAt(Instant.now())
+                .createdAt(createdAt)
                 .build();
     }
 
