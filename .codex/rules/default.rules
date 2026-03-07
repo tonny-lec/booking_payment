@@ -1,6 +1,6 @@
 # ~/.codex/rules/default.rules
 # Codex Rules (Starlark)
-# Goal: Block git/gh usage and prefer Graphite workflow.
+# Goal: Prefer standard Git and GitHub CLI workflow, and block Graphite.
 
 # Shell scripts can hide complex side effects, so require explicit approval.
 prefix_rule(
@@ -13,40 +13,116 @@ prefix_rule(
     ],
 )
 
-# Hard block: git is forbidden.
+# Hard block: Graphite is not part of the standard workflow.
+prefix_rule(
+    pattern = ["gt"],
+    decision = "forbidden",
+    justification = "Graphite commands are not used in this repository. Use standard git and gh workflow.",
+    match = [
+        "gt state",
+        "gt checkout main",
+        "gt create --message 'docs: update default rules'",
+        "gt submit --no-interactive",
+    ],
+)
+
+# Standard Git operations are allowed.
 prefix_rule(
     pattern = ["git"],
-    decision = "forbidden",
-    justification = "git commands are prohibited in this environment. Use Graphite (gt) workflow.",
+    decision = "allow",
+    justification = "Standard git operations are allowed for normal repository workflow.",
     match = [
         "git status",
+        "git diff",
+        "git log --oneline",
+        "git show HEAD",
+        "git branch",
+        "git checkout feature-branch",
+        "git switch -c docs/update-rules",
         "git add -A",
-        "git commit -m 'wip'",
+        "git restore --staged .",
+        "git commit -m 'docs: update codex rules'",
+        "git fetch origin",
+        "git pull --ff-only",
+        "git push origin feature-branch",
+        "git rebase origin/main",
+        "git merge origin/main",
+        "git stash",
+        "git cherry-pick abc1234",
+    ],
+)
+
+# Hard block: destructive git operations.
+prefix_rule(
+    pattern = ["git", "reset", "--hard"],
+    decision = "forbidden",
+    justification = "Destructive git reset is not allowed without explicit approval.",
+    match = [
+        "git reset --hard",
+        "git reset --hard HEAD~1",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "clean"],
+    decision = "forbidden",
+    justification = "Destructive git clean is not allowed without explicit approval.",
+    match = [
+        "git clean -fd",
+        "git clean -fdx",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "--force"],
+    decision = "forbidden",
+    justification = "Force push is not allowed without explicit approval.",
+    match = [
+        "git push --force origin feature-branch",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "--force-with-lease"],
+    decision = "forbidden",
+    justification = "Force push is not allowed without explicit approval.",
+    match = [
+        "git push --force-with-lease origin feature-branch",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "push", "origin", "main"],
+    decision = "forbidden",
+    justification = "Direct pushes to main are not allowed.",
+    match = [
         "git push origin main",
     ],
 )
 
-# Graphite local workflow commands.
+# Standard GitHub CLI operations are allowed.
 prefix_rule(
-    pattern = ["gt", ["state", "checkout", "up", "down", "sync", "restack", "create", "modify"]],
+    pattern = ["gh"],
     decision = "allow",
-    justification = "Graphite commands are the default workflow for local stack management.",
+    justification = "Standard GitHub CLI operations are allowed for repository workflow.",
     match = [
-        "gt state",
-        "gt checkout main",
-        "gt sync",
-        "gt create --message 'docs: update default rules'",
-        "gt modify",
+        "gh auth status",
+        "gh repo view --json nameWithOwner,defaultBranchRef",
+        "gh pr status",
+        "gh pr view 147 --json title,body,url",
+        "gh pr create --title 'docs: update codex rules' --body-file /tmp/pr-body.md",
+        "gh pr edit 147 --title 'docs: update codex rules'",
+        "gh api repos/tonny-lec/booking_payment/pulls/147/comments --paginate",
     ],
 )
 
-# Submitting a stack updates remote state: require confirmation.
+# Hard block: destructive GitHub repository operations.
 prefix_rule(
-    pattern = ["gt", "submit"],
-    decision = "allow",
-    justification = "Submitting a stack has remote side effects.",
+    pattern = ["gh", "repo", "delete"],
+    decision = "forbidden",
+    justification = "Repository deletion is not allowed.",
     match = [
-        "gt submit --no-interactive",
+        "gh repo delete tonny-lec/booking_payment",
     ],
 )
 
@@ -85,32 +161,4 @@ prefix_rule(
     match = [
         "ls -la",
     ],
-)
-
-# Allow: PRの閲覧（コメント含む）
-prefix_rule(
-  pattern = ["gh", "pr", "view"],
-  decision = "allow",
-  justification = "Allow reading PR summary and comments for review triage",
-  match = [
-      "gh pr view 116 --repo tonny-lec/booking_payment --comments",
-      "gh pr view 91 --repo tonny-lec/booking_payment --json title,body,comments",
-  ],
-  not_match = [
-      "gh pr list --repo tonny-lec/booking_payment",
-  ],
-)
-
-# Allow: GitHub APIでレビューコメント取得
-prefix_rule(
-  pattern = ["gh", "api"],
-  decision = "allow",
-  justification = "Allow fetching review comments/reviews from GitHub API",
-  match = [
-      "gh api repos/tonny-lec/booking_payment/pulls/116/comments --paginate",
-      "gh api repos/tonny-lec/booking_payment/pulls/116/reviews --paginate",
-  ],
-  not_match = [
-      "gh pr view 116 --repo tonny-lec/booking_payment",
-  ],
 )
