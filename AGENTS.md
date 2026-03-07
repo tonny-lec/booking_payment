@@ -15,24 +15,19 @@ Agent-specific documents (rules, workflows, templates) live under `agents/`.
 
 | # | Principle | Description |
 |---|-----------|-------------|
-| 1 | **PRD-First** | Never implement without approved PRD. No PRD = experimental work only |
+| 1 | **PRD-First** | Never implement code/infra changes without approved PRD. No PRD = experimental work only |
 | 2 | **Modular Rules** | Keep global rules short; load detailed rules only when needed |
 | 3 | **Commandify Everything** | If you do it twice, make it a reusable template/command |
-| 4 | **Context Reset** | Separate planning from execution; carry only Plan to implementation |
+| 4 | **Explore First** | Inspect the repo and resolve discoverable facts before asking questions |
 | 5 | **System Evolution** | Bugs are not just fixes—update rules/templates to prevent recurrence |
 
 ---
 
-## Development Workflow (7 Phases)
+## Development Workflow
 
 ```
-Phase 0: Prime      → Understand scope and dependencies
-Phase 1: PRD        → Create/update requirements document
-Phase 2: Plan       → Write implementation plan
-Phase 3: Reset      → Clear context, carry only Plan forward
-Phase 4: Implement  → Execute with small, reversible changes
-Phase 5: Validate   → Test, lint, build, verify
-Phase 6: Report     → Document changes and remaining work
+Default: Explore -> Confirm if needed -> Edit/Analyze -> Validate -> Report
+Extended: Prime -> PRD -> Plan -> Reset -> Implement -> Validate -> Report
 ```
 
 **Full details**: `agents/workflow.md`
@@ -70,26 +65,25 @@ This repo is template-mode (no `src/` yet). Use the provided scripts:
 
 ## Commit & Pull Request Guidelines
 - Commit message format: `<type>: <summary>` with optional body. Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`.
-- Use Graphite stacked PR workflow; never push directly to `main`. See `agents/rules.md` for the full flow.
-- Graphite flow details and branching rules: `agents/rules.md`.
+- Standard flow is normal Git with `1 task = 1 branch = 1 PR`.
+- Never push directly to `main`.
 - PRs should reference the relevant PRD and include evidence for changes.
 
 ## Agent-Specific Instructions
-- PRD-first is mandatory: no code/infra changes without a PRD in `status: approved`.
+- PRD-first is mandatory for code/infra changes: no such changes without a PRD in `status: approved`.
 - `docs/prd-*.md` is treated as persistent context for Codex.
 - Use `checkpoint.md` to summarize long-running work.
-- Always review the Graphite flow rules before starting work: `agents/rules.md`.
+- Explore the repo before asking questions that can be answered locally.
 - Create a new branch for each new task; do not work directly on `main`.
 
 ## Agent SSOT & Policies (Read First)
-- System rules (Must/Must Not, Graphite flow): `agents/rules.md`.
+- System rules (Must/Must Not, standard flow, optional profiles): `agents/rules.md`.
 - Workflow (7-phase development): `agents/workflow.md`.
 - Self-check checklists: `agents/self-check.md`.
 - Context policy & reference order: `agents/context-policy.md`.
 - Tool contract & write scope: `agents/tool-contract.md`.
 - Initial prompt to start new work: `agents/initial-command.md`.
 - Evaluation metrics and outputs: `agents/evaluation.md`, `agents/output/`.
-- Graphite workflows: `.agent/workflows/graphite-commands.md`.
 
 ## Common References by Task
 - Product requirements: `docs/prd-*.md`.

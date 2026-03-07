@@ -150,5 +150,5 @@ status: "draft"
 
 ### Task SA-8：Gitコミット（Slice A Docs）
 - Context Independent: YES
-- 実行：`git add . && git commit -m "docs: add Slice A documentation (glossary, OpenAPI, usecases)"`
+- 実行：`git add . && git commit -m "docs: add Slice A documentation (glossary, OpenAPI, usecases)"` または、プロジェクトの標準 Git/PR フローに従う
 - 検証：コミット履歴に変更が残る

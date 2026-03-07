@@ -1,60 +1,69 @@
 ---
 doc_type: "agent_policy"
 id: "context-policy"
-version: "0.3"
-last_updated: "2026-01-22"
+version: "0.4"
+last_updated: "2026-03-07"
 status: "stable"
 ---
 
-# コンテキスト運用ポリシー（SSOT参照の最小化）
+# コンテキスト運用ポリシー
 
 ## 基本原則
-
-**Context is Currency**: コンテキストウィンドウは貴重な資源である。
-常に消費量を最小限に抑え、必要な情報のみをロードせよ。
+- 必要最小限の情報だけを読む
+- まず探索し、探索で解けることは質問しない
+- タスク種別ごとに読むべき文書を変える
 
 ---
 
 ## SSOT参照順
-
-情報を探す際は、以下の順序で確認する：
-
-1. `agents/rules.md` - システムルール
-2. `agents/workflow.md` - ワークフロー手順
-3. `agents/self-check.md` - セルフチェックリスト
-4. PRD（`docs/prd-*.md`） - 製品要件
-5. `docs/domain/glossary.md` - ドメイン用語
-6. `docs/api/openapi/*.yaml` - API契約
-7. `docs/design/usecases/*.md` - ユースケース設計
-8. `docs/design/contexts/*.md` - コンテキスト設計
-9. `docs/plan/*.md` - 計画
-10. `docs/test/*.md` - テスト
-11. `checkpoint.md` - セッション状態
+1. `agents/rules.md`
+2. `agents/workflow.md`
+3. `agents/self-check.md`
+4. PRD（`docs/prd-*.md`、コード/インフラ変更時のみ優先必須）
+5. `docs/domain/glossary.md`
+6. `docs/api/openapi/*.yaml`
+7. `docs/design/usecases/*.md`
+8. `docs/design/contexts/*.md`
+9. `docs/plan/*.md`
+10. `docs/test/*.md`
+11. `checkpoint.md`
 
 ---
 
-## タスク開始時の質問（必須）
+## Explore Before Asking
+- まず `rg` などで対象を探す
+- 次に、入口ファイル、設定、型、契約を読む
+- それでも解けない仕様判断だけを質問する
 
-タスクを開始する前に、以下を明確にすること：
+質問してよい例:
+- 複数の妥当な仕様案がある
+- 優先順位やスコープの選択が必要
+- レビュー基準や期待成果物が明示されていない
 
-### 参照領域の特定
-- **Frontend / Backend / Auth / DB / Messaging / Observability / Security** のどれを参照する？
-
-### 変更種別の特定
-- **機能追加 / バグ修正 / 性能改善 / 互換性 / セキュリティ** のどれ？
-
-### 検証方法の特定
-- **unit / integration / contract / e2e / load** のどれ？
+質問しない例:
+- 対象ファイルの場所
+- 既存フローの把握
+- テストや起動方法の確認
 
 ---
 
-## モジュラールール（Overwhelm防止）
+## Minimal Load Set by Task Type
 
-タスクの種類に応じて、特定の参照ルールのみを読み込む：
-
-| 作業領域 | 参照ドキュメント |
+| タスク種別 | 最初に読むもの |
 |---------|-----------------|
-| **API開発** | `docs/api/openapi/*.yaml`, `docs/design/usecases/*.md` |
+| **Implement** | `agents/rules.md`, 関連PRD, 対象コード/仕様 |
+| **Review** | `agents/rules.md`, 対象差分, 関連テスト/仕様 |
+| **Debug** | `agents/rules.md`, エラーログ, 対象コード, 再現手順 |
+| **Explain** | `agents/rules.md`, 対象コード/文書 |
+| **Research** | `agents/rules.md`, 関連文書, 対象設定 |
+
+---
+
+## Modular Rules
+
+| 作業領域 | 優先参照 |
+|---------|---------|
+| **API** | `docs/api/openapi/*.yaml`, `docs/design/usecases/*.md` |
 | **認証・認可** | `docs/design/contexts/iam.md`, `docs/security/*.md` |
 | **予約機能** | `docs/design/contexts/booking.md`, `docs/design/usecases/booking-*.md` |
 | **決済機能** | `docs/design/contexts/payment.md`, `docs/design/usecases/payment-*.md` |
@@ -65,18 +74,11 @@ status: "stable"
 ---
 
 ## Context Reset
+- 長時間タスクに切り替わるとき
+- 会話が長文化したとき
+- 無関係なタスクが混ざり始めたとき
 
-### いつリセットするか
-- 計画フェーズから実装フェーズに移行するとき
-- 長文化したとき（概ね会話が10往復を超えたら）
-- 複数の無関係なタスクが混在し始めたとき
-
-### リセット手順
-1. `checkpoint.md` を更新して現在の状態を要約
-2. 新しいセッションまたは新しい会話を開始
-3. `checkpoint.md` と `Plan` のみを入力として続行
-
-### セルフチェック（Reset）
-- [ ] 今から参照するのは「PLAN」だけ、と宣言した
-- [ ] 追加で参照するdocがあるなら列挙した
-- [ ] `checkpoint.md` が最新状態に更新されている
+手順:
+1. `checkpoint.md` に要点をまとめる
+2. `Plan` と必要最小限の参照文書だけを残す
+3. 以後はその要約をSSOTとして続行する

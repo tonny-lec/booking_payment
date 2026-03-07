@@ -18,6 +18,8 @@ status: "draft"
 - `docs/codex/03-security-governance.md`: セキュリティ・ガバナンス
 - `docs/codex/04-use-cases-lessons.md`: 活用事例と学び
 - `docs/codex/05-whats-new-timeline.md`: 最新アップデート時系列
+- `docs/codex/06-template-evaluation-shiteki-a.md`: この repo の Codex テンプレート評価メモ（トリガー: `指摘A`）
+- `docs/codex/07-codex-first-flow.md`: Codex を最大活用する標準運用フロー
 - `docs/codex/sources.yaml`: 収集対象URLの台帳（SSOT）
 
 ## Source Policy

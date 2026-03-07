@@ -9,7 +9,7 @@ status: "stable"
 # Pull Request Template
 
 このテンプレートは `.github/pull_request_template.md` と同期されています。
-PRを作成する際は、このフォーマットに従ってください。
+PRを作成する際は、このフォーマットをベースに、変更規模に応じて簡潔に使ってください。
 
 ---
 
@@ -27,7 +27,7 @@ PRを作成する際は、このフォーマットに従ってください。
 - Update task list: IAM-D-06 marked as completed
 ```
 
-### 2. Changes（必須）
+### 2. Changes（推奨）
 
 #### New Files（新規ファイルがある場合）
 
@@ -50,7 +50,7 @@ PRを作成する際は、このフォーマットに従ってください。
 | `docs/tasks/implementation-slice-a.md` | Mark IAM-D-06 as completed |
 ```
 
-#### Key Implementation Details（実装の詳細）
+#### Key Implementation Details（必要な場合のみ）
 
 重要な実装の詳細を説明します：
 - コード構造とデザインパターン
@@ -92,7 +92,7 @@ public interface DomainEvent {
 3. **Separate `of()` factory** - Allows reconstruction from persistence
 ```
 
-### 4. Test Coverage（必須）
+### 4. Test Coverage（推奨）
 
 テスト内容をリストします：
 
@@ -140,7 +140,7 @@ public interface DomainEvent {
 
 ### Changes
 - **ファイルパスは省略形OK**：`domain/.../model/User.java`
-- **コードスニペット**：重要な構造を示す場合に使用
+- **コードスニペット**：レビューに必要な場合だけ使用
 - **テーブル形式**：ファイル一覧には表を使用
 
 ### Design Decisions
@@ -152,6 +152,7 @@ public interface DomainEvent {
 - **具体的に**：テストケース数、カバー範囲
 - **チェックボックス**：完了状態を示す
 - **コマンドを記載**：実行方法を明示
+- **小さい変更では簡潔に**：要約と実行コマンドだけでもよい
 
 ---
 
@@ -182,5 +183,4 @@ public interface DomainEvent {
 ## 参照
 
 - `agents/rules.md` - PR作成ルール
-- `.agent/workflows/graphite-commands.md` - Graphite操作ワークフロー
 - `.github/pull_request_template.md` - GitHubテンプレート（本ファイルと同期）
