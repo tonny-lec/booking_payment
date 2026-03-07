@@ -1,189 +1,111 @@
 ---
 doc_type: "agent_rules"
 id: "rules"
-version: "0.4"
-last_updated: "2026-01-22"
+version: "0.5"
+last_updated: "2026-03-07"
 status: "stable"
 ---
 
-# ルール（System FixのSSOT）
+# ルール（Codex-first SSOT）
 
-## 基本原則（Core Principles）
+## Core Principles
 
 ### Context is Currency
-- コンテキストウィンドウは貴重な資源である
-- 常に消費量を最小限に抑え、必要な情報のみをロードする
-- 長文化したら `checkpoint.md` に要約し、以後はそれをSSOTとして進める
+- コンテキストウィンドウは貴重な資源である。
+- 必要最小限の文書とコードだけを読む。
+- 長時間タスクや長文化した会話は `checkpoint.md` に要約し、以後はそれをSSOTとして使う。
 
-### Single Source of Truth
-- すべての開発はPRD（製品要件ドキュメント）を「北極星（North Star）」として進める
-- SSOTを無視してコードだけ変更しない
+### Explore Before Asking
+- まずリポジトリと環境を探索し、解ける不確定は自分で潰す。
+- 質問は、探索で解けない仕様判断、優先順位、トレードオフに限る。
+- 推論は事実と分離し、不確かなら明示する。
+
+### Evidence-First
+- 提案、変更、レビュー、調査には根拠を残す。
+- 根拠は差分、ログ、テスト結果、仕様、計測、ファイル参照のいずれかで示す。
 
 ### System Evolution
-- バグやエラーは単なる修正対象ではなく、「システム（ルール）」の欠陥である
-- 修正後は必ずルールを更新し、再発防止策をシステムに組み込む
+- バグや手戻りは個別ミスではなく、運用ルール、テンプレート、検証手順の改善機会として扱う。
+- 同種のミスを繰り返した場合は、必ずシステム側を更新する。
 
 ---
 
-## Must（絶対）
-1. **PRD-First**：承認済みPRD（`status: approved`）なしに実装（コード）変更しない
-2. **Evidence-First**：提案/変更/レビューには必ず根拠（差分/ログ/計測/仕様）を付ける
-3. **Small Changes**：変更は最小。分割して各分割ごとに検証
-4. **Tests Gate**：テストが落ちる変更はReject（例外なし）
-5. **No Secrets / No PII**：Secrets/PIIを出力・埋め込みしない（SSOT：`docs/security/pii-policy.md`）
-6. **Graphite Flow**：Graphite stacked PR運用ルールを遵守する（下記参照）
-7. **One Task, One PR**：細分化されたタスク単位でブランチを作成しPRを出す（下記参照）
+## Must
+1. **PRD-First for code/infra changes**: コードまたはインフラ変更は、承認済みPRD（`status: approved`）なしに実装しない
+2. **Small Changes**: 変更は小さく、論点ごとに分ける
+3. **Validate Changes**: 変更後は必ず対象に応じた検証を行う
+4. **No Secrets / No PII**: Secrets/PII を生成、出力、埋め込みしない
+5. **Stay Off Main**: `main` で直接作業しない
+6. **One Task, One Branch, One PR**: 標準運用は 1 タスク 1 ブランチ 1 PR とする
+7. **Respect User Changes**: 自分が作っていない差分は、明示依頼なしに戻さない
+8. **Prefer Non-Destructive Tools**: まず探索、次に局所編集、最後に検証の順で進める
 
-## Must Not（禁止）
-- SSOTを無視してコードだけ変更
-- 推論を事実として断定（不確かなら推論と明記）
-- 外部送信設定（webhook等）を追加（明示許可なし）
-- mainブランチへの直接push
-- mainブランチ上での直接作業
-- ルールに反する依頼を黙って破る（抵触するルールと代替案を提示すること）
-
----
-
-## Graphite Flow（stacked PR運用ルール）
-
-### 作業開始時（必須手順）
-```bash
-# 1. trunk(main)に切り替え
-gt checkout main
-
-# 2. trunkとopen stackを同期
-gt sync
-```
-
-### ブランチ・コミット作成ルール
-- 変更を実装した後に `git add` でステージする
-- `gt create --message "<type>: <summary>"` で branch + commit を作成する
-- type: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
-
-### コミットルール
-- コミットメッセージは意図を明確に記述
-- 1コミット = 1つの論理的変更
-- コミットメッセージ形式：
-  ```
-  <type>: <summary>
-
-  <body（任意）>
-
-  Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
-  ```
-- Graphite運用では `git commit` より `gt create` / `gt modify` を優先する
-
-### プッシュ・マージルール
-1. PRスタックを提出：`gt submit --no-interactive`
-2. Pull Request を作成/更新（Graphite経由）
-3. レビュー後にmainへマージ（人間が実行）
-4. **mainへの直接pushは禁止**
-
-### 作業中断・再開時
-```bash
-# 中断前：変更をコミット or スタッシュ
-git stash  # または gt create / gt modify
-
-# 再開時：trunkとstackを同期
-gt checkout main
-gt sync
-gt checkout <作業ブランチ>
-# 必要に応じて: gt restack
-```
+## Must Not
+- SSOTを無視してコードだけ変更する
+- 推論を事実として断定する
+- 外部送信設定を追加する（明示許可なし）
+- `main` へ直接 push する
+- ユーザーや他プロセスの変更を黙って巻き戻す
+- 破壊的な Git 操作を明示承認なしで実行する
 
 ---
 
-## One Task, One PR（タスク単位PR運用）
+## Standard Git PR Flow
 
-### 原則
-- `docs/tasks/by-feature.md` で細分化されたタスク単位でPRを作成
-- 1つのPRに複数の無関係なタスクを混ぜない
-- 関連するタスクは同一PRにまとめてもよい（例：同一ファイルの複数セクション）
+### Start
+1. `main` は読むだけにする
+2. 新しいタスクは専用ブランチで開始する
+3. まず探索して、対象範囲と検証方法を確定する
 
-### OpenAPI仕様の粒度（例外ルール）
-- **OpenAPI仕様はタスクID単位で1つのPRを作成**
-- 例：`IAM-API-01`（POST /auth/login）で1PR、`IAM-API-02`（POST /auth/refresh）で別PR
-- 理由：APIエンドポイントは個別にレビュー・検証が必要なため
-- ブランチ命名：`docs/openapi-<context>-<endpoint>`
-  - 例：`docs/openapi-iam-login`, `docs/openapi-booking-create`
+### Implementation
+- まず小さく編集する
+- 各変更の後に、その変更に対応する検証を行う
+- 無関係なリファクタは混ぜない
 
-### ブランチ命名
-```
-docs/<context>-<document>
-```
-例：
-- `docs/iam-context` - IAMコンテキスト設計
-- `docs/booking-update-usecase` - 予約変更ユースケース
-- `docs/observability` - 観測性設計
-
-### ワークフロー
-```
-1. gt checkout main / gt sync
-2. タスクを完了（ドキュメント編集）
-3. git add -> gt create
-4. gt submit --no-interactive
-5. （必要に応じて）レビュー・修正
-6. マージ後、次のタスクへ
-```
-
-### PRタイトル形式
-```
-<type>(<scope>): <summary>
-```
-
-| type | 用途 |
-|------|------|
-| `feat` | 新機能 |
-| `fix` | バグ修正 |
-| `docs` | ドキュメントのみ |
-| `refactor` | リファクタリング |
-| `test` | テスト追加・修正 |
-| `chore` | 設定・ツール変更 |
-
-例：
-- `feat(iam): add RefreshToken entity`
-- `fix(booking): resolve time range overlap detection`
-- `docs: add IAM context design`
-- `docs: add POST /auth/login endpoint to OpenAPI`
-
-### タスク参照
-- PRの説明にタスクID（例：`IAM-D-06`）を記載
-- 完了後は `docs/tasks/implementation-slice-a.md` のステータスを更新
+### Submission
+- PR は 1 タスク 1 本を原則とする
+- PR には要約、根拠、検証結果、関連仕様を含める
+- マージは人間が行う
 
 ---
 
-## PR作成ルール
+## Workflow Profiles
 
-### 必須セクション
-PRを作成する際は、以下のセクションを必ず含めること：
+### Core Loop
+小さい修正、レビュー、調査、説明では次を標準とする。
 
-1. **Summary**：変更内容の要約（1-3箇条書き）
-2. **Changes**：変更ファイル一覧と実装詳細
-3. **Test Coverage**：テスト内容
-4. **Test plan**：検証チェックリスト
-5. **Related**：関連タスクID・仕様へのリンク
+1. Explore
+2. Confirm intent only if needed
+3. Edit or analyze
+4. Validate
+5. Report
 
-### 詳細度ガイドライン
+### Extended Plan Flow
+次の条件では明示的な Plan を作る。
+- 複数ファイルにまたがる
+- 複数時間かかる
+- 外部依存や移行がある
+- 判断点が多い
+- 失敗コストが高い
 
-| 変更規模 | Summary | Changes | Design Decisions |
-|----------|---------|---------|------------------|
-| 小（1-2ファイル） | 1-2行 | ファイル一覧のみ | 省略可 |
-| 中（3-5ファイル） | 2-3行 | ファイル一覧＋概要 | 重要な判断のみ |
-| 大（6ファイル以上） | 3行＋背景 | 詳細な実装説明＋コード例 | 全ての設計判断 |
+Extended Plan Flow は次を使う。
 
-### コード実装PRの必須項目
-コード（Java等）を含むPRでは、以下を必ず記載：
-- **Key Implementation Details**：主要クラス/インターフェースの説明
-- **コードスニペット**：重要な構造を示す（インターフェース定義、主要メソッド等）
-- **入出力例**：該当する場合（マスキング処理、変換処理等）
+1. Prime
+2. PRD
+3. Plan
+4. Reset
+5. Implement
+6. Validate
+7. Report
 
-### テンプレート参照
-- `.github/pull_request_template.md` - GitHubテンプレート（自動適用）
-- `docs/templates/pr-template.md` - 詳細ガイドライン
+## PR and Reporting
+- PR の本文は簡潔に保つ
+- 小さい変更では、要約、検証結果、関連仕様があれば十分
+- 詳細な設計説明やコードスニペットは、本当に必要な変更だけに限定する
+- 実装完了時は、何を変えたか、どう検証したか、残課題は何かを短く残す
 
 ---
 
-## System Fix（更新先）
-- 重要失敗は Postmortem を作り、**この rules.md を更新**してから修正する。
-- 「人の注意力」に依存する対策で終わらせない
-- ルール or テンプレ or 検証手順のどれかが更新されること
+## System Fix
+- 重要失敗や再発は、`rules.md`、テンプレート、検証手順のいずれかを更新して閉じる
+- 「次から気を付ける」で終わらせない

@@ -1,8 +1,11 @@
 ---
 doc_type: "agent_boot"
 id: "initial-command"
-version: "0.1"
+version: "0.2"
+last_updated: "2026-03-07"
+status: "stable"
 ---
 
-# Initial Command（そのまま使う）
-What are we building today? I am ready to draft the PRD.
+# Initial Command
+
+Describe the task. I will first inspect the repo, classify the work as implement, review, debug, explain, or research, and then either execute a short Codex loop or produce a plan for larger work.
