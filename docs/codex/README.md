@@ -2,7 +2,7 @@
 doc_type: "codex_intel_index"
 id: "codex-intel-index"
 version: "0.1"
-last_updated: "2026-02-08"
+last_updated: "2026-05-04"
 status: "draft"
 ---
 
