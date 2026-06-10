@@ -78,10 +78,14 @@ app:
     include-timestamp: true
   openapi:
     validation:
+      # NOTE: map keys contain special characters (/ and *), so they MUST use
+      # Spring's bracket notation. Without "[...]" relaxed binding strips the
+      # characters (e.g. "/api/v1/auth/**" -> "apiv1auth"), no request ever
+      # matches its OpenAPI spec, and kappa rejects every API call with 400.
       path-to-spec:
-        /api/v1/auth/**: /static/openapi/iam.yaml
-        /api/v1/bookings/**: /static/openapi/booking.yaml
-        /api/v1/payments/**: /static/openapi/payment.yaml
+        "[/api/v1/auth/**]": /static/openapi/iam.yaml
+        "[/api/v1/bookings/**]": /static/openapi/booking.yaml
+        "[/api/v1/payments/**]": /static/openapi/payment.yaml
       ignored-path-patterns:
         - /actuator/**
         - /swagger-ui/**
