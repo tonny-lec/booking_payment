@@ -38,10 +38,11 @@ spring:
 app:
   openapi:
     validation:
+      # Map keys need bracket notation (see main application.yaml note)
       path-to-spec:
-        /api/v1/auth/**: /static/openapi/iam.yaml
-        /api/v1/bookings/**: /static/openapi/booking.yaml
-        /api/v1/payments/**: /static/openapi/payment.yaml
+        "[/api/v1/auth/**]": /static/openapi/iam.yaml
+        "[/api/v1/bookings/**]": /static/openapi/booking.yaml
+        "[/api/v1/payments/**]": /static/openapi/payment.yaml
       ignored-path-patterns:
         - /api/v1/auth/**
         - /actuator/**

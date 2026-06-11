@@ -1,8 +1,8 @@
 ---
 doc_type: "test_plan"
 id: "test-plan"
-version: "1.3"
-last_updated: "2026-01-22"
+version: "1.4"
+last_updated: "2026-06-11"
 status: "draft"
 ---
 
@@ -37,6 +37,21 @@ status: "draft"
 | **Contract Test** | API契約の遵守（OpenAPI準拠） | コミットごと | < 1分 |
 | **E2E Test** | ユーザーシナリオ全体 | PR/デプロイ時 | < 10分 |
 | **Performance Test** | 負荷、レイテンシ | リリース前 | 可変 |
+
+### 1.2.1 実行方法（現状の実装）
+
+```bash
+./gradlew test                 # 全モジュールの Unit / Integration / E2E
+./gradlew :domain:test         # ドメイン単体テストのみ
+./gradlew :application:test    # ユースケース単体テストのみ
+./gradlew :adapter-web:test    # Controller スライステスト（MockMvc standalone）
+./gradlew :adapter-persistence:test  # リポジトリ統合テスト（H2 in-memory）
+./gradlew :bootstrap:test      # E2E（Testcontainers PostgreSQL、Docker 必須）
+bash scripts/test-all.sh       # ドキュメント検証 + 上記すべて
+```
+
+- E2E テスト（`IamAuthFlowE2ETest`, `PaymentFlowE2ETest`）は Testcontainers で PostgreSQL を起動するため **Docker が必須**。Flyway マイグレーション（V1〜V5）も実 DB に対して検証される。
+- Contract Test は専用タスクではなく、E2E 実行時に kappa の OpenAPI リクエスト検証フィルタ（`/api/v1/bookings/**`, `/api/v1/payments/**`）が `docs/api/openapi/*.yaml` への準拠を検証する形で実現している（テストプロファイルでは `/api/v1/auth/**` は除外中）。
 
 ### 1.3 重点テスト領域
 

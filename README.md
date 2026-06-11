@@ -86,4 +86,12 @@ domain -> application -> adapter-web / adapter-persistence -> bootstrap
 
 ## 現在の状態
 
-設計ドキュメント中心のリポジトリとして始まっていますが、現在は Booking / IAM を中心に Java 実装とテストが入っています。README の情報だけでなく、`docs/` の設計と各モジュールのコードを合わせて確認してください。
+設計ドキュメント中心のリポジトリとして始まり、現在は IAM / Booking / Payment の3コンテキストで「HTTP → ユースケース → ドメイン → 永続化」の縦スライスが動作します（単体・統合・E2Eテスト付き）。
+
+| コンテキスト | 実装済み | 未実装（次スライス候補） |
+|------|------|------|
+| IAM | login / refresh / logout、JWT検証、E2E | Brute-force lock の E2E |
+| Booking | 作成・取得・更新（衝突検出、楽観的ロック） | DELETE エンドポイント、一部テスト |
+| Payment | 作成（Idempotency-Key 冪等）・取得、E2E | capture / refund / 一覧、実ゲートウェイAdapter |
+
+タスク粒度の進捗は `docs/tasks/implementation-slice-a.md`、直近の状態は `checkpoint.md` を参照してください。E2E テスト（Testcontainers）の実行には Docker が必要です。

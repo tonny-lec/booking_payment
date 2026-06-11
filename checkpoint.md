@@ -1,89 +1,36 @@
 ---
 doc_type: "checkpoint"
-version: "0.1"
-last_updated: "2026-02-04"
+version: "0.2"
+last_updated: "2026-06-11"
 status: "active"
 ---
 
 # checkpoint.md（Context Reset：会話が長くなったらここへ要約）
 
 ## 現在のゴール
-- DDDコンテキスト中心のパッケージ構成へ段階的に再編し、共有レイヤを整理する
+- Slice A の縦スライス完成: IAM / Booking に続き Payment の最小フロー（作成・取得）を実装済み。次は capture/refund エンドポイントと idempotency_records 方式への移行
 
 ## 決定事項（SSOTに反映済み）
-- 方針: DDDコンテキスト中心（`com.booking.<context>.*`）で整理、共有は `com.booking.shared.*`
-- 段階導入: IAM から開始し、Booking/Payment は枠のみ作成
-- モジュール境界は維持（domain/application/adapter-*/bootstrap）
-- 共有アダプタ（例外/メトリクス/OpenAPI検証）は shared 配下へ移動
+- Payment 縦スライス（POST /payments / GET /payments/{id}）を実装（詳細: `docs/tasks/implementation-slice-a.md` 更新履歴 2026-06-11）
+- 冪等性は Slice A では `payments.idempotency_key` ユニーク制約＋リクエスト内容比較（userId/bookingId/amount/currency）で実現。同一キー再送は 200 で既存結果、内容不一致は 409
+- 外部決済ゲートウェイは `PaymentGatewayPort`（ACL）で抽象化し、bootstrap に `StubPaymentGateway`（常に与信成功）を配置
+- `app.openapi.validation.path-to-spec` のマップキーはブラケット記法必須（relaxed binding がキーの `/` `*` を破壊し全 API が 400 になるバグを修正済み）
 
 ## 未決事項 / 質問
-- なし
+- idempotency_records テーブル（24h TTL・レスポンスキャッシュ）の導入時期
+- Payment → Booking 連携の最終形（現状はモジュラーモノリス内で BookingRepository ポートを直接参照。ACLポート化 or イベント連携が候補）
+- ドメインイベント（PaymentCreated 等）の発行基盤（Outbox 等）
 
 ## 次のタスク（ファイルパス + 検証）
-- 完了（PR #57 で反映済み）
+- `POST /payments/{id}/capture` / `POST /payments/{id}/refund` の実装
+  - 追加: `application/.../payment/application/usecase/CapturePaymentUseCase.java` ほか、`adapter-web/.../payment/adapter/web/PaymentController.java` 拡張
+  - 検証: `./gradlew :application:test :adapter-web:test :bootstrap:test`（E2E は `PaymentFlowE2ETest` を拡張）
+- Booking の未完テスト補完（BK-T-03/04/05/06）と DELETE /bookings/{id}（BK-W-04）
+- 本物のゲートウェイ Adapter（タイムアウト・リトライ・502/504変換、`docs/design/usecases/payment-create.md` §8 準拠）
 
-## 過去プラン（全文）
-
-### タイトル
-プロジェクト全体リファクタリング計画（DDDコンテキスト中心 / 段階導入）
-
-### 概要
-- 現在の「レイヤーモジュール構成（domain/application/adapter）」は維持しつつ、Javaパッケージ構成をBC中心へ再編する。
-- 影響を最小化するため、IAM から段階的に移行し、以降 Booking/Payment に同じ規約を展開する。
-- 併せて共通（shared）系の配置を明確化し、Springのスキャンや依存関係が自然に読める構成へ統一する。
-
-### 重要な変更（公開API/インターフェース）
-- Javaパッケージの移動により、公開クラスのFQCNが変わる（依存する外部コードがある場合は影響）。
-- 例: `com.booking.domain.iam.model.User` → `com.booking.iam.domain.model.User`
-- `MetricsPort` 等の共通インターフェースは `com.booking.shared.*` に移動予定。
-- Springコンポーネントのスキャン対象は `com.booking` ルートのまま維持するため、`@SpringBootApplication` の変更は不要。
-
-### フェーズ1: IAMコンテキストのパッケージ再設計
-1. ターゲット構成を定義
-   `com.booking.iam.domain.*`
-   `com.booking.iam.application.*`
-   `com.booking.iam.adapter.web.*`
-   `com.booking.iam.adapter.persistence.*`
-   `com.booking.shared.*`（横断系）
-2. IAMドメインの移動
-   `domain/src/main/java/com/booking/domain/iam/**` → `domain/src/main/java/com/booking/iam/domain/**`
-   `domain/src/main/java/com/booking/domain/shared/**` → `domain/src/main/java/com/booking/shared/**`
-3. アプリケーション層の移動
-   `application/src/main/java/com/booking/application/shared/**` → `application/src/main/java/com/booking/shared/**`
-   以降IAMユースケースが追加される想定で `application/src/main/java/com/booking/iam/application/**` を用意
-4. アダプター層の移動（現状分）
-   `adapter-web` 内を `com.booking.shared.adapter.web.*` と `com.booking.iam.adapter.web.*` に整理
-   `OpenApiValidationConfig` は `com.booking.shared.adapter.web.openapi` に移動（BC横断）
-5. import修正 / package宣言修正
-   既存の参照先を新パッケージへ全置換
-6. ビルド/テスト実行
-   `./gradlew :domain:compileJava :application:compileJava :adapter-web:compileJava`
-   `./gradlew :bootstrap:test` で最低限確認
-
-### フェーズ2: Booking / Payment への展開準備
-1. 空のパッケージ枠だけ作成（実装なし）
-   `com.booking.booking.domain`
-   `com.booking.payment.domain`
-   `com.booking.booking.application`
-   `com.booking.payment.application`
-2. これにより以降の実装追加時に配置ルールが確定する
-
-### フェーズ3: ディレクトリ構成の明文化
-1. `docs/plan/file-map.md` に新パッケージ構成の配置ルールを追記
-2. `docs/design/overview.md` に「BC中心のパッケージ構成」を図示・説明
-
-### テストケース / シナリオ
-- コンパイル確認
-  `./gradlew :domain:compileJava`
-  `./gradlew :application:compileJava`
-  `./gradlew :adapter-web:compileJava`
-- 簡易統合
-  `./gradlew :bootstrap:test`
-- 影響確認
-  importの自動修正が漏れていないこと
-  Springコンポーネントが検出されること（起動時Bean定義エラーがない）
-
-### 前提・仮定
-- Gradleモジュール構成（domain/application/adapter-*/bootstrap）は維持する。
-- 外部に公開しているバイナリ/APIはない前提で進める（FQCN変更の影響は内部に限定）。
-- 変更は IAM から開始し、Booking/Payment は空パッケージのみ作成する。
+## 直近の検証コマンド
+```bash
+./gradlew build          # 全モジュールのビルド＋テスト（E2E は Docker 必須）
+./gradlew :bootstrap:test --tests "com.booking.payment.PaymentFlowE2ETest"
+bash scripts/test-all.sh # ドキュメント検証 + Gradle テスト
+```
