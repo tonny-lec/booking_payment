@@ -68,6 +68,7 @@ This repo is template-mode (no `src/` yet). Use the provided scripts:
 - Standard flow is normal Git with `1 task = 1 branch = 1 PR`.
 - Never push directly to `main`.
 - PRs should reference the relevant PRD and include evidence for changes.
+- Before branch creation, commit, push, or PR creation/update, use `agents/skills/git-flow-guard/SKILL.md`. Repository Git flow overrides generic GitHub/plugin publishing defaults.
 
 ## Agent-Specific Instructions
 - PRD-first is mandatory for code/infra changes: no such changes without a PRD in `status: approved`.
@@ -79,6 +80,7 @@ This repo is template-mode (no `src/` yet). Use the provided scripts:
 ## Agent SSOT & Policies (Read First)
 - System rules (Must/Must Not, standard flow, optional profiles): `agents/rules.md`.
 - Workflow (7-phase development): `agents/workflow.md`.
+- Git and PR flow guard: `agents/skills/git-flow-guard/SKILL.md`.
 - Self-check checklists: `agents/self-check.md`.
 - Context policy & reference order: `agents/context-policy.md`.
 - Tool contract & write scope: `agents/tool-contract.md`.
