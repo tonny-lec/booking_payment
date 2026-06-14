@@ -1,5 +1,6 @@
 package com.booking.booking.adapter.web;
 
+import com.booking.booking.application.usecase.CancelBookingUseCase;
 import com.booking.booking.application.usecase.CreateBookingUseCase;
 import com.booking.booking.application.usecase.GetBookingUseCase;
 import com.booking.booking.application.usecase.UpdateBookingUseCase;
@@ -16,6 +17,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -41,15 +43,18 @@ public class BookingController {
     private final CreateBookingUseCase createBookingUseCase;
     private final GetBookingUseCase getBookingUseCase;
     private final UpdateBookingUseCase updateBookingUseCase;
+    private final CancelBookingUseCase cancelBookingUseCase;
 
     public BookingController(
             CreateBookingUseCase createBookingUseCase,
             GetBookingUseCase getBookingUseCase,
-            UpdateBookingUseCase updateBookingUseCase
+            UpdateBookingUseCase updateBookingUseCase,
+            CancelBookingUseCase cancelBookingUseCase
     ) {
         this.createBookingUseCase = Objects.requireNonNull(createBookingUseCase, "createBookingUseCase must not be null");
         this.getBookingUseCase = Objects.requireNonNull(getBookingUseCase, "getBookingUseCase must not be null");
         this.updateBookingUseCase = Objects.requireNonNull(updateBookingUseCase, "updateBookingUseCase must not be null");
+        this.cancelBookingUseCase = Objects.requireNonNull(cancelBookingUseCase, "cancelBookingUseCase must not be null");
     }
 
     /**
@@ -106,6 +111,23 @@ public class BookingController {
                 range,
                 request.note(),
                 request.version()
+        ));
+        return ResponseEntity.ok(BookingResponse.from(booking));
+    }
+
+    /**
+     * Cancels an existing booking.
+     */
+    @DeleteMapping("/{bookingId}")
+    public ResponseEntity<BookingResponse> cancelBooking(
+            @PathVariable("bookingId") String bookingId,
+            Principal principal
+    ) {
+        UserId requestUserId = resolveAuthenticatedUserId(principal);
+        Booking booking = cancelBookingUseCase.execute(new CancelBookingUseCase.CancelBookingCommand(
+                toBookingId(bookingId),
+                requestUserId,
+                null
         ));
         return ResponseEntity.ok(BookingResponse.from(booking));
     }
