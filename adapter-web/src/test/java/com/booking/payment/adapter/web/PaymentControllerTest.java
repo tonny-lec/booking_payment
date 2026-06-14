@@ -2,8 +2,10 @@ package com.booking.payment.adapter.web;
 
 import com.booking.booking.domain.model.BookingId;
 import com.booking.iam.domain.model.UserId;
+import com.booking.payment.application.usecase.CapturePaymentUseCase;
 import com.booking.payment.application.usecase.CreatePaymentUseCase;
 import com.booking.payment.application.usecase.GetPaymentUseCase;
+import com.booking.payment.application.usecase.RefundPaymentUseCase;
 import com.booking.payment.domain.model.IdempotencyKey;
 import com.booking.payment.domain.model.Money;
 import com.booking.payment.domain.model.Payment;
@@ -46,14 +48,23 @@ class PaymentControllerTest {
 
     private CreatePaymentUseCase createPaymentUseCase;
     private GetPaymentUseCase getPaymentUseCase;
+    private CapturePaymentUseCase capturePaymentUseCase;
+    private RefundPaymentUseCase refundPaymentUseCase;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         createPaymentUseCase = mock(CreatePaymentUseCase.class);
         getPaymentUseCase = mock(GetPaymentUseCase.class);
+        capturePaymentUseCase = mock(CapturePaymentUseCase.class);
+        refundPaymentUseCase = mock(RefundPaymentUseCase.class);
 
-        PaymentController controller = new PaymentController(createPaymentUseCase, getPaymentUseCase);
+        PaymentController controller = new PaymentController(
+                createPaymentUseCase,
+                getPaymentUseCase,
+                capturePaymentUseCase,
+                refundPaymentUseCase
+        );
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
 
@@ -248,6 +259,162 @@ class PaymentControllerTest {
         verifyNoInteractions(getPaymentUseCase);
     }
 
+    @Test
+    @DisplayName("should return 200 when payment is captured")
+    void shouldReturn200WhenPaymentIsCaptured() throws Exception {
+        Payment payment = capturedPayment();
+        when(capturePaymentUseCase.execute(any())).thenReturn(payment);
+
+        mockMvc.perform(post("/api/v1/payments/" + payment.id().asString() + "/capture")
+                        .principal(() -> OWNER_ID)
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "amount": 4000
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(payment.id().asString()))
+                .andExpect(jsonPath("$.status").value("CAPTURED"))
+                .andExpect(jsonPath("$.capturedAmount").value(4000));
+    }
+
+    @Test
+    @DisplayName("should return 400 when capture paymentId is malformed")
+    void shouldReturn400WhenCapturePaymentIdIsMalformed() throws Exception {
+        mockMvc.perform(post("/api/v1/payments/not-a-uuid/capture")
+                        .principal(() -> OWNER_ID)
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(capturePaymentUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 400 when capture Idempotency-Key is missing")
+    void shouldReturn400WhenCaptureIdempotencyKeyIsMissing() throws Exception {
+        mockMvc.perform(post("/api/v1/payments/" + UUID.randomUUID() + "/capture")
+                        .principal(() -> OWNER_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(capturePaymentUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 400 when capture Idempotency-Key is not UUID")
+    void shouldReturn400WhenCaptureIdempotencyKeyIsNotUuid() throws Exception {
+        mockMvc.perform(post("/api/v1/payments/" + UUID.randomUUID() + "/capture")
+                        .principal(() -> OWNER_ID)
+                        .header("Idempotency-Key", "not-a-uuid")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(capturePaymentUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 400 when capture amount is not positive")
+    void shouldReturn400WhenCaptureAmountIsNotPositive() throws Exception {
+        mockMvc.perform(post("/api/v1/payments/" + UUID.randomUUID() + "/capture")
+                        .principal(() -> OWNER_ID)
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "amount": 0
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.amount").exists());
+
+        verifyNoInteractions(capturePaymentUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 200 when payment is refunded")
+    void shouldReturn200WhenPaymentIsRefunded() throws Exception {
+        Payment payment = refundedPayment();
+        when(refundPaymentUseCase.execute(any())).thenReturn(payment);
+
+        mockMvc.perform(post("/api/v1/payments/" + payment.id().asString() + "/refund")
+                        .principal(() -> OWNER_ID)
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "amount": 4000,
+                                  "reason": "CUSTOMER_REQUEST",
+                                  "note": "customer cancellation"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(payment.id().asString()))
+                .andExpect(jsonPath("$.status").value("REFUNDED"))
+                .andExpect(jsonPath("$.refundedAmount").value(4000));
+    }
+
+    @Test
+    @DisplayName("should return 400 when refund paymentId is malformed")
+    void shouldReturn400WhenRefundPaymentIdIsMalformed() throws Exception {
+        mockMvc.perform(post("/api/v1/payments/not-a-uuid/refund")
+                        .principal(() -> OWNER_ID)
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRefundBody()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(refundPaymentUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 400 when refund Idempotency-Key is missing")
+    void shouldReturn400WhenRefundIdempotencyKeyIsMissing() throws Exception {
+        mockMvc.perform(post("/api/v1/payments/" + UUID.randomUUID() + "/refund")
+                        .principal(() -> OWNER_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRefundBody()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(refundPaymentUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 400 when refund Idempotency-Key is not UUID")
+    void shouldReturn400WhenRefundIdempotencyKeyIsNotUuid() throws Exception {
+        mockMvc.perform(post("/api/v1/payments/" + UUID.randomUUID() + "/refund")
+                        .principal(() -> OWNER_ID)
+                        .header("Idempotency-Key", "not-a-uuid")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validRefundBody()))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(refundPaymentUseCase);
+    }
+
+    @Test
+    @DisplayName("should return 400 when refund reason is missing")
+    void shouldReturn400WhenRefundReasonIsMissing() throws Exception {
+        mockMvc.perform(post("/api/v1/payments/" + UUID.randomUUID() + "/refund")
+                        .principal(() -> OWNER_ID)
+                        .header("Idempotency-Key", IDEMPOTENCY_KEY)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "amount": 4000
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.reason").exists());
+
+        verifyNoInteractions(refundPaymentUseCase);
+    }
+
     private static String validBody() {
         return """
                 {
@@ -257,6 +424,16 @@ class PaymentControllerTest {
                   "description": "meeting room"
                 }
                 """.formatted(BOOKING_ID);
+    }
+
+    private static String validRefundBody() {
+        return """
+                {
+                  "amount": 4000,
+                  "reason": "CUSTOMER_REQUEST",
+                  "note": "customer cancellation"
+                }
+                """;
     }
 
     private static Payment authorizedPayment() {
@@ -269,6 +446,18 @@ class PaymentControllerTest {
                 FIXED_CLOCK
         );
         payment.authorize("txn_123");
+        return payment;
+    }
+
+    private static Payment capturedPayment() {
+        Payment payment = authorizedPayment();
+        payment.capture(4000);
+        return payment;
+    }
+
+    private static Payment refundedPayment() {
+        Payment payment = capturedPayment();
+        payment.refund(4000);
         return payment;
     }
 }
