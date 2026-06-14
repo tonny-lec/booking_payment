@@ -2,8 +2,10 @@ package com.booking.payment.adapter.web;
 
 import com.booking.booking.domain.model.BookingId;
 import com.booking.iam.domain.model.UserId;
+import com.booking.payment.application.usecase.CapturePaymentUseCase;
 import com.booking.payment.application.usecase.CreatePaymentUseCase;
 import com.booking.payment.application.usecase.GetPaymentUseCase;
+import com.booking.payment.application.usecase.RefundPaymentUseCase;
 import com.booking.payment.domain.model.IdempotencyKey;
 import com.booking.payment.domain.model.Money;
 import com.booking.payment.domain.model.Payment;
@@ -48,13 +50,19 @@ public class PaymentController {
 
     private final CreatePaymentUseCase createPaymentUseCase;
     private final GetPaymentUseCase getPaymentUseCase;
+    private final CapturePaymentUseCase capturePaymentUseCase;
+    private final RefundPaymentUseCase refundPaymentUseCase;
 
     public PaymentController(
             CreatePaymentUseCase createPaymentUseCase,
-            GetPaymentUseCase getPaymentUseCase
+            GetPaymentUseCase getPaymentUseCase,
+            CapturePaymentUseCase capturePaymentUseCase,
+            RefundPaymentUseCase refundPaymentUseCase
     ) {
         this.createPaymentUseCase = Objects.requireNonNull(createPaymentUseCase, "createPaymentUseCase must not be null");
         this.getPaymentUseCase = Objects.requireNonNull(getPaymentUseCase, "getPaymentUseCase must not be null");
+        this.capturePaymentUseCase = Objects.requireNonNull(capturePaymentUseCase, "capturePaymentUseCase must not be null");
+        this.refundPaymentUseCase = Objects.requireNonNull(refundPaymentUseCase, "refundPaymentUseCase must not be null");
     }
 
     /**
@@ -102,6 +110,48 @@ public class PaymentController {
         return ResponseEntity.ok(PaymentResponse.from(payment));
     }
 
+    /**
+     * Captures an authorized payment.
+     */
+    @PostMapping("/{paymentId}/capture")
+    public ResponseEntity<PaymentResponse> capturePayment(
+            @PathVariable("paymentId") String paymentId,
+            @RequestHeader(IDEMPOTENCY_KEY_HEADER) String idempotencyKey,
+            @Valid @RequestBody(required = false) CapturePaymentRequest request,
+            Principal principal
+    ) {
+        UserId requestUserId = resolveAuthenticatedUserId(principal);
+        Payment payment = capturePaymentUseCase.execute(new CapturePaymentUseCase.CapturePaymentCommand(
+                toPaymentId(paymentId),
+                requestUserId,
+                toIdempotencyKey(idempotencyKey),
+                request != null ? request.amount() : null
+        ));
+        return ResponseEntity.ok(PaymentResponse.from(payment));
+    }
+
+    /**
+     * Refunds a captured payment, or voids an authorized payment.
+     */
+    @PostMapping("/{paymentId}/refund")
+    public ResponseEntity<PaymentResponse> refundPayment(
+            @PathVariable("paymentId") String paymentId,
+            @RequestHeader(IDEMPOTENCY_KEY_HEADER) String idempotencyKey,
+            @Valid @RequestBody RefundPaymentRequest request,
+            Principal principal
+    ) {
+        UserId requestUserId = resolveAuthenticatedUserId(principal);
+        Payment payment = refundPaymentUseCase.execute(new RefundPaymentUseCase.RefundPaymentCommand(
+                toPaymentId(paymentId),
+                requestUserId,
+                toIdempotencyKey(idempotencyKey),
+                request.amount(),
+                request.reason().name(),
+                request.note()
+        ));
+        return ResponseEntity.ok(PaymentResponse.from(payment));
+    }
+
     private UserId resolveAuthenticatedUserId(Principal principal) {
         if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
             throw new UnauthorizedException("unauthorized", "Authentication is required");
@@ -143,6 +193,25 @@ public class PaymentController {
             @NotNull @Pattern(regexp = "^[A-Z]{3}$") String currency,
             @Size(max = Payment.MAX_DESCRIPTION_LENGTH) String description
     ) {
+    }
+
+    public record CapturePaymentRequest(
+            @Min(1) Integer amount
+    ) {
+    }
+
+    public record RefundPaymentRequest(
+            @Min(1) Integer amount,
+            @NotNull RefundReason reason,
+            @Size(max = 500) String note
+    ) {
+    }
+
+    public enum RefundReason {
+        CUSTOMER_REQUEST,
+        DUPLICATE,
+        FRAUDULENT,
+        OTHER
     }
 
     public record PaymentResponse(

@@ -33,4 +33,32 @@ public class StubPaymentGateway implements PaymentGatewayPort {
                 transactionId);
         return AuthorizationResult.authorized(transactionId);
     }
+
+    @Override
+    public CaptureResult capture(CaptureRequest request) {
+        log.info("Stub gateway captured payment: paymentId={}, amount={}, transactionId={}",
+                request.paymentId().asString(),
+                request.amount(),
+                request.gatewayTransactionId());
+        return CaptureResult.captured();
+    }
+
+    @Override
+    public RefundResult refund(RefundRequest request) {
+        log.info("Stub gateway refunded payment: paymentId={}, amount={}, reason={}, transactionId={}",
+                request.paymentId().asString(),
+                request.amount(),
+                request.reason(),
+                request.gatewayTransactionId());
+        return RefundResult.refunded();
+    }
+
+    @Override
+    public VoidResult voidAuthorization(VoidRequest request) {
+        log.info("Stub gateway voided payment: paymentId={}, reason={}, transactionId={}",
+                request.paymentId().asString(),
+                request.reason(),
+                request.gatewayTransactionId());
+        return VoidResult.voided();
+    }
 }

@@ -194,6 +194,29 @@ class PaymentTest {
         }
 
         @Test
+        @DisplayName("refund should keep captured status for partial refund")
+        void refundShouldKeepCapturedStatusForPartialRefund() {
+            Payment payment = capturedPayment();
+
+            payment.refund(3000);
+
+            assertThat(payment.status()).isEqualTo(PaymentStatus.CAPTURED);
+            assertThat(payment.refundedAmount()).isEqualTo(3000);
+        }
+
+        @Test
+        @DisplayName("refund should accumulate partial refunds and transition when fully refunded")
+        void refundShouldAccumulatePartialRefundsAndTransitionWhenFullyRefunded() {
+            Payment payment = capturedPayment();
+
+            payment.refund(3000);
+            payment.refund(7000);
+
+            assertThat(payment.status()).isEqualTo(PaymentStatus.REFUNDED);
+            assertThat(payment.refundedAmount()).isEqualTo(10000);
+        }
+
+        @Test
         @DisplayName("refund should reject amount exceeding captured amount")
         void refundShouldRejectAmountExceedingCapturedAmount() {
             Payment payment = authorizedPayment();

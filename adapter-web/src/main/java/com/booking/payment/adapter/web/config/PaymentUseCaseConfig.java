@@ -3,8 +3,10 @@ package com.booking.payment.adapter.web.config;
 import com.booking.booking.application.port.BookingRepository;
 import com.booking.payment.application.port.PaymentGatewayPort;
 import com.booking.payment.application.port.PaymentRepository;
+import com.booking.payment.application.usecase.CapturePaymentUseCase;
 import com.booking.payment.application.usecase.CreatePaymentUseCase;
 import com.booking.payment.application.usecase.GetPaymentUseCase;
+import com.booking.payment.application.usecase.RefundPaymentUseCase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -29,5 +31,21 @@ public class PaymentUseCaseConfig {
     @Bean
     public GetPaymentUseCase getPaymentUseCase(PaymentRepository paymentRepository) {
         return new GetPaymentUseCase(paymentRepository);
+    }
+
+    @Bean
+    public CapturePaymentUseCase capturePaymentUseCase(
+            PaymentRepository paymentRepository,
+            PaymentGatewayPort paymentGateway
+    ) {
+        return new CapturePaymentUseCase(paymentRepository, paymentGateway);
+    }
+
+    @Bean
+    public RefundPaymentUseCase refundPaymentUseCase(
+            PaymentRepository paymentRepository,
+            PaymentGatewayPort paymentGateway
+    ) {
+        return new RefundPaymentUseCase(paymentRepository, paymentGateway);
     }
 }

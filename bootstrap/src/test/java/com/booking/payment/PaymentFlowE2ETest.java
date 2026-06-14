@@ -40,7 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * End-to-end test for the payment slice:
  * login -> create booking -> create payment (201) -> idempotent replay (200)
- * -> idempotency conflict (409) -> get payment (200).
+ * -> idempotency conflict (409) -> capture payment -> refund payment
+ * -> get payment (200).
  *
  * <p>Runs against a Testcontainers PostgreSQL (Flyway V1..V5 applied) with
  * the real security filter chain and OpenAPI request validation enabled,
@@ -91,8 +92,8 @@ class PaymentFlowE2ETest {
     }
 
     @Test
-    @DisplayName("should create payment idempotently for own booking")
-    void shouldCreatePaymentIdempotentlyForOwnBooking() throws Exception {
+    @DisplayName("should create, capture, and refund payment for own booking")
+    void shouldCreateCaptureAndRefundPaymentForOwnBooking() throws Exception {
         String accessToken = login();
         String bookingId = createBooking(accessToken);
         String idempotencyKey = UUID.randomUUID().toString();
@@ -128,10 +129,33 @@ class PaymentFlowE2ETest {
                 .andExpect(jsonPath("$.id").value(paymentId))
                 .andExpect(jsonPath("$.status").value("AUTHORIZED"));
 
-        // 5. A second payment for the same booking with a new key is rejected (422).
+        // 5. A second active payment for the same booking with a new key is rejected (422).
         mockMvc.perform(paymentRequest(accessToken, UUID.randomUUID().toString(), bookingId, 10000))
                 .andExpect(status().isUnprocessableContent())
                 .andExpect(jsonPath("$.errorCode").value("payment_booking_already_paid"));
+
+        // 6. Capture the authorized payment.
+        mockMvc.perform(captureRequest(accessToken, UUID.randomUUID().toString(), paymentId, 10000))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(paymentId))
+                .andExpect(jsonPath("$.status").value("CAPTURED"))
+                .andExpect(jsonPath("$.capturedAmount").value(10000));
+
+        // 7. Refund the captured payment.
+        mockMvc.perform(refundRequest(accessToken, UUID.randomUUID().toString(), paymentId, 10000))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(paymentId))
+                .andExpect(jsonPath("$.status").value("REFUNDED"))
+                .andExpect(jsonPath("$.refundedAmount").value(10000));
+
+        // 8. The refunded payment is retrievable by its owner.
+        mockMvc.perform(get("/api/v1/payments/" + paymentId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(paymentId))
+                .andExpect(jsonPath("$.status").value("REFUNDED"))
+                .andExpect(jsonPath("$.capturedAmount").value(10000))
+                .andExpect(jsonPath("$.refundedAmount").value(10000));
     }
 
     private String login() throws Exception {
@@ -182,6 +206,42 @@ class PaymentFlowE2ETest {
                           "description": "payment e2e"
                         }
                         """.formatted(bookingId, amount));
+    }
+
+    private MockHttpServletRequestBuilder captureRequest(
+            String accessToken,
+            String idempotencyKey,
+            String paymentId,
+            int amount
+    ) {
+        return post("/api/v1/payments/" + paymentId + "/capture")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .header("Idempotency-Key", idempotencyKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "amount": %d
+                        }
+                        """.formatted(amount));
+    }
+
+    private MockHttpServletRequestBuilder refundRequest(
+            String accessToken,
+            String idempotencyKey,
+            String paymentId,
+            int amount
+    ) {
+        return post("/api/v1/payments/" + paymentId + "/refund")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .header("Idempotency-Key", idempotencyKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "amount": %d,
+                          "reason": "CUSTOMER_REQUEST",
+                          "note": "payment e2e refund"
+                        }
+                        """.formatted(amount));
     }
 
     private static KeyPair generateKeyPair() {

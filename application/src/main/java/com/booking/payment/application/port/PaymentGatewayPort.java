@@ -5,6 +5,7 @@ import com.booking.payment.domain.model.Money;
 import com.booking.payment.domain.model.PaymentId;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Anti-Corruption Layer port for the external payment gateway
@@ -31,6 +32,30 @@ public interface PaymentGatewayPort {
     AuthorizationResult authorize(AuthorizationRequest request);
 
     /**
+     * Captures a previously authorized payment.
+     *
+     * @param request capture request
+     * @return capture result
+     */
+    CaptureResult capture(CaptureRequest request);
+
+    /**
+     * Refunds a captured payment.
+     *
+     * @param request refund request
+     * @return refund result
+     */
+    RefundResult refund(RefundRequest request);
+
+    /**
+     * Voids a previously authorized payment without capture.
+     *
+     * @param request void request
+     * @return void result
+     */
+    VoidResult voidAuthorization(VoidRequest request);
+
+    /**
      * Authorization request passed to the gateway.
      *
      * @param paymentId payment identifier (used as gateway reference)
@@ -42,6 +67,72 @@ public interface PaymentGatewayPort {
             Objects.requireNonNull(paymentId, "paymentId must not be null");
             Objects.requireNonNull(bookingId, "bookingId must not be null");
             Objects.requireNonNull(money, "money must not be null");
+        }
+    }
+
+    /**
+     * Capture request passed to the gateway.
+     *
+     * @param paymentId payment identifier
+     * @param gatewayTransactionId gateway authorization transaction id
+     * @param amount capture amount
+     * @param idempotencyKey client idempotency key for this operation
+     */
+    record CaptureRequest(PaymentId paymentId, String gatewayTransactionId, int amount, UUID idempotencyKey) {
+        public CaptureRequest {
+            Objects.requireNonNull(paymentId, "paymentId must not be null");
+            Objects.requireNonNull(gatewayTransactionId, "gatewayTransactionId must not be null");
+            Objects.requireNonNull(idempotencyKey, "idempotencyKey must not be null");
+            if (amount <= 0) {
+                throw new IllegalArgumentException("amount must be positive");
+            }
+        }
+    }
+
+    /**
+     * Refund request passed to the gateway.
+     *
+     * @param paymentId payment identifier
+     * @param gatewayTransactionId gateway capture/authorization transaction id
+     * @param amount refund amount
+     * @param reason refund reason
+     * @param note optional refund note
+     * @param idempotencyKey client idempotency key for this operation
+     */
+    record RefundRequest(
+            PaymentId paymentId,
+            String gatewayTransactionId,
+            int amount,
+            String reason,
+            String note,
+            UUID idempotencyKey
+    ) {
+        public RefundRequest {
+            Objects.requireNonNull(paymentId, "paymentId must not be null");
+            Objects.requireNonNull(gatewayTransactionId, "gatewayTransactionId must not be null");
+            Objects.requireNonNull(reason, "reason must not be null");
+            Objects.requireNonNull(idempotencyKey, "idempotencyKey must not be null");
+            if (amount <= 0) {
+                throw new IllegalArgumentException("amount must be positive");
+            }
+        }
+    }
+
+    /**
+     * Void request passed to the gateway.
+     *
+     * @param paymentId payment identifier
+     * @param gatewayTransactionId gateway authorization transaction id
+     * @param reason void/refund reason
+     * @param note optional note
+     * @param idempotencyKey client idempotency key for this operation
+     */
+    record VoidRequest(PaymentId paymentId, String gatewayTransactionId, String reason, String note, UUID idempotencyKey) {
+        public VoidRequest {
+            Objects.requireNonNull(paymentId, "paymentId must not be null");
+            Objects.requireNonNull(gatewayTransactionId, "gatewayTransactionId must not be null");
+            Objects.requireNonNull(reason, "reason must not be null");
+            Objects.requireNonNull(idempotencyKey, "idempotencyKey must not be null");
         }
     }
 
@@ -74,6 +165,42 @@ public interface PaymentGatewayPort {
         public static AuthorizationResult declined(String failureReason) {
             Objects.requireNonNull(failureReason, "failureReason must not be null");
             return new AuthorizationResult(false, null, failureReason);
+        }
+    }
+
+    record CaptureResult(boolean successful, String failureReason) {
+
+        public static CaptureResult captured() {
+            return new CaptureResult(true, null);
+        }
+
+        public static CaptureResult failed(String failureReason) {
+            Objects.requireNonNull(failureReason, "failureReason must not be null");
+            return new CaptureResult(false, failureReason);
+        }
+    }
+
+    record RefundResult(boolean successful, String failureReason) {
+
+        public static RefundResult refunded() {
+            return new RefundResult(true, null);
+        }
+
+        public static RefundResult failed(String failureReason) {
+            Objects.requireNonNull(failureReason, "failureReason must not be null");
+            return new RefundResult(false, failureReason);
+        }
+    }
+
+    record VoidResult(boolean successful, String failureReason) {
+
+        public static VoidResult voided() {
+            return new VoidResult(true, null);
+        }
+
+        public static VoidResult failed(String failureReason) {
+            Objects.requireNonNull(failureReason, "failureReason must not be null");
+            return new VoidResult(false, failureReason);
         }
     }
 }

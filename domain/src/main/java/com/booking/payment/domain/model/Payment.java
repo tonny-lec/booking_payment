@@ -173,18 +173,22 @@ public class Payment {
             );
         }
         int maxRefundable = capturedAmount != null ? capturedAmount : money.amount();
-        int targetAmount = amount != null ? amount : maxRefundable;
+        int alreadyRefunded = refundedAmount != null ? refundedAmount : 0;
+        int remainingRefundable = maxRefundable - alreadyRefunded;
+        int targetAmount = amount != null ? amount : remainingRefundable;
         if (targetAmount <= 0) {
             throw new BusinessRuleViolationException("payment_invalid_refund_amount", "Refund amount must be positive");
         }
-        if (targetAmount > maxRefundable) {
+        if (targetAmount > remainingRefundable) {
             throw new BusinessRuleViolationException(
                     "payment_refund_exceeds_captured",
                     "Refund amount cannot exceed captured amount"
             );
         }
-        this.refundedAmount = targetAmount;
-        this.status = PaymentStatus.REFUNDED;
+        this.refundedAmount = alreadyRefunded + targetAmount;
+        if (this.refundedAmount.equals(maxRefundable)) {
+            this.status = PaymentStatus.REFUNDED;
+        }
         touch();
     }
 
