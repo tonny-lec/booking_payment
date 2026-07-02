@@ -6,7 +6,11 @@ import com.booking.shared.exception.BusinessRuleViolationException;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Aggregate root representing a payment lifecycle.
@@ -27,6 +31,7 @@ public class Payment {
     private String gatewayTransactionId;
     private String failureReason;
     private final IdempotencyKey idempotencyKey;
+    private final Map<UUID, Integer> refundRequestAmounts;
     private final Instant createdAt;
     private Instant updatedAt;
 
@@ -42,6 +47,9 @@ public class Payment {
         this.gatewayTransactionId = normalizeOptionalText(builder.gatewayTransactionId, 255, "gatewayTransactionId");
         this.failureReason = normalizeOptionalText(builder.failureReason, MAX_FAILURE_REASON_LENGTH, "failureReason");
         this.idempotencyKey = Objects.requireNonNull(builder.idempotencyKey, "idempotencyKey must not be null");
+        this.refundRequestAmounts = new LinkedHashMap<>(
+                builder.refundRequestAmounts != null ? builder.refundRequestAmounts : Map.of()
+        );
         this.createdAt = builder.createdAt != null ? builder.createdAt : Instant.now();
         this.updatedAt = builder.updatedAt != null ? builder.updatedAt : this.createdAt;
 
@@ -149,6 +157,13 @@ public class Payment {
      * Voids an authorized payment.
      */
     public void voidAuthorization() {
+        voidAuthorization(null);
+    }
+
+    /**
+     * Voids an authorized payment and records the refund idempotency key.
+     */
+    public void voidAuthorization(IdempotencyKey refundIdempotencyKey) {
         if (status != PaymentStatus.AUTHORIZED) {
             throw new BusinessRuleViolationException(
                     "payment_not_voidable",
@@ -157,6 +172,7 @@ public class Payment {
         }
         this.refundedAmount = capturedAmount != null ? capturedAmount : money.amount();
         this.status = PaymentStatus.REFUNDED;
+        recordRefundRequest(refundIdempotencyKey, null);
         touch();
     }
 
@@ -166,6 +182,16 @@ public class Payment {
      * @param amount amount to refund; null means full captured amount
      */
     public void refund(Integer amount) {
+        refund(amount, null);
+    }
+
+    /**
+     * Refunds a captured payment and records the refund idempotency key.
+     *
+     * @param amount amount to refund; null means remaining captured amount
+     * @param refundIdempotencyKey idempotency key for this refund request
+     */
+    public void refund(Integer amount, IdempotencyKey refundIdempotencyKey) {
         if (status != PaymentStatus.CAPTURED) {
             throw new BusinessRuleViolationException(
                     "payment_not_refundable",
@@ -189,7 +215,26 @@ public class Payment {
         if (this.refundedAmount.equals(maxRefundable)) {
             this.status = PaymentStatus.REFUNDED;
         }
+        recordRefundRequest(refundIdempotencyKey, amount);
         touch();
+    }
+
+    public boolean isSameRefundRequest(IdempotencyKey refundIdempotencyKey, Integer amount) {
+        Objects.requireNonNull(refundIdempotencyKey, "refundIdempotencyKey must not be null");
+        return refundRequestAmounts.containsKey(refundIdempotencyKey.value())
+                && Objects.equals(amount, refundRequestAmounts.get(refundIdempotencyKey.value()));
+    }
+
+    public boolean hasRefundRequestWith(IdempotencyKey refundIdempotencyKey) {
+        Objects.requireNonNull(refundIdempotencyKey, "refundIdempotencyKey must not be null");
+        return refundRequestAmounts.containsKey(refundIdempotencyKey.value());
+    }
+
+    private void recordRefundRequest(IdempotencyKey refundIdempotencyKey, Integer amount) {
+        if (refundIdempotencyKey == null) {
+            return;
+        }
+        this.refundRequestAmounts.put(refundIdempotencyKey.value(), amount);
     }
 
     public boolean isOwnedBy(UserId requesterId) {
@@ -241,6 +286,10 @@ public class Payment {
         return idempotencyKey;
     }
 
+    public Map<UUID, Integer> refundRequestAmounts() {
+        return Collections.unmodifiableMap(refundRequestAmounts);
+    }
+
     public Instant createdAt() {
         return createdAt;
     }
@@ -265,6 +314,7 @@ public class Payment {
         private String gatewayTransactionId;
         private String failureReason;
         private IdempotencyKey idempotencyKey;
+        private Map<UUID, Integer> refundRequestAmounts;
         private Instant createdAt;
         private Instant updatedAt;
 
@@ -323,6 +373,11 @@ public class Payment {
 
         public Builder idempotencyKey(IdempotencyKey idempotencyKey) {
             this.idempotencyKey = idempotencyKey;
+            return this;
+        }
+
+        public Builder refundRequestAmounts(Map<UUID, Integer> refundRequestAmounts) {
+            this.refundRequestAmounts = refundRequestAmounts;
             return this;
         }
 

@@ -134,6 +134,57 @@ class JpaPaymentRepositoryIntegrationTest {
         }
     }
 
+    @Nested
+    @DisplayName("findLatestByBookingId")
+    class FindLatestByBookingId {
+
+        @Test
+        @DisplayName("should find latest payment for booking including refunded terminal state")
+        void shouldFindLatestPaymentForBookingIncludingRefundedTerminalState() {
+            BookingId bookingId = BookingId.generate();
+            Payment older = newPayment(bookingId, Instant.parse("2026-03-01T00:00:00Z"));
+            older.fail("card_declined");
+            paymentRepository.save(older);
+            Payment latest = newPayment(bookingId, Instant.parse("2026-03-02T00:00:00Z"));
+            latest.authorize("txn_latest");
+            latest.voidAuthorization();
+            paymentRepository.save(latest);
+
+            assertThat(paymentRepository.findLatestByBookingId(bookingId))
+                    .hasValueSatisfying(found -> {
+                        assertThat(found.id()).isEqualTo(latest.id());
+                        assertThat(found.status()).isEqualTo(PaymentStatus.REFUNDED);
+                    });
+        }
+
+        @Test
+        @DisplayName("should return empty when booking has no payments")
+        void shouldReturnEmptyWhenBookingHasNoPayments() {
+            assertThat(paymentRepository.findLatestByBookingId(BookingId.generate())).isEmpty();
+        }
+    }
+
+    @Test
+    @DisplayName("should preserve refund idempotency keys when saving payment")
+    void shouldPreserveRefundIdempotencyKeysWhenSavingPayment() {
+        Payment payment = newPayment();
+        payment.authorize("txn_existing");
+        payment.capture(10000);
+        IdempotencyKey firstRefundKey = IdempotencyKey.of(UUID.randomUUID(), FIXED_CLOCK);
+        IdempotencyKey secondRefundKey = IdempotencyKey.of(UUID.randomUUID(), FIXED_CLOCK);
+        payment.refund(3000, firstRefundKey);
+        payment.refund(1000, secondRefundKey);
+
+        paymentRepository.save(payment);
+
+        assertThat(paymentRepository.findById(payment.id()))
+                .hasValueSatisfying(found -> {
+                    assertThat(found.refundRequestAmounts())
+                            .containsEntry(firstRefundKey.value(), 3000)
+                            .containsEntry(secondRefundKey.value(), 1000);
+                });
+    }
+
     @Test
     @DisplayName("should translate duplicate idempotency key into ConflictException")
     void shouldTranslateDuplicateIdempotencyKeyIntoConflictException() {
@@ -155,13 +206,17 @@ class JpaPaymentRepositoryIntegrationTest {
     }
 
     private static Payment newPayment() {
+        return newPayment(BookingId.generate(), FIXED_CLOCK.instant());
+    }
+
+    private static Payment newPayment(BookingId bookingId, Instant createdAt) {
         return Payment.create(
-                BookingId.generate(),
+                bookingId,
                 UserId.generate(),
                 Money.of(10000, "JPY"),
-                IdempotencyKey.of(UUID.randomUUID(), FIXED_CLOCK),
+                IdempotencyKey.of(UUID.randomUUID(), Clock.fixed(createdAt, ZoneOffset.UTC)),
                 "meeting room",
-                FIXED_CLOCK
+                Clock.fixed(createdAt, ZoneOffset.UTC)
         );
     }
 

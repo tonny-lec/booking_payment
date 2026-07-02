@@ -133,7 +133,14 @@ class BookingFlowE2ETest {
         assertThat(updatedVersion).isEqualTo(3);
 
         mockMvc.perform(delete("/api/v1/bookings/" + bookingId)
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "refundPolicy": "NO_REFUND",
+                                  "reason": "booking e2e cancel"
+                                }
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(bookingId))
                 .andExpect(jsonPath("$.status").value("CANCELLED"))

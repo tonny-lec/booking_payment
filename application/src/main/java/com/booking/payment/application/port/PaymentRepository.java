@@ -31,6 +31,18 @@ public interface PaymentRepository {
     Optional<Payment> findByIdempotencyKey(UUID idempotencyKeyValue);
 
     /**
+     * Finds the latest payment created for a booking.
+     *
+     * <p>Cancellation-time refund policy selection needs terminal payments too
+     * (for example REFUNDED), so this lookup is intentionally not limited to
+     * active statuses.
+     *
+     * @param bookingId booking identifier
+     * @return latest payment for the booking, if any
+     */
+    Optional<Payment> findLatestByBookingId(BookingId bookingId);
+
+    /**
      * Checks whether an active (PENDING/AUTHORIZED/CAPTURED) payment
      * already exists for the given booking.
      *

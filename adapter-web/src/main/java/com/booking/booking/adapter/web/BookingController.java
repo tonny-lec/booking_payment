@@ -3,12 +3,14 @@ package com.booking.booking.adapter.web;
 import com.booking.booking.application.usecase.CancelBookingUseCase;
 import com.booking.booking.application.usecase.CreateBookingUseCase;
 import com.booking.booking.application.usecase.GetBookingUseCase;
+import com.booking.booking.application.usecase.RefundPolicy;
 import com.booking.booking.application.usecase.UpdateBookingUseCase;
 import com.booking.booking.domain.model.Booking;
 import com.booking.booking.domain.model.BookingId;
 import com.booking.booking.domain.model.ResourceId;
 import com.booking.booking.domain.model.TimeRange;
 import com.booking.iam.domain.model.UserId;
+import com.booking.payment.domain.model.IdempotencyKey;
 import com.booking.shared.exception.BusinessRuleViolationException;
 import com.booking.shared.exception.UnauthorizedException;
 import jakarta.validation.Valid;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -39,6 +42,8 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @RestController
 @RequestMapping("/api/v1/bookings")
 public class BookingController {
+
+    static final String IDEMPOTENCY_KEY_HEADER = "Idempotency-Key";
 
     private final CreateBookingUseCase createBookingUseCase;
     private final GetBookingUseCase getBookingUseCase;
@@ -121,13 +126,18 @@ public class BookingController {
     @DeleteMapping("/{bookingId}")
     public ResponseEntity<BookingResponse> cancelBooking(
             @PathVariable("bookingId") String bookingId,
+            @RequestHeader(value = IDEMPOTENCY_KEY_HEADER, required = false) String idempotencyKey,
+            @Valid @RequestBody CancelBookingRequest request,
             Principal principal
     ) {
         UserId requestUserId = resolveAuthenticatedUserId(principal);
         Booking booking = cancelBookingUseCase.execute(new CancelBookingUseCase.CancelBookingCommand(
                 toBookingId(bookingId),
                 requestUserId,
-                null
+                request.reason(),
+                request.refundPolicy(),
+                request.partialRefundAmount(),
+                request.refundPolicy() == RefundPolicy.NO_REFUND ? null : toIdempotencyKey(idempotencyKey)
         ));
         return ResponseEntity.ok(BookingResponse.from(booking));
     }
@@ -169,6 +179,17 @@ public class BookingController {
         }
     }
 
+    private IdempotencyKey toIdempotencyKey(String value) {
+        if (value == null || value.isBlank()) {
+            throw new ResponseStatusException(BAD_REQUEST, "Idempotency-Key is required for refund policies");
+        }
+        try {
+            return IdempotencyKey.fromString(value.trim());
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(BAD_REQUEST, "Idempotency-Key must be a UUID", ex);
+        }
+    }
+
     public record CreateBookingRequest(
             @NotNull java.util.UUID resourceId,
             @NotNull Instant startAt,
@@ -182,6 +203,13 @@ public class BookingController {
             Instant endAt,
             @Size(max = Booking.MAX_NOTE_LENGTH) String note,
             @NotNull @Min(1) Integer version
+    ) {
+    }
+
+    public record CancelBookingRequest(
+            @NotNull RefundPolicy refundPolicy,
+            @Min(1) Integer partialRefundAmount,
+            @Size(max = Booking.MAX_CANCEL_REASON_LENGTH) String reason
     ) {
     }
 

@@ -9,6 +9,7 @@ import com.booking.booking.domain.model.BookingId;
 import com.booking.booking.domain.model.BookingStatus;
 import com.booking.booking.domain.model.ResourceId;
 import com.booking.booking.domain.model.TimeRange;
+import com.booking.booking.application.usecase.RefundPolicy;
 import com.booking.iam.domain.model.UserId;
 import com.booking.shared.adapter.web.config.ApiErrorProperties;
 import com.booking.shared.adapter.web.exception.GlobalExceptionHandler;
@@ -155,7 +156,16 @@ class BookingControllerTest {
         when(cancelBookingUseCase.execute(any())).thenReturn(booking);
 
         mockMvc.perform(delete("/api/v1/bookings/" + BOOKING_ID)
-                        .principal(() -> OWNER_ID))
+                        .principal(() -> OWNER_ID)
+                        .header("Idempotency-Key", "44444444-4444-4444-4444-444444444444")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "refundPolicy": "PARTIAL_REFUND",
+                                  "partialRefundAmount": 3000,
+                                  "reason": "changed plans"
+                                }
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(BOOKING_ID))
                 .andExpect(jsonPath("$.userId").value(OWNER_ID))
@@ -166,8 +176,29 @@ class BookingControllerTest {
         verify(cancelBookingUseCase).execute(argThat(command ->
                 command.bookingId().equals(BookingId.fromString(BOOKING_ID))
                         && command.requestUserId().equals(UserId.fromString(OWNER_ID))
-                        && command.reason() == null
+                        && command.reason().equals("changed plans")
+                        && command.refundPolicy() == RefundPolicy.PARTIAL_REFUND
+                        && command.partialRefundAmount().equals(3000)
+                        && command.idempotencyKey().asString().equals("44444444-4444-4444-4444-444444444444")
         ));
+    }
+
+    @Test
+    @DisplayName("should return 400 when refund policy is missing")
+    void shouldReturn400WhenRefundPolicyIsMissing() throws Exception {
+        mockMvc.perform(delete("/api/v1/bookings/" + BOOKING_ID)
+                        .principal(() -> OWNER_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "reason": "changed plans"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.errors.refundPolicy").exists());
+
+        verifyNoInteractions(cancelBookingUseCase);
     }
 
     @Test
@@ -185,7 +216,14 @@ class BookingControllerTest {
     @DisplayName("should return 401 when delete principal name is not UUID")
     void shouldReturn401WhenDeletePrincipalNameIsNotUuid() throws Exception {
         mockMvc.perform(delete("/api/v1/bookings/" + BOOKING_ID)
-                        .principal(() -> "anonymousUser"))
+                        .principal(() -> "anonymousUser")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "refundPolicy": "NO_REFUND",
+                                  "reason": "changed plans"
+                                }
+                                """))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.errorCode").value("unauthorized"));

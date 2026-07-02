@@ -5,6 +5,8 @@ import com.booking.booking.application.usecase.CancelBookingUseCase;
 import com.booking.booking.application.usecase.CreateBookingUseCase;
 import com.booking.booking.application.usecase.GetBookingUseCase;
 import com.booking.booking.application.usecase.UpdateBookingUseCase;
+import com.booking.payment.application.port.PaymentRepository;
+import com.booking.payment.application.usecase.RefundPaymentUseCase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -25,8 +27,12 @@ public class BookingUseCaseConfig {
     }
 
     @Bean
-    public CancelBookingUseCase cancelBookingUseCase(BookingRepository bookingRepository) {
-        return new CancelBookingUseCase(bookingRepository);
+    public CancelBookingUseCase cancelBookingUseCase(
+            BookingRepository bookingRepository,
+            PaymentRepository paymentRepository,
+            RefundPaymentUseCase refundPaymentUseCase
+    ) {
+        return new CancelBookingUseCase(bookingRepository, paymentRepository, refundPaymentUseCase);
     }
 
     @Bean
