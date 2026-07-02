@@ -15,5 +15,7 @@ public interface PaymentJpaRepository extends JpaRepository<PaymentEntity, UUID>
 
     Optional<PaymentEntity> findByIdempotencyKey(UUID idempotencyKey);
 
+    Optional<PaymentEntity> findFirstByBookingIdOrderByCreatedAtDesc(UUID bookingId);
+
     boolean existsByBookingIdAndStatusIn(UUID bookingId, Collection<PaymentStatus> statuses);
 }

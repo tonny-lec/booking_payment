@@ -31,6 +31,7 @@ import java.util.Base64;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -149,6 +150,45 @@ class PaymentFlowE2ETest {
                 .andExpect(jsonPath("$.refundedAmount").value(10000));
 
         // 8. The refunded payment is retrievable by its owner.
+        mockMvc.perform(get("/api/v1/payments/" + paymentId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(paymentId))
+                .andExpect(jsonPath("$.status").value("REFUNDED"))
+                .andExpect(jsonPath("$.capturedAmount").value(10000))
+                .andExpect(jsonPath("$.refundedAmount").value(10000));
+    }
+
+    @Test
+    @DisplayName("should full-refund captured payment when booking is cancelled with FULL_REFUND policy")
+    void shouldFullRefundCapturedPaymentWhenBookingIsCancelledWithFullRefundPolicy() throws Exception {
+        String accessToken = login();
+        String bookingId = createBooking(accessToken);
+        String createResponse = mockMvc.perform(paymentRequest(accessToken, UUID.randomUUID().toString(), bookingId, 10000))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("AUTHORIZED"))
+                .andReturn().getResponse().getContentAsString();
+        String paymentId = JsonPath.read(createResponse, "$.id");
+
+        mockMvc.perform(captureRequest(accessToken, UUID.randomUUID().toString(), paymentId, 10000))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CAPTURED"))
+                .andExpect(jsonPath("$.capturedAmount").value(10000));
+
+        mockMvc.perform(delete("/api/v1/bookings/" + bookingId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header("Idempotency-Key", UUID.randomUUID().toString())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "refundPolicy": "FULL_REFUND",
+                                  "reason": "payment e2e cancellation"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(bookingId))
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+
         mockMvc.perform(get("/api/v1/payments/" + paymentId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
                 .andExpect(status().isOk())

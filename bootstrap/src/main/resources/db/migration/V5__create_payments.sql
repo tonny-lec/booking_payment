@@ -46,3 +46,19 @@ COMMENT ON COLUMN payments.failure_reason IS 'Failure reason (FAILED status only
 COMMENT ON COLUMN payments.idempotency_key IS 'Client-generated idempotency key (unique, replay guard)';
 COMMENT ON COLUMN payments.created_at IS 'Creation timestamp (also idempotency-key TTL reference)';
 COMMENT ON COLUMN payments.updated_at IS 'Last update timestamp';
+
+CREATE TABLE payment_refund_requests (
+    payment_id UUID NOT NULL,
+    idempotency_key UUID NOT NULL,
+    request_amount INTEGER NULL,
+    PRIMARY KEY (payment_id, idempotency_key),
+    CONSTRAINT fk_payment_refund_requests_payment
+        FOREIGN KEY (payment_id) REFERENCES payments(id)
+        ON DELETE CASCADE,
+    CONSTRAINT chk_payment_refund_requests_amount CHECK (request_amount IS NULL OR request_amount > 0)
+);
+
+COMMENT ON TABLE payment_refund_requests IS 'Processed refund idempotency keys for payment replay guard';
+COMMENT ON COLUMN payment_refund_requests.payment_id IS 'Payment aggregate identifier';
+COMMENT ON COLUMN payment_refund_requests.idempotency_key IS 'Refund request idempotency key';
+COMMENT ON COLUMN payment_refund_requests.request_amount IS 'Requested refund amount (NULL means full/void)';

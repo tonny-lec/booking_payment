@@ -49,6 +49,12 @@ public class JpaPaymentRepository implements PaymentRepository {
     }
 
     @Override
+    public Optional<Payment> findLatestByBookingId(BookingId bookingId) {
+        return paymentJpaRepository.findFirstByBookingIdOrderByCreatedAtDesc(bookingId.value())
+                .map(PaymentEntity::toDomain);
+    }
+
+    @Override
     public boolean existsActiveByBookingId(BookingId bookingId) {
         return paymentJpaRepository.existsByBookingIdAndStatusIn(bookingId.value(), ACTIVE_STATUSES);
     }

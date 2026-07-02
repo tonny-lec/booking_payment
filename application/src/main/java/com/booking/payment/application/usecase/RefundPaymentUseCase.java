@@ -8,6 +8,7 @@ import com.booking.payment.domain.model.Payment;
 import com.booking.payment.domain.model.PaymentId;
 import com.booking.payment.domain.model.PaymentStatus;
 import com.booking.shared.exception.BusinessRuleViolationException;
+import com.booking.shared.exception.ConflictException;
 import com.booking.shared.exception.ForbiddenException;
 import com.booking.shared.exception.ResourceNotFoundException;
 
@@ -47,6 +48,15 @@ public class RefundPaymentUseCase {
                     "Only payment owner can refund payment"
             );
         }
+        if (payment.isSameRefundRequest(command.idempotencyKey(), command.amount())) {
+            return payment;
+        }
+        if (payment.hasRefundRequestWith(command.idempotencyKey())) {
+            throw new ConflictException(
+                    "payment_refund_idempotency_key_conflict",
+                    "Idempotency-Key was already used with a different refund request content"
+            );
+        }
         if (payment.status() == PaymentStatus.REFUNDED) {
             return payment;
         }
@@ -72,13 +82,13 @@ public class RefundPaymentUseCase {
                     result.failureReason() != null ? result.failureReason() : "Payment void failed"
             );
         }
-        payment.voidAuthorization();
+        payment.voidAuthorization(command.idempotencyKey());
     }
 
     private void refundCapturedPayment(Payment payment, RefundPaymentCommand command) {
         int refundAmount = command.amount() != null
                 ? command.amount()
-                : payment.capturedAmount() != null ? payment.capturedAmount() : payment.money().amount();
+                : remainingRefundableAmount(payment);
         validateRefundRequest(payment, refundAmount);
         PaymentGatewayPort.RefundResult result = paymentGateway.refund(new PaymentGatewayPort.RefundRequest(
                 payment.id(),
@@ -94,7 +104,13 @@ public class RefundPaymentUseCase {
                     result.failureReason() != null ? result.failureReason() : "Payment refund failed"
             );
         }
-        payment.refund(command.amount());
+        payment.refund(command.amount(), command.idempotencyKey());
+    }
+
+    private int remainingRefundableAmount(Payment payment) {
+        int maxRefundable = payment.capturedAmount() != null ? payment.capturedAmount() : payment.money().amount();
+        int alreadyRefunded = payment.refundedAmount() != null ? payment.refundedAmount() : 0;
+        return maxRefundable - alreadyRefunded;
     }
 
     private void validateRefundRequest(Payment payment, int refundAmount) {
@@ -104,9 +120,7 @@ public class RefundPaymentUseCase {
                     "Payment cannot be refunded from status: " + payment.status()
             );
         }
-        int maxRefundable = payment.capturedAmount() != null ? payment.capturedAmount() : payment.money().amount();
-        int alreadyRefunded = payment.refundedAmount() != null ? payment.refundedAmount() : 0;
-        int remainingRefundable = maxRefundable - alreadyRefunded;
+        int remainingRefundable = remainingRefundableAmount(payment);
         if (refundAmount <= 0) {
             throw new BusinessRuleViolationException("payment_invalid_refund_amount", "Refund amount must be positive");
         }

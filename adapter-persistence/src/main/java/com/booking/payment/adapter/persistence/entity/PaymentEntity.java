@@ -8,13 +8,22 @@ import com.booking.payment.domain.model.Payment;
 import com.booking.payment.domain.model.PaymentId;
 import com.booking.payment.domain.model.PaymentStatus;
 import jakarta.persistence.Column;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 /**
@@ -67,6 +76,13 @@ public class PaymentEntity {
     @Column(name = "idempotency_key", nullable = false, unique = true)
     private UUID idempotencyKey;
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "payment_refund_requests",
+            joinColumns = @JoinColumn(name = "payment_id", nullable = false)
+    )
+    private Set<PaymentRefundRequestEntity> refundRequests = new LinkedHashSet<>();
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -90,6 +106,9 @@ public class PaymentEntity {
         entity.gatewayTransactionId = payment.gatewayTransactionId();
         entity.failureReason = payment.failureReason();
         entity.idempotencyKey = payment.idempotencyKey().value();
+        entity.refundRequests = payment.refundRequestAmounts().entrySet().stream()
+                .map(entry -> new PaymentRefundRequestEntity(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
         entity.createdAt = payment.createdAt();
         entity.updatedAt = payment.updatedAt();
         return entity;
@@ -108,8 +127,17 @@ public class PaymentEntity {
                 .gatewayTransactionId(gatewayTransactionId)
                 .failureReason(failureReason)
                 .idempotencyKey(new IdempotencyKey(idempotencyKey, createdAt))
+                .refundRequestAmounts(toRefundRequestAmounts())
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();
+    }
+
+    private Map<UUID, Integer> toRefundRequestAmounts() {
+        Map<UUID, Integer> result = new LinkedHashMap<>();
+        for (PaymentRefundRequestEntity refundRequest : refundRequests) {
+            result.put(refundRequest.idempotencyKey(), refundRequest.requestAmount());
+        }
+        return result;
     }
 }

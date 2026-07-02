@@ -271,7 +271,28 @@ paths:
         キャンセル後のステータスはCANCELLED。
 
         ## 副作用
-        - CONFIRMED状態からのキャンセルは返金処理をトリガー（非同期）
+        - CONFIRMED状態からのキャンセルは、指定された返金ポリシーに応じて返金または返金なしで処理
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: |
+            返金ポリシーが FULL_REFUND または PARTIAL_REFUND の場合に必須。
+            NO_REFUND の場合は不要。
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/CancelBookingFullRefundRequest'
+                - $ref: '#/components/schemas/CancelBookingPartialRefundRequest'
+                - $ref: '#/components/schemas/CancelBookingNoRefundRequest'
+              discriminator:
+                propertyName: refundPolicy
       responses:
         '200':
           description: キャンセル成功
@@ -279,6 +300,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Booking'
+        '400':
+          description: リクエスト不正（返金ポリシー未指定、部分返金額不正、Idempotency-Key不正等）
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
         '401':
           description: 未認証
           content:
@@ -367,6 +394,77 @@ components:
           minimum: 1
           description: 楽観的ロック用バージョン
           example: 1
+
+    CancelBookingRequest:
+      oneOf:
+        - $ref: '#/components/schemas/CancelBookingFullRefundRequest'
+        - $ref: '#/components/schemas/CancelBookingPartialRefundRequest'
+        - $ref: '#/components/schemas/CancelBookingNoRefundRequest'
+      discriminator:
+        propertyName: refundPolicy
+
+    CancelBookingFullRefundRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - refundPolicy
+      properties:
+        refundPolicy:
+          type: string
+          enum: [FULL_REFUND]
+          description: |
+            予約キャンセル時の返金ポリシー。
+            FULL_REFUND は支払いがAUTHORIZEDならvoid、CAPTUREDなら未返金残額を全額返金する。
+          example: FULL_REFUND
+        reason:
+          type: string
+          maxLength: 500
+          description: キャンセル理由
+          example: "顧客都合によるキャンセル"
+
+    CancelBookingPartialRefundRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - refundPolicy
+        - partialRefundAmount
+      properties:
+        refundPolicy:
+          type: string
+          enum: [PARTIAL_REFUND]
+          description: |
+            予約キャンセル時の返金ポリシー。
+            PARTIAL_REFUND は CAPTURED 支払いに対して partialRefundAmount だけ返金する。
+          example: PARTIAL_REFUND
+        partialRefundAmount:
+          type: integer
+          minimum: 1
+          description: PARTIAL_REFUND の場合に必須の返金額
+          example: 3000
+        reason:
+          type: string
+          maxLength: 500
+          description: キャンセル理由
+          example: "顧客都合によるキャンセル"
+
+    CancelBookingNoRefundRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - refundPolicy
+      properties:
+        refundPolicy:
+          type: string
+          enum: [NO_REFUND]
+          description: |
+            予約キャンセル時の返金ポリシー。
+            NO_REFUND は支払い状態を変更せず予約だけキャンセルする。
+          example: NO_REFUND
+        reason:
+          type: string
+          maxLength: 500
+          description: キャンセル理由
+          example: "顧客都合によるキャンセル"
 
     Booking:
       type: object

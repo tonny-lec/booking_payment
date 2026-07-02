@@ -9,6 +9,7 @@ import com.booking.payment.domain.model.Money;
 import com.booking.payment.domain.model.Payment;
 import com.booking.payment.domain.model.PaymentStatus;
 import com.booking.shared.exception.BusinessRuleViolationException;
+import com.booking.shared.exception.ConflictException;
 import com.booking.shared.exception.ForbiddenException;
 import com.booking.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -105,6 +106,109 @@ class RefundPaymentUseCaseTest {
                 idempotencyKey.value()
         ));
         verify(paymentRepository).save(payment);
+    }
+
+    @Test
+    @DisplayName("execute should full-refund remaining amount after partial refund")
+    void executeShouldFullRefundRemainingAmountAfterPartialRefund() {
+        Payment payment = capturedPayment();
+        payment.refund(3000);
+        when(paymentRepository.findById(payment.id())).thenReturn(Optional.of(payment));
+        when(paymentGateway.refund(any()))
+                .thenReturn(PaymentGatewayPort.RefundResult.refunded());
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        IdempotencyKey idempotencyKey = idempotencyKey();
+        Payment result = useCase().execute(new RefundPaymentUseCase.RefundPaymentCommand(
+                payment.id(),
+                payment.userId(),
+                idempotencyKey,
+                null,
+                "customer_request",
+                "remaining refund"
+        ));
+
+        assertThat(result.status()).isEqualTo(PaymentStatus.REFUNDED);
+        assertThat(result.refundedAmount()).isEqualTo(10000);
+        verify(paymentGateway).refund(new PaymentGatewayPort.RefundRequest(
+                payment.id(),
+                payment.gatewayTransactionId(),
+                7000,
+                "customer_request",
+                "remaining refund",
+                idempotencyKey.value()
+        ));
+        verify(paymentRepository).save(payment);
+    }
+
+    @Test
+    @DisplayName("execute should replay same partial refund idempotency key without gateway call")
+    void executeShouldReplaySamePartialRefundIdempotencyKeyWithoutGatewayCall() {
+        Payment payment = capturedPayment();
+        IdempotencyKey idempotencyKey = idempotencyKey();
+        payment.refund(3000, idempotencyKey);
+        when(paymentRepository.findById(payment.id())).thenReturn(Optional.of(payment));
+
+        Payment result = useCase().execute(new RefundPaymentUseCase.RefundPaymentCommand(
+                payment.id(),
+                payment.userId(),
+                idempotencyKey,
+                3000,
+                "customer_request",
+                "partial refund"
+        ));
+
+        assertThat(result).isSameAs(payment);
+        assertThat(result.status()).isEqualTo(PaymentStatus.CAPTURED);
+        assertThat(result.refundedAmount()).isEqualTo(3000);
+        verifyNoInteractions(paymentGateway);
+        verify(paymentRepository, never()).save(any(Payment.class));
+    }
+
+    @Test
+    @DisplayName("execute should replay earlier partial refund idempotency key after later refunds")
+    void executeShouldReplayEarlierPartialRefundIdempotencyKeyAfterLaterRefunds() {
+        Payment payment = capturedPayment();
+        IdempotencyKey firstKey = idempotencyKey();
+        IdempotencyKey secondKey = idempotencyKey();
+        payment.refund(3000, firstKey);
+        payment.refund(1000, secondKey);
+        when(paymentRepository.findById(payment.id())).thenReturn(Optional.of(payment));
+
+        Payment result = useCase().execute(new RefundPaymentUseCase.RefundPaymentCommand(
+                payment.id(),
+                payment.userId(),
+                firstKey,
+                3000,
+                "customer_request",
+                "partial refund"
+        ));
+
+        assertThat(result.refundedAmount()).isEqualTo(4000);
+        verifyNoInteractions(paymentGateway);
+        verify(paymentRepository, never()).save(any(Payment.class));
+    }
+
+    @Test
+    @DisplayName("execute should reject same refund idempotency key with different amount")
+    void executeShouldRejectSameRefundIdempotencyKeyWithDifferentAmount() {
+        Payment payment = capturedPayment();
+        IdempotencyKey idempotencyKey = idempotencyKey();
+        payment.refund(3000, idempotencyKey);
+        when(paymentRepository.findById(payment.id())).thenReturn(Optional.of(payment));
+
+        assertThatThrownBy(() -> useCase().execute(new RefundPaymentUseCase.RefundPaymentCommand(
+                payment.id(),
+                payment.userId(),
+                idempotencyKey,
+                4000,
+                "customer_request",
+                "partial refund"
+        ))).isInstanceOfSatisfying(ConflictException.class, ex ->
+                assertThat(ex.getErrorCode()).isEqualTo("payment_refund_idempotency_key_conflict"));
+
+        verifyNoInteractions(paymentGateway);
+        verify(paymentRepository, never()).save(any(Payment.class));
     }
 
     @Test
